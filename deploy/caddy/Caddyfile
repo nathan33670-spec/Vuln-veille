@@ -1,0 +1,78 @@
+# Vuln-Veille reverse proxy. Hostnames and TLS come from the environment (.env):
+#   VV_BACKOFFICE_HOST, VV_PORTAL_HOST     public names of the two applications
+#   VV_TLS                                 "internal" (local CA), an ACME e-mail, or "<cert> <key>"
+#   VV_BACKOFFICE_ALLOWED_CIDRS            networks allowed to reach the back-office (ADR-003)
+{
+	admin off
+	http_port 8080
+	https_port 8443
+	servers {
+		protocols h1 h2
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		X-Frame-Options "DENY"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types dompurify; upgrade-insecure-requests"
+		-Server
+	}
+}
+
+(spa) {
+	handle {
+		root * {args[0]}
+		# Hashed assets are immutable; everything else (index.html, deep links) is revalidated.
+		@assets path /assets/*
+		@pages not path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header @pages Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$VV_BACKOFFICE_HOST:backoffice.localhost} {
+	tls {$VV_TLS:internal}
+	import security_headers
+
+	@outside not remote_ip {$VV_BACKOFFICE_ALLOWED_CIDRS:private_ranges}
+	abort @outside
+
+	request_body {
+		max_size 2MB
+	}
+	handle /api/* {
+		reverse_proxy api-backoffice:8000
+	}
+	handle /healthz {
+		reverse_proxy api-backoffice:8000
+	}
+	import spa /srv/backoffice
+}
+
+{$VV_PORTAL_HOST:portal.localhost} {
+	tls {$VV_TLS:internal}
+	import security_headers
+
+	request_body {
+		max_size 1MB
+	}
+	handle /api/portal/* {
+		reverse_proxy api-portal:8000
+	}
+	handle /healthz {
+		reverse_proxy api-portal:8000
+	}
+	# The back-office API does not exist on the portal host.
+	handle /api/* {
+		respond 404
+	}
+	import spa /srv/portal
+}

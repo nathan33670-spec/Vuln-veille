@@ -1,0 +1,27 @@
+# Egress allow-list. Phase 2 generates it from the enabled connectors' declared
+# domains; until then it lists the services planned in spec 07.
+---
+version: v1
+services: []
+default:
+  name: vuln-veille-workers
+  project: vuln-veille
+  action: enforce
+  allowed_domains:
+    # Vulnerability catalogues (global connectors)
+    - services.nvd.nist.gov
+    - raw.githubusercontent.com
+    - www.cisa.gov
+    - api.first.org
+    - api.osv.dev
+    - www.cert.ssi.gouv.fr
+    # Watch connectors (free tiers only, ADR-023)
+    - api.github.com
+    - api.stackexchange.com
+    - bsky.social
+    - public.api.bsky.app
+    - publish.x.com
+    - www.reddit.com
+    - hn.algolia.com
+    # AI engine (Gemini free tier, ADR-025)
+    - generativelanguage.googleapis.com

@@ -1,0 +1,198 @@
+# Vuln-Veille — single-host deployment (ADR-017). Usage: `make env && make up`.
+#
+# Networks (SECURITY.md §4.10):
+#   public  Caddy and smokescreen only (Internet access)
+#   edge    Caddy <-> APIs              (internal, no Internet)
+#   data    APIs, workers <-> PostgreSQL, Redis (internal)
+#   egress  workers <-> smokescreen     (internal; smokescreen is the only way out)
+name: vuln-veille
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: ["/tmp:size=64m,mode=1777"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+x-backend: &backend
+  <<: *hardening
+  image: vuln-veille-backend:local
+  build:
+    context: ../backend
+  env_file: ../.env
+  environment: &backend-env
+    VV_DATABASE_URL_APP: postgresql://vv_app:${VV_DB_PASSWORD_APP}@postgres:5432/${VV_DB_NAME}
+    VV_DATABASE_URL_PORTAL: postgresql://vv_portal:${VV_DB_PASSWORD_PORTAL}@postgres:5432/${VV_DB_NAME}
+    VV_DATABASE_URL_WORKER: postgresql://vv_worker:${VV_DB_PASSWORD_WORKER}@postgres:5432/${VV_DB_NAME}
+    VV_DATABASE_URL_MIGRATOR: postgresql://vv_migrator:${VV_DB_PASSWORD_MIGRATOR}@postgres:5432/${VV_DB_NAME}
+    VV_REDIS_URL: redis://:${VV_REDIS_PASSWORD}@redis:6379/0
+  depends_on:
+    migrate: { condition: service_completed_successfully }
+    redis: { condition: service_healthy }
+
+x-worker: &worker
+  <<: *backend
+  environment:
+    <<: *backend-env
+    HTTPS_PROXY: http://smokescreen:4750
+    HTTP_PROXY: http://smokescreen:4750
+    NO_PROXY: postgres,redis
+  networks: [data, egress]
+  mem_limit: 768m
+
+services:
+  caddy:
+    <<: *hardening
+    build:
+      context: ..
+      dockerfile: deploy/caddy/Dockerfile
+    env_file: ../.env
+    ports:
+      - "${VV_HTTP_PORT:-80}:8080"
+      - "${VV_HTTPS_PORT:-443}:8443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [public, edge]
+    depends_on: [api-backoffice, api-portal]
+    mem_limit: 256m
+
+  api-backoffice:
+    <<: *backend
+    command: ["uvicorn", "app.main_backoffice:app", "--host", "0.0.0.0", "--port", "8000",
+              "--proxy-headers", "--no-server-header", "--workers", "2"]
+    environment:
+      <<: *backend-env
+      FORWARDED_ALLOW_IPS: 172.30.10.0/24
+    networks: [edge, data]
+    healthcheck: &api-health
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+
+  api-portal:
+    <<: *backend
+    command: ["uvicorn", "app.main_portal:app", "--host", "0.0.0.0", "--port", "8000",
+              "--proxy-headers", "--no-server-header", "--workers", "2"]
+    environment:
+      <<: *backend-env
+      FORWARDED_ALLOW_IPS: 172.30.10.0/24
+    networks: [edge, data]
+    healthcheck: *api-health
+    mem_limit: 512m
+
+  worker-default:
+    <<: *worker
+    command: ["celery", "-A", "app.worker", "worker", "-Q", "default", "--concurrency", "2", "--loglevel", "INFO"]
+
+  worker-collect:
+    <<: *worker
+    command: ["celery", "-A", "app.worker", "worker", "-Q", "collect", "--concurrency", "4", "--loglevel", "INFO"]
+
+  worker-ai:
+    <<: *worker
+    command: ["celery", "-A", "app.worker", "worker", "-Q", "ai", "--concurrency", "2", "--loglevel", "INFO"]
+
+  worker-publish:
+    <<: *worker
+    command: ["celery", "-A", "app.worker", "worker", "-Q", "publish", "--concurrency", "2", "--loglevel", "INFO"]
+
+  scheduler:
+    <<: *backend
+    command: ["python", "-m", "app.scheduler"]
+    networks: [data]
+    mem_limit: 256m
+
+  migrate:
+    <<: *hardening
+    image: vuln-veille-backend:local
+    build:
+      context: ../backend
+    restart: "no"
+    env_file: ../.env
+    environment:
+      VV_DB_ADMIN_URL: postgresql://${VV_DB_ADMIN_USER}:${VV_DB_ADMIN_PASSWORD}@postgres:5432/${VV_DB_NAME}
+      VV_DATABASE_URL_MIGRATOR: postgresql://vv_migrator:${VV_DB_PASSWORD_MIGRATOR}@postgres:5432/${VV_DB_NAME}
+    command: ["sh", "-c", "python -m app.cli provision-db-roles && alembic upgrade head"]
+    networks: [data]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  postgres:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_USER: ${VV_DB_ADMIN_USER}
+      POSTGRES_PASSWORD: ${VV_DB_ADMIN_PASSWORD}
+      POSTGRES_DB: ${VV_DB_NAME}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 1g
+
+  redis:
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    restart: unless-stopped
+    read_only: true
+    # Runs directly as the image's unprivileged user; the named volume inherits /data ownership.
+    user: redis
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    environment:
+      REDIS_PASSWORD: ${VV_REDIS_PASSWORD}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --protected-mode yes --rename-command FLUSHALL '' --rename-command CONFIG ''"]
+    volumes:
+      - redis_data:/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 256m
+
+  smokescreen:
+    <<: *hardening
+    build:
+      context: smokescreen
+    networks: [egress, public]
+    mem_limit: 128m
+
+  mailpit:
+    image: axllent/mailpit:v1.27@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    profiles: [dev]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks: [data]
+
+networks:
+  public: {}
+  edge:
+    internal: true
+    ipam:
+      config: [{ subnet: 172.30.10.0/24 }]
+  data:
+    internal: true
+  egress:
+    internal: true
+
+volumes:
+  pg_data: {}
+  redis_data: {}
+  caddy_data: {}
+  caddy_config: {}

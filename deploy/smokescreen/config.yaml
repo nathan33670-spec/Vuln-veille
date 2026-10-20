@@ -1,0 +1,11 @@
+# smokescreen configuration (ADR-012). Private, loopback, link-local (incl. cloud
+# metadata) and other non-routable ranges are always refused by smokescreen itself.
+acl_file: /etc/smokescreen/acl.yaml
+# Clients without an mTLS role use the "default" ACL entry (per-worker roles: phase 2).
+allow_missing_role: true
+deny_ranges:
+  - 100.64.0.0/10   # carrier-grade NAT
+  - 198.18.0.0/15   # benchmarking
+connect_timeout: 10s
+idle_timeout: 60s
+max_concurrent_requests: 200

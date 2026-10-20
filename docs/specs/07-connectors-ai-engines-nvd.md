@@ -35,7 +35,7 @@ Implémentation : `backend/app/connectors/` contient le cadre (`base.py` : `Conn
 | `nvd` | Globale | Clé API (recommandée, une seule pour l'organisation) | **Vecteur d'entrée n°1**, enrichissement | Voir §3 ; NVD recommande une synchro incrémentale au plus toutes les 2 h |
 | `cisa_kev` | Globale | Aucune | Statut « exploitée activement » | Flux JSON officiel |
 | `epss` | Globale | Aucune | Probabilité d'exploitation | Mise à jour quotidienne |
-| `cve_org` | Globale | Aucune | Détection plus précoce (option, Q24) | Dépôt cvelistV5 ou CVE Services |
+| `cve_org` | Globale | Aucune | **Détection précoce (retenue, Q24)** : nouvelles CVE publiées par les CNA, souvent avant leur arrivée sur NVD | Dépôt public cvelistV5 (fichiers delta) ; émet `cve.published` avec la source `cve_org`, NVD complète ensuite l'enrichissement |
 | `osv` | Globale | Aucune | Écosystèmes open source (purl) | — |
 | `github` | Espace | Jeton (lecture seule, sans droit sur des dépôts privés) | GHSA, recherche de dépôts, code, commits et issues ; lecture de fichiers en texte | Quotas de l'API de recherche GitHub |
 | `x_reader` | Espace | Aucune | **Lecture gratuite de X** : découverte de posts puis lecture par l'oEmbed officiel (§2.1) | Pas d'API X payante, pas de scraping |
@@ -58,7 +58,7 @@ Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage dep
 | Couche | Comment | Coût | Disponibilité |
 |---|---|---|---|
 | **1. Découverte indirecte** | On récupère les liens `x.com` ou `twitter.com` cités dans les sources déjà collectées : références NVD, avis GHSA, README et issues GitHub, posts Mastodon et Bluesky, blogs et flux RSS, Hacker News | Gratuit | Toujours |
-| **2. Recherche web du moteur IA** | L'agent « Réseaux sociaux » utilise l'outil de recherche web fourni par le moteur IA, restreint aux domaines `x.com` et `twitter.com` (par exemple `CVE-2026-XXXX site:x.com`) | Facturé sur l'abonnement IA (de l'ordre de 0,01 $ par recherche chez Claude, à confirmer), plafonné par un budget | Tant que le moteur IA fournit cette recherche (Claude oui ; un LLM auto-hébergé non, d'où la couche 3) |
+| **2. Recherche web du moteur IA** | L'agent « Réseaux sociaux » utilise la recherche web du moteur IA, restreinte à `x.com` et `twitter.com` (par exemple `CVE-2026-XXXX site:x.com`). Avec Gemini (démarrage), c'est la **recherche Google intégrée** (grounding) | Quota gratuit de Gemini (sans facturation activée) ; avec Claude via l'API, facturé sur l'abonnement IA et plafonné | Tant que le moteur IA fournit cette recherche (Gemini et Claude oui ; un LLMaaS probablement non : on garde alors la couche 1) |
 | **3. Recherche auto-hébergée (option)** | Instance SearXNG interne interrogée avec `site:x.com` | Gratuit | Option, conditions d'usage des moteurs interrogés à valider (Q30) |
 
 **Lecture d'un post** : une fois l'URL connue, le texte est obtenu par l'**oEmbed officiel** de X (`publish.x.com/oembed`), gratuit, sans authentification et documenté par X pour les traitements en masse. On garde le texte, l'auteur, la date et l'URL ; le HTML renvoyé est réduit à du texte puis assaini. Le résultat est mis en cache selon `cache_age` et marqué non fiable. Un post supprimé ou devenu privé (échec de l'oEmbed) est marqué « retiré ». Le respect de la politique développeur de X (affichage, suppression) est revérifié à l'implémentation.
@@ -74,7 +74,7 @@ Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage dep
 - L'API officielle (Custom Search JSON API avec un Programmable Search Engine restreint à `x.com`, 100 requêtes gratuites par jour) **n'accepte plus de nouveaux clients et s'arrête le 1er janvier 2027**. Le remplaçant proposé par Google (Vertex AI Search) est payant.
 - Interroger google.com par automate, directement ou via SearXNG, va à l'encontre des conditions de Google, qui interdisent l'accès automatisé contraire au robots.txt ; il se heurte aussi rapidement aux captchas et aux blocages d'IP.
 - Brave Search API (alternative proche) exige désormais une carte bancaire et facture au-delà des crédits gratuits, ce qui est contraire à la règle « zéro abonnement payant ».
-- Le choix final est demandé au porteur (Q32). La recommandation est la couche 2 (recherche web du moteur IA, sur l'abonnement IA existant), avec le principe du strict nécessaire ci-dessus.
+- **Décision du porteur (Q32, 2026-10-20) : couches 1 et 2 uniquement**, avec le principe du strict nécessaire. La couche 3 (SearXNG) est abandonnée.
 
 **Exclus** :
 - l'API X payante ;
@@ -135,10 +135,11 @@ Un analyste peut saisir un identifiant CVE (récupéré à la volée sur NVD s'i
 
 ### 4.1 Principe : moteur préféré interchangeable
 
-- Un **moteur IA** est un connecteur `ai_engine` : type (`anthropic` ou `openai_compatible`), URL de base, authentification, liste de modèles avec leurs capacités.
+- Un **moteur IA** est un connecteur `ai_engine` : type (`gemini`, `openai_compatible` ou `anthropic`), URL de base, authentification, liste de modèles avec leurs capacités.
 - **Moteur préféré** à trois niveaux : plateforme (admin), surchargé par espace (analystes de l'espace), puis par agent (« hériter » ou « épingler » un moteur et un modèle).
-- **Aujourd'hui** : Claude, avec le modèle par défaut `claude-opus-5-5`.
-- **Demain** : un LLM open source auto-hébergé, exposé par une API compatible OpenAI (OpenLLM, vLLM, Ollama…). Le changement se fait en modifiant le moteur préféré, sans toucher au code, après passage du banc d'évaluation (§4.6).
+- **Au démarrage (ADR-025, budget 0 €)** : **Gemini, palier gratuit** de Google AI Studio, adaptateur `gemini` (SDK `google-genai`), sans facturation activée.
+- **Ensuite** : un **LLMaaS** compatible OpenAI (adaptateur `openai_compatible`), puis éventuellement **Claude** via l'API (adaptateur `anthropic`, modèle `claude-opus-5-5`) si un budget existe. L'abonnement Claude Pro ne donne pas accès à l'API.
+- Le changement se fait en modifiant le moteur préféré, sans toucher au code ; les admins décident librement, le banc d'évaluation (§4.6) est facultatif (Q26).
 
 ### 4.2 Capacités d'un modèle
 
@@ -174,7 +175,7 @@ Avant de changer le moteur préféré (plateforme ou espace), l'interface affich
 
 - Chaque moteur déclare sa localisation (`external_cloud` ou `self_hosted`) et les classes de données qu'il peut recevoir (`public`, `tlp_clear`, `tlp_green`, `tlp_amber`, `tlp_red`, `client_data`).
 - Le constructeur de contexte refuse d'envoyer une donnée de classe supérieure à celle autorisée. Par exemple, le CERT peut réserver les sujets TLP:AMBER à un modèle auto-hébergé.
-- Par défaut : Claude reçoit uniquement des données publiques ou TLP:CLEAR/GREEN ; les abonnements clients ne sont jamais envoyés à un LLM.
+- Par défaut (Q6) : un palier **gratuit** (Gemini) reçoit uniquement des données publiques et TLP:CLEAR ; Claude via l'API reçoit tout sauf TLP:RED ; un LLMaaS se configure selon son contrat. Les abonnements clients et les secrets ne sont jamais envoyés à un LLM.
 
 ### 4.6 Banc d'évaluation
 

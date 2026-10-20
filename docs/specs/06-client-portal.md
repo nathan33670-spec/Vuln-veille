@@ -4,7 +4,9 @@
 
 - Application **séparée** (ASGI et SPA), exposée sur Internet ; le back-office n'y existe pas.
 - Un client ne voit que les **bulletins publiés** destinés à son organisation, filtrés par l'audience et le TLP. Il ne voit jamais les vulnérabilités, preuves, synthèses IA, sources, workflows, auteurs internes ni commentaires.
-- Comptes créés **uniquement sur invitation** (pas d'inscription libre).
+- Comptes créés **uniquement sur invitation** (pas d'inscription libre) : les admins plateforme créent l'organisation et son référent `client_admin`, qui invite ensuite ses utilisateurs (Q15).
+- MFA **facultative** pour les clients (Q16), proposée à chaque connexion tant qu'elle n'est pas activée ; une organisation peut l'imposer.
+- L'équipe émettrice (VOC ou CERT) est affichée sur chaque bulletin (Q3).
 - Lecture via le rôle PostgreSQL `vv_portal`, limité à la vue `portal_bulletins_v` et aux tables du portail de son organisation (RLS).
 
 ## 2. MVP (phase 8)
@@ -16,6 +18,8 @@
 | Recherche et filtres | Texte intégral (titre et contenu), sévérité, techno, période |
 | Détail | HTML assaini, CVE, technos, historique des mises à jour, export Markdown ou HTML, impression |
 | Mon compte | Mot de passe, MFA, sessions actives |
+| Mon organisation (`client_admin`) | Inviter, désactiver, renvoyer une invitation ; liste des utilisateurs |
+| Réception par e-mail | Chaque utilisateur choisit de recevoir les bulletins par e-mail (HTML assaini + PDF joint) |
 
 API : `/api/portal/v1/bulletins`, `/api/portal/v1/bulletins/{id}`, `/api/portal/v1/me`. Les schémas de sortie sont des listes blanches.
 

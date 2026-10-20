@@ -59,15 +59,15 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-007 — Authentification locale avec MFA et sessions côté serveur
 
-- **Statut** : Proposée (dépend de la question ouverte Q8 sur le SSO)
+- **Statut** : Acceptée (2026-10-20, Q8)
 - **Décision** : comptes locaux, Argon2id, TOTP obligatoire en interne, sessions opaques côté serveur en cookie `__Host-` SameSite=Strict, CSRF par jeton en en-tête. Une interface d'authentification abstraite permet d'ajouter le SSO OIDC ensuite. Pas de JWT dans le navigateur.
 - **Alternatives écartées** : JWT en localStorage (vol par XSS, révocation difficile) ; Keycloak dès le départ (sûr, mais un composant de plus à opérer ; reste l'option préférée si un IdP d'entreprise existe déjà).
 - **Conséquences** : on implémente le MFA, la récupération et les invitations, avec des tests dédiés.
 
 ## ADR-008 — RBAC par permissions définies dans le code
 
-- **Statut** : Proposée
-- **Décision** : voir RBAC.md. Permissions et rôles déclarés dans le code ; périmètres global, espace et organisation ; l'admin plateforme n'a pas accès aux données métier sans appartenance à l'espace.
+- **Statut** : Acceptée (2026-10-20, Q1)
+- **Décision** : voir RBAC.md. Tous les analystes VOC sont admins plateforme : l'espace VOC porte le réglage `grants_platform_admin`, et l'appartenance `analyst` à cet espace donne les permissions globales. Le CERT ne les a pas. Permissions et rôles déclarés dans le code ; périmètres global, espace et organisation ; l'admin plateforme n'a pas accès aux données métier sans appartenance à l'espace.
 - **Conséquences** : test bloquant « route sans permission » et matrice de tests générée.
 
 ## ADR-009 — Gabarits Liquid (python-liquid), pas Jinja2
@@ -87,7 +87,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-011 — Moteur IA interchangeable : Claude aujourd'hui, LLM open source demain
 
-- **Statut** : Proposée, mise à jour le 2026-10-20 après la consigne du porteur : « notre moteur d'IA préféré, aujourd'hui Claude, demain un LLM open source ». Q6 reste ouverte sur la confidentialité.
+- **Statut** : Acceptée pour l'abstraction ; le moteur de démarrage est fixé par ADR-025 (Gemini, palier gratuit). Mise à jour le 2026-10-20 après la consigne du porteur : « notre moteur d'IA préféré, aujourd'hui Claude, demain un LLM open source ». Q6 reste ouverte sur la confidentialité.
 - **Décision** :
   - Une interface `AIEngine` (complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés) et des agents configurés par **paramètres abstraits** (niveau de raisonnement, schéma de sortie, limites), traduits par chaque adaptateur.
   - Adaptateur **Claude** (SDK officiel `anthropic`), moteur préféré par défaut avec `claude-opus-5-5` : réflexion adaptative, `effort` d'après le niveau de raisonnement, sorties structurées (`output_config.format`), cache de prompt, streaming pour les sorties longues, gestion du stop reason `refusal` avec le fallback serveur.
@@ -129,7 +129,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-017 — Déploiement Docker Compose et Caddy
 
-- **Statut** : Proposée (dépend de Q9 sur l'hébergement)
+- **Statut** : Acceptée (2026-10-20, Q9 : serveur on-premise, sortie Internet directe)
 - **Décision** : Docker Compose pour le développement et la production mono-hôte, Caddy en reverse proxy. Les images sont prêtes pour Kubernetes (configuration par variables d'environnement, sans état local).
 
 ## ADR-018 — Journal d'audit chaîné par hachage
@@ -180,3 +180,24 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 - **Alternatives écartées** : l'API X à l'usage (contraire à la consigne) ; le scraping avec des comptes (contraire aux conditions de X, risque juridique et financier pour l'entreprise, comptes bannis, maintenance permanente) ; la recherche Google, demandée le 2026-10-20 : l'API Custom Search JSON n'accepte plus de nouveaux clients et s'arrête le 1er janvier 2027, son remplaçant est payant, et l'interrogation automatisée de google.com est contraire aux conditions de Google et vite bloquée (spec 07 §2.1, Q32) ; Brave Search API (carte bancaire obligatoire, facturation au-delà des crédits gratuits).
 - **Principe du strict nécessaire** (2026-10-20) : requêtes limitées à l'identifiant CVE et restreintes à x.com, seuls l'URL, le titre et l'extrait sont conservés, au plus 5 posts lus par CVE, jamais de profil ni de timeline, conservation minimale, plafonds avec arrêt dur.
 - **Conséquences** : la couverture de X est partielle (pas de recherche exhaustive en temps réel, pas de suivi de comptes), d'où un indicateur de couverture (phase 4) et un poids accru de Mastodon et Bluesky. La couche 2 dépend du moteur IA : avec un LLM auto-hébergé, seules les couches 1 et 3 restent. Le reste de la pile suit la même règle : composants open source, e-mail via le SMTP existant, certificats Let's Encrypt ou PKI interne, CI dans le quota gratuit ou sur un runner auto-hébergé.
+
+## ADR-024 — Vulnérabilités partagées entre VOC et CERT, qualification par équipe
+
+- **Statut** : Acceptée (2026-10-20, Q2, Q2a, Q2b, Q2c)
+- **Décision** :
+  - La fiche vulnérabilité est **globale** : une seule fiche par CVE (ou par vulnérabilité sans CVE), avec les preuves et les synthèses IA visibles par les deux équipes, l'équipe d'origine étant indiquée.
+  - La **qualification est propre à chaque équipe** (table `vulnerability_assessments` : statut, priorité, assigné, commentaire de qualification, par espace). Quand une équipe qualifie, l'autre voit « qualifiée par l'autre équipe » avec le détail, et un bouton **« Reprendre cette qualification »** recopie la qualification dans son espace (action auditée).
+  - Restent cloisonnés par espace : agents, workflows, modèles, connecteurs d'espace, configuration, périmètre de veille, bulletins non publiés. Un bulletin publié est lisible par l'autre équipe.
+  - Les workflows des deux espaces font un `vuln.upsert` sur la même fiche (clé : identifiant CVE ou alias), sans doublon. Une recherche d'agents déjà faite par une équipe peut être réutilisée par l'autre (économie de quota).
+- **Conséquences** : la RLS des fiches vulnérabilités est globale pour les internes (aucun client n'y accède) ; la RLS par espace s'applique aux évaluations, bulletins, agents et workflows.
+
+## ADR-025 — Moteur IA de démarrage : Gemini, palier gratuit
+
+- **Statut** : Acceptée (2026-10-20, Q7, Q7a)
+- **Contexte** : budget IA de 0 €. L'abonnement Claude Pro (claude.ai) n'inclut pas l'accès API, et ses conditions excluent l'usage automatisé par une application multi-utilisateur. Le LLMaaS envisagé n'est pas encore disponible.
+- **Décision** :
+  - Moteur préféré au démarrage : **Gemini, palier gratuit de Google AI Studio**, via un adaptateur `gemini` (SDK officiel `google-genai`) : sorties structurées, appels de fonctions, et **recherche Google intégrée** (grounding) pour la découverte des posts X, dans la limite du quota gratuit.
+  - **Aucune facturation** n'est activée sur le projet Google : au-delà du quota, les requêtes échouent au lieu d'être facturées. Un limiteur de débit respecte les quotas gratuits ; arrêt dur et alertes.
+  - Politique de données du palier gratuit : uniquement des données publiques et TLP:CLEAR, car le fournisseur peut réutiliser les données du palier gratuit.
+  - Les adaptateurs **compatible OpenAI** (pour le futur LLMaaS) et **Claude** (si un budget API apparaît) sont développés et testés avec des serveurs simulés ; la bascule est une configuration.
+- **Conséquences** : débit limité, donc on donne la priorité aux CVE du périmètre (KEV, P1 d'abord) et on file d'attente le reste. La qualité doit être mesurée (banc d'évaluation facultatif). L'adaptateur `gemini` s'ajoute à la liste de la spec 07 §4.

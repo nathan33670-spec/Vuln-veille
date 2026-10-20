@@ -38,7 +38,14 @@ class AIEngine(Protocol):
 
 `AIRequest` contient le modèle, le prompt système, les messages, les outils (JSON Schema), le schéma de sortie, le niveau de raisonnement et `max_output_tokens`. `AIResponse` contient le contenu, les appels d'outils, le stop reason normalisé (`end_turn`, `tool_use`, `max_tokens`, `refusal`, `error`), l'usage (tokens d'entrée, de sortie, cache) et le modèle effectivement servi.
 
-### Adaptateur Claude (moteur préféré aujourd'hui)
+### Adaptateur Gemini (moteur de démarrage, ADR-025)
+
+- SDK officiel `google-genai`, palier gratuit de Google AI Studio, **sans facturation activée** sur le projet.
+- Sorties structurées (schéma de réponse), appels de fonctions, recherche Google intégrée (grounding) utilisée par l'outil `x_discover` dans un appel dédié.
+- Limiteur de débit réglé sur les quotas gratuits (requêtes par minute et par jour) ; au-delà, mise en file d'attente par priorité (KEV, P1 d'abord), jamais de facturation.
+- Politique de données : public et TLP:CLEAR uniquement.
+
+### Adaptateur Claude (si un budget API apparaît)
 
 - SDK officiel `anthropic` (Python). Les signatures exactes se vérifient dans la documentation du SDK au moment de l'implémentation.
 - Modèle par défaut `claude-opus-5-5`, avec la réflexion adaptative (comportement par défaut du modèle ; on ne l'envoie pas en mode désactivé, ce qui renvoie une erreur 400 sur ce modèle).
@@ -49,7 +56,7 @@ class AIEngine(Protocol):
 - **Refus** : `stop_reason == "refusal"` est vérifié avant de lire le contenu. Les sujets d'exploits et de vulnérabilités peuvent déclencher le classifieur `cyber`. On active le fallback côté serveur (`fallbacks: "default"` avec l'en-tête bêta dédié) ; en cas de refus persistant, l'exécution est marquée `refused` avec sa catégorie, visible et relançable par l'analyste.
 - Erreurs typées du SDK : relance sur 429, 5xx et erreurs réseau (backoff) ; pas de relance sur 400 ou 404.
 
-### Adaptateur compatible OpenAI (LLM open source demain)
+### Adaptateur compatible OpenAI (LLMaaS prévu, LLM open source)
 
 - Cible : OpenLLM, vLLM, Ollama (auto-hébergés), et aussi Mistral ou Azure OpenAI, par l'API compatible OpenAI.
 - Outils natifs si le modèle les prend en charge, sinon **mode émulé** : le modèle produit un JSON contraint `{ "tool": …, "arguments": … }` ou `{ "final": … }`, validé par schéma, et le runtime exécute la même boucle.

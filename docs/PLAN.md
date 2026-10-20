@@ -53,7 +53,7 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 - Authentification sécurisée : mot de passe, MFA TOTP obligatoire en interne, sessions, invitations.
 - RBAC multi-espace (VOC/CERT) et organisations clientes, journal d'audit.
 - **Connecteurs** paramétrables depuis l'interface, **tous gratuits** : veille (NVD, KEV, EPSS, GitHub, X en lecture gratuite, Stack Exchange, Mastodon, Bluesky, Reddit en RSS, Hacker News, RSS, web), moteurs IA, publication ; test de connexion, quotas, budgets, état de santé.
-- **Moteur IA interchangeable** : Claude par défaut, adaptateur compatible OpenAI pour les LLM open source (OpenLLM, vLLM, Ollama…), moteur préféré par plateforme, par espace et par agent, banc d'évaluation avant tout changement.
+- **Moteur IA interchangeable** : démarrage sur le palier gratuit Gemini (budget 0 €), puis LLMaaS compatible OpenAI, Claude via l'API si un budget apparaît ; moteur préféré par plateforme, par espace et par agent ; banc d'évaluation facultatif.
 - **Agents de veille paramétrables** par espace : moteur, modèle, niveau de raisonnement, prompt, connecteurs autorisés, domaines, schéma de sortie, limites et budgets ; agents prédéfinis fournis.
 - Gestion des vulnérabilités : file des non qualifiées, qualification, assignation, preuves, synthèse IA, historique, re-veille périodique (nouveaux PoC, ajout au KEV).
 - Moteur de workflows natif, puis éditeur visuel (canvas type n8n).
@@ -84,7 +84,7 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 | Réactivité | Délai entre publication sur NVD et vulnérabilité visible, synthèse comprise : de l'ordre de l'intervalle de synchronisation NVD (2 h par défaut, recommandation NVD) plus quelques minutes d'investigation. Voir Q24 pour réduire ce délai. |
 | Portabilité IA | Changer de moteur IA ne demande aucune modification de code ; prompts et schémas sont indépendants du fournisseur. |
 | **Coûts** | **Aucun abonnement ni service payant en dehors de l'abonnement IA** (ADR-023) : connecteurs gratuits (clé ou compte gratuits au plus), composants open source, pas de SaaS payant (monitoring, e-mail, recherche…). Les seuls coûts variables passent par la facture IA et sont plafonnés par des budgets. |
-| Volumétrie cible (hypothèse) | Moins de 100 utilisateurs internes, moins de 1 000 utilisateurs clients, environ 130 nouvelles CVE par jour sur NVD, environ 10 000 éléments collectés par jour. |
+| Volumétrie cible (Q13) | 20 à 100 analystes, jusqu'à 1 000 utilisateurs clients, environ 130 nouvelles CVE par jour, environ 10 000 éléments collectés par jour ; rétention de 3 ans minimum (Q17). |
 | Disponibilité | Instance unique avec sauvegardes chiffrées et restauration testée (haute disponibilité hors MVP). |
 | Exploitabilité | Déploiement Docker Compose, configuration par variables d'environnement, métriques et logs structurés. |
 | Langue | Interface en français, i18n prête ; bulletins multilingues selon le modèle. |
@@ -133,7 +133,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés, classe de coût (test bloquant : aucun type payant)
 - [ ] 2.4 **Connecteur NVD (global)** : synchronisation incrémentale (`lastModStartDate`/`lastModEndDate`, pagination, pauses, backoff), curseur avec recouvrement, rattrapage initial par fenêtres de 120 jours **sans** émettre d'événements, intervalle configurable (2 h par défaut)
 - [ ] 2.5 Détection des nouveautés et changements NVD : `cve.published` (nouvelle CVE), `cve.updated` avec types de changement (CVSS ajouté ou modifié, CPE ajoutées, entrée KEV, référence d'exploit, rejet), écrits dans l'outbox et historisés (`cve_changes`)
-- [ ] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées)
+- [ ] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées) et **CVE.org** (cvelistV5, détection précoce, Q24)
 - [ ] 2.7 Catalogue des technos : CRUD, alias, préfixes CPE, purl, recherche approchée, import depuis le dictionnaire CPE
 - [ ] 2.8 Périmètre de veille par espace : technos suivies, éditeurs et mots-clés, seuil CVSS, KEV toujours inclus, filtres CWE, mode « toutes les CVE » ou « filtré »
 - [ ] 2.9 Éléments collectés (`collected_items`) avec déduplication et marquage « non fiable »
@@ -163,8 +163,9 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 ### Phase 4 — Moteurs IA, connecteurs de veille et agents de veille (Jalon 1)
 
 - [ ] 4.1 Abstraction `AIEngine` (spec 07 §4) : complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés, paramètres abstraits (niveau de raisonnement)
-- [ ] 4.2 Adaptateur **Claude** (SDK officiel `anthropic`) : modèle par défaut `claude-opus-5-5`, effort, sorties structurées, cache de prompt, streaming, gestion du refus et fallback serveur
-- [ ] 4.3 Adaptateur **compatible OpenAI** pour les LLM open source (OpenLLM, vLLM, Ollama, et aussi Mistral, Azure OpenAI) ; mode outils émulé par sortie JSON contrainte quand le modèle n'a pas d'appel d'outils natif
+- [ ] 4.2 Adaptateur **Gemini** (moteur de démarrage, palier gratuit, ADR-025) : sorties structurées, appels de fonctions, recherche Google intégrée, limiteur de débit sur les quotas gratuits
+- [ ] 4.3 Adaptateur **compatible OpenAI** pour le futur LLMaaS (et OpenLLM, vLLM, Ollama, Mistral) ; mode outils émulé par sortie JSON contrainte
+- [ ] 4.3 bis Adaptateur **Claude** (SDK officiel `anthropic`, `claude-opus-5-5`), prêt pour le jour où un budget API existe ; testé contre un serveur simulé
 - [ ] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
 - [ ] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
 - [ ] 4.6 Connecteurs de veille gratuits : GitHub, **lecture gratuite de X** (découverte des URL de posts, puis lecture par l'oEmbed officiel ; spec 07 §2.1), Stack Exchange, Mastodon, Bluesky, Reddit (flux RSS), Hacker News, OSV, web (avis éditeurs, liste de domaines) ; SearXNG auto-hébergé en option
@@ -202,7 +203,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 6.3 Éditeur de modèle avec aperçu calculé côté serveur sur une vulnérabilité réelle
 - [ ] 6.4 Demande unitaire de draft (depuis une vulnérabilité, un CVE, des URL ou un texte libre), exécution asynchrone, progression en SSE
 - [ ] 6.5 Génération par sortie structurée avec le moteur IA de l'espace, puis rendu déterministe ; Markdown assaini en HTML
-- [ ] 6.6 Cycle de vie : `draft`, `in_review`, `approved`, `published`, `withdrawn` ; révisions et diff ; double validation configurable
+- [ ] 6.6 Cycle de vie : `draft`, `approved`, `published`, `withdrawn` (`in_review` si l'espace active la double validation, désactivée par défaut) ; révisions et diff ; versions FR et EN liées
 - [ ] 6.7 Marquage TLP, audience (tous les clients ou une sélection), technos associées
 - [ ] 6.8 Nœud `bulletin.generate_draft` pour les workflows
 - [ ] 6.9 Interfaces : bibliothèque de modèles, demande de draft, éditeur de bulletin (champs et aperçu), relecture et validation
@@ -228,7 +229,8 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 8.1 Application portail séparée (bundle distinct, aucun code back-office), connexion, MFA (selon la décision)
 - [ ] 8.2 Vue PostgreSQL `portal_bulletins_v` et rôle `vv_portal` limité à cette vue et aux tables du portail
 - [ ] 8.3 Liste, recherche, filtres (techno, sévérité, date) et détail des bulletins publiés destinés à l'organisation
-- [ ] 8.4 Export Markdown et HTML, impression
+- [ ] 8.4 Export Markdown, HTML et **PDF**, impression ; **envoi par e-mail** (SMTP) au choix de chaque utilisateur
+- [ ] 8.4 bis Référent client `client_admin` : invitation et gestion des utilisateurs de son organisation
 - [ ] 8.5 Tests de non-fuite : aucun champ interne, aucune vulnérabilité non publiée, aucune donnée d'une autre organisation
 
 **Critère de sortie** : un client consulte les bulletins qui lui sont destinés, et les tests prouvent qu'il ne peut rien voir d'autre.

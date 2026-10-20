@@ -101,14 +101,19 @@ Déroulement (file `ai`) :
 
 - Éditeur à deux volets : formulaire des champs (Markdown avec CodeMirror) et aperçu rendu côté serveur.
 - Chaque enregistrement crée une révision immuable ; diff entre révisions ; on peut régénérer **un seul champ** avec une consigne.
-- `in_review` : un relecteur différent de l'auteur si la double validation est active ; commentaires ; retour au `draft` ou passage à `approved`.
+- `in_review` (facultatif) : la double validation est **désactivée par défaut** (décision Q4) ; un analyste peut approuver et publier son propre bulletin. Si un espace l'active, le relecteur doit être différent de l'auteur.
 - `published` : ré-authentification MFA récente ; la révision publiée est figée (`published_revision_id`, `content_hash`) ; elle devient visible sur le portail selon l'audience et le TLP.
 - Mise à jour d'un bulletin publié : nouvelle révision, nouvelle relecture, puis republication (historique visible des clients : « mis à jour le … »).
 - `withdrawn` : retrait du portail avec un motif ; audité.
 
-## 5. Formats et exports
+## 5. Langues, formats et exports
 
-Markdown et HTML (MVP), JSON (champs), CSAF 2.0 (phase 7), PDF avec charte (plus tard, WeasyPrint dans un worker isolé).
+Bulletins en **français et en anglais** (Q10) : chaque modèle a une langue ; une action « Générer la version EN/FR » crée un bulletin lié (`translation_of`) à partir de la version validée, à relire avant publication.
+
+Visibilité inter-équipes : un bulletin publié est lisible par l'autre équipe (ADR-024).
+
+
+Markdown et HTML, **PDF** (WeasyPrint dans un worker isolé, gabarit sobre avec logo configurable) et **e-mail** aux clients (Q11) dès le MVP ; JSON (champs), CSAF 2.0 (phase 7).
 
 ## 6. Sécurité spécifique
 

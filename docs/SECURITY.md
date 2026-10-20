@@ -42,7 +42,7 @@ Référentiels : OWASP ASVS 5.0 (niveau 2, niveau 3 visé pour l'authentificatio
 | S13 | Webhook entrant forgé ou rejoué | HMAC-SHA256 sur horodatage et corps, tolérance de 5 minutes, cache anti-rejeu, limite de taille et de débit |
 | S14 | DoS ou explosion des coûts | Limitation de débit par IP et par utilisateur, quotas de workflows, budgets LLM avec arrêt dur, limites de taille et de durée, timeouts partout |
 | S15 | Bombes XML ou de décompression, fichiers géants | defusedxml, plafonds de taille décompressée, lecture en streaming avec coupure |
-| S16 | Fuite de secrets | Chiffrement d'enveloppe, API en écriture seule, filtre de redaction des logs, gitleaks en pre-commit et en CI, aucun secret dans les images |
+| S16 | Fuite de secrets (le **dépôt est public**) | Chiffrement d'enveloppe, API en écriture seule, filtre de redaction des logs, gitleaks en pre-commit et en CI (bloquant), aucun secret dans les images, aucune donnée interne (noms de clients, IP, comptes) dans le dépôt |
 | S17 | Répudiation | Journal d'audit append-only chaîné par hachage, horodatage serveur, identifiant de requête |
 | S18 | Dépendance compromise | Lockfiles avec hachages, Renovate, pip-audit et osv-scanner, pnpm audit, SBOM CycloneDX, Trivy, actions CI épinglées par SHA |
 | S19 | Compromission d'un conteneur | Non-root, FS en lecture seule, `no-new-privileges`, capacités supprimées, réseaux séparés, secrets limités à chaque worker, rôles DB distincts |
@@ -60,7 +60,7 @@ Référentiels : OWASP ASVS 5.0 (niveau 2, niveau 3 visé pour l'authentificatio
 
 - Argon2id (argon2-cffi), au moins m=64 Mio, t=3, p=4, paramètres recalibrés sur le serveur cible ; rehachage transparent si les paramètres changent.
 - Mots de passe : 12 caractères minimum, pas de règle de composition imposée (NIST 800-63B, ANSSI), refus des mots de passe présents dans une liste de mots de passe compromis embarquée.
-- MFA : TOTP (RFC 6238) obligatoire pour tous les comptes internes, avec anti-rejeu (dernier pas utilisé mémorisé) et 10 codes de secours hachés à usage unique. WebAuthn/passkeys en phase 10. MFA client : selon la question ouverte, recommandé.
+- MFA : TOTP (RFC 6238) obligatoire pour tous les comptes internes, avec anti-rejeu (dernier pas utilisé mémorisé) et 10 codes de secours hachés à usage unique. WebAuthn/passkeys en phase 10. MFA client : facultative (Q16), proposée à chaque connexion, imposable par organisation.
 - Invitations et réinitialisations : jeton aléatoire de 256 bits stocké haché, usage unique, expiration de 24 h (invitation) ou 30 min (réinitialisation), invalidation des sessions à la réinitialisation.
 - Limitation : 5 tentatives par minute par compte, 20 par IP, puis délais exponentiels ; verrouillage temporaire et notification à l'utilisateur.
 - Pas de compte par défaut : le premier admin est créé en CLI (`app.cli bootstrap-admin`) avec MFA à enrôler à la première connexion.

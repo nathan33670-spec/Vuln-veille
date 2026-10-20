@@ -1,50 +1,64 @@
-# OPEN_QUESTIONS — Questions ouvertes et hypothèses par défaut
+# OPEN_QUESTIONS — Questions et décisions du porteur
 
 Tant qu'une question n'a pas de réponse, le développement applique l'**hypothèse par défaut**, conçue pour être réversible. Quand une réponse arrive : la noter, dater, mettre à jour l'ADR et la spec concernés, et passer la ligne en « Répondue ».
 
-Priorité : **B** = bloquante pour la phase indiquée, **I** = importante, **P** = peut attendre.
+Les questions de cadrage ont été posées en interactif le 2026-10-20 (session 5). **La colonne « Décision » fait foi.**
 
-| # | Question | Prio | Hypothèse par défaut | Statut |
-|---|---|---|---|---|
-| Q1 | Tous les analystes VOC sont-ils admins plateforme, ou faut-il un rôle admin attribué à quelques personnes ? | B (ph. 1) | Rôle `platform_admin` séparé et cumulable, attribué nominativement | Ouverte |
-| Q2 | Au-delà des agents et workflows, qu'est-ce qui est cloisonné entre VOC et CERT : vulnérabilités, bulletins, modèles, connecteurs, sources ? Faut-il un partage explicite (par exemple, le CERT transmet une vulnérabilité au VOC) ? | B (ph. 1) | Tout est cloisonné par espace ; seuls les catalogues CVE et technos sont globaux ; partage explicite plus tard | Ouverte |
-| Q3 | Le CERT publie-t-il aussi vers le portail client ? Les clients doivent-ils savoir quelle équipe a émis un bulletin ? | I (ph. 6) | Les deux espaces peuvent publier ; l'émetteur est affiché | Ouverte |
-| Q4 | Double validation (un rédacteur et un valideur distincts) obligatoire avant publication aux clients ? | I (ph. 6) | Oui, configurable par espace | Ouverte |
-| Q5 | Une publication automatique sans humain est-elle souhaitée dans certains cas (par exemple, KEV critique) ? | I (ph. 6) | Non, jamais (ADR-019) | Ouverte |
-| Q6 | Contraintes de confidentialité sur les LLM : quelles données peut-on envoyer à Claude (cloud) ? Faut-il réserver certains sujets (TLP:AMBER/RED, CERT) au futur LLM auto-hébergé ? | B (ph. 4) | **Moteur préféré confirmé : Claude aujourd'hui, LLM open source demain.** Claude reçoit les données publiques et TLP:CLEAR/GREEN ; politique de données par moteur et par espace | Partiellement répondue |
-| Q7 | Budgets : plafond mensuel sur l'abonnement IA ? Jetons GitHub (gratuits) disponibles ? Clé API NVD (gratuite) demandée ? | I (ph. 4) | Budget IA configurable avec arrêt dur ; clé NVD fortement recommandée. **API X payante exclue (ADR-023).** | Partiellement répondue |
-| Q8 | Authentification : comptes locaux, ou SSO d'entreprise (Entra ID, Keycloak, ADFS) pour les internes ? Et pour les clients ? | B (ph. 1) | Comptes locaux et TOTP obligatoire ; OIDC en phase 10 | Ouverte |
-| Q9 | Hébergement : on-premise, cloud (lequel) ? Kubernetes disponible ? Accès Internet sortant direct ou via un proxy d'entreprise ? | I (ph. 0) | Docker Compose mono-hôte, sortie via smokescreen (chaînable vers un proxy d'entreprise) | Ouverte |
-| Q10 | Langues des bulletins (FR, EN, les deux) ? | P | Interface en FR ; langue définie par modèle | Ouverte |
-| Q11 | Formats de diffusion : Markdown, HTML, PDF avec charte graphique ? E-mail aux clients ? | P (ph. 8) | Markdown et HTML ; PDF plus tard | Ouverte |
-| Q12 | Quels systèmes vont recevoir les bulletins par API (MISP, OpenCTI, ticketing, CMS, portail tiers…) ? Sont-ils sur le réseau interne ? | I (ph. 7) | Connecteur HTTP générique ; réseau privé sur autorisation admin | Ouverte |
-| Q13 | Volumétrie : nombre d'analystes, de clients et d'utilisateurs clients, de sources, de vulnérabilités par jour ? | P | Moins de 100 internes, moins de 1 000 clients, environ 10 000 éléments par jour | Ouverte |
-| Q14 | Existe-t-il des workflows n8n à reprendre ? | P | Non ; nœud passerelle `integration.n8n_webhook` disponible | Ouverte |
-| Q15 | Qui crée les comptes clients : les admins seulement, ou un admin côté client qui gère son organisation ? | I (ph. 8) | Admins plateforme seulement ; `client_admin` plus tard | Ouverte |
-| Q16 | MFA obligatoire pour les clients ? | I (ph. 8) | Proposé et fortement recommandé, rendu obligatoire par organisation si souhaité | Ouverte |
-| Q17 | Rétention : éléments collectés, traces d'agents (prompts et réponses), exécutions de workflows, journaux ? | P | Éléments collectés 180 j, traces IA 90 j, exécutions 30 j, audit 1 an minimum | Ouverte |
-| Q18 | Échelle de criticité : CVSS 4.0 et/ou 3.1, échelle interne (P1 à P4), statuts de qualification spécifiques ? | I (ph. 2) | CVSS 4.0 et 3.1 affichés, priorité interne P1 à P4, statuts de `specs/01-data-model.md` | Ouverte |
-| Q19 | Granularité des technos pour les clients : éditeur et produit, ou aussi les versions ? | P (ph. 9) | Éditeur et produit (avec correspondance CPE et purl) ; versions plus tard | Ouverte |
-| Q20 | Canaux de notification disponibles : SMTP, Teams, Slack, Mattermost ? | P | SMTP | Ouverte |
-| Q21 | Nom du produit et charte graphique ? | P | « Vuln-Veille », thème sobre clair et sombre | Ouverte |
-| Q22 | Marquage TLP attendu sur les bulletins, et règles de visibilité TLP pour les clients ? | I (ph. 6) | TLP 2.0 ; portail limité à TLP:CLEAR et TLP:GREEN, plus TLP:AMBER pour les organisations explicitement ciblées | Ouverte |
-| Q23 | Quelles nouvelles CVE NVD lancent les agents : toutes (environ 130 par jour), ou seulement celles du périmètre de veille (technos suivies, éditeurs, seuil CVSS, KEV) ? Le périmètre diffère-t-il entre VOC et CERT ? | B (ph. 2) | Mode « filtré » par espace : technos suivies, éditeurs et mots-clés, CVSS ≥ 7 ou sans score, KEV toujours inclus ; les autres CVE restent dans le catalogue et peuvent être promues à la main | Ouverte |
-| Q24 | Délai de détection : l'intervalle de 2 h recommandé par NVD convient-il ? Faut-il ajouter CVE.org (cvelistV5) pour détecter plus tôt, NVD restant la référence ? | I (ph. 2) | NVD seul, toutes les 2 h ; connecteur CVE.org optionnel prévu | Ouverte |
-| Q25 | LLM open source visé : quel modèle, quel serveur (OpenLLM, vLLM, Ollama), quelle infrastructure GPU, quelle échéance ? | P (ph. 4) | Adaptateur compatible OpenAI livré et testé contre un serveur simulé ; validation réelle quand l'infrastructure existera | Ouverte |
-| Q26 | Qui décide de basculer le moteur préféré, et sur quels critères du banc d'évaluation (qualité minimale, coût, latence) ? | P (ph. 4) | Admin pour la plateforme, analystes pour leur espace ; bascule seulement si la qualité est au moins équivalente sur le jeu de référence | Ouverte |
-| Q27 | Quels connecteurs de veille activer en premier, avec quels comptes gratuits (GitHub, Stack Exchange, Bluesky, instance Mastodon) ? Quels flux RSS, subreddits et sites d'éditeurs suivre ? | I (ph. 4) | Tous les connecteurs gratuits ; lecture de X couches 1 et 2 ; flux de départ : CERT-FR, CISA, principaux éditeurs, r/netsec | Ouverte |
-| Q28 | Accepte-t-on que la découverte de posts X passe par la recherche web du moteur IA (couche 2), facturée sur l'abonnement IA (de l'ordre de 0,01 $ par recherche chez Claude, à confirmer) avec un plafond ? | I (ph. 4) | Oui, avec un sous-budget mensuel dédié ; sinon, couches 1 et 3 seulement | Ouverte |
-| Q29 | Le dépôt GitHub est-il privé ? La CI GitHub Actions doit rester dans le quota gratuit, sinon il faut un runner auto-hébergé. | I (ph. 0) | CI économe (déclenchement par dossier, cache) dans le quota gratuit ; runner auto-hébergé si le quota ne suffit pas | Ouverte |
-| Q30 | Peut-on héberger une instance SearXNG (métamoteur open source) pour la recherche web gratuite, en sachant qu'elle interroge des moteurs tiers dont les conditions d'usage restreignent l'automatisation ? | P (ph. 4) | Non activée par défaut ; décision après l'indicateur de couverture de X (étape 4.18) | Ouverte |
-| Q31 | Reddit : les flux RSS publics suffisent-ils, ou faut-il l'API Data, en vérifiant qu'elle reste gratuite pour notre usage ? | P (ph. 4) | Flux RSS publics uniquement | Ouverte |
-| Q32 | La recherche Google demandée pour trouver les posts X n'est plus accessible légitimement et gratuitement (API fermée aux nouveaux clients, arrêt le 1er janvier 2027 ; interrogation automatisée contraire aux conditions de Google). Quel moteur de découverte retenir ? (a) recherche web du moteur IA, sur l'abonnement IA existant ; (b) une clé Google existante, si l'organisation en a une, jusqu'au 31 décembre 2026 seulement ; (c) SearXNG ou interrogation directe de Google, en acceptant le risque sur les conditions d'usage ; (d) liens déjà collectés seulement | I (ph. 4) | (a) avec le principe du strict nécessaire, et (d) toujours actif | Ouverte |
-
-## Réponses reçues
-
-| Date | Sujet | Réponse | Impact |
+| # | Question | Décision (2026-10-20) | Impact |
 |---|---|---|---|
-| 2026-10-20 | Vecteur d'entrée | « Le 1er vecteur d'entrée est la saisie d'une nouvelle vuln au NVD : c'est l'initiateur qui va lancer les agents pour faire des recherches dessus. » | ADR-020, spec 07 §3, déclencheurs `trigger.cve_published` et `trigger.cve_updated`, phase 2 (synchro NVD) et phase 4 (workflow d'investigation) |
-| 2026-10-20 | Connecteurs et agents de veille | Ne pas oublier les connecteurs et le paramétrage des agents de veille. | ADR-021 et ADR-022, spec 07, phase 2.3 (cadre des connecteurs) et phase 4 (connecteurs de veille, agents prédéfinis paramétrables) |
-| 2026-10-20 | Moteur IA | « Notre moteur d'IA préféré : aujourd'hui Claude, demain un LLM open source. » | ADR-011 révisée, spec 07 §4 (moteur préféré, adaptateur compatible OpenAI, banc d'évaluation), Q6 partiellement répondue |
-| 2026-10-20 | Coûts et lecture de X | « Le moteur de lecture sur X doit être gratuit. Aucun abonnement payant en plus de ceux utilisés par l'IA. » | ADR-023, ADR-015 révisée, spec 07 §2.1 (connecteur `x_reader`), classe de coût obligatoire par connecteur, Q7 partiellement répondue, Q28 à Q31 |
-| 2026-10-20 | Recherche Google pour X | « Utilise la recherche Google pour contourner la limitation de X et accéder seulement au strict nécessaire. » | Principe du strict nécessaire adopté (spec 07 §2.1, ADR-023). Recherche Google évaluée : pas de voie gratuite et autorisée (API fermée aux nouveaux clients, arrêt le 1er janvier 2027). Choix du moteur de découverte demandé (Q32) |
+| Q1 | Qui est admin plateforme ? | **Tous les analystes VOC** sont admins plateforme (attribution automatique par l'appartenance à l'espace VOC). Le CERT n'a pas l'admin. | RBAC §2, ADR-008 |
+| Q2 | Que cloisonne-t-on entre VOC et CERT ? | **Vulnérabilités partagées** (fiche commune, preuves et synthèses IA visibles par les deux). Séparés : agents, workflows, modèles, connecteurs d'espace, configuration, périmètre de veille, bulletins non publiés. | ADR-024, specs 01 et 02, RBAC |
+| Q2a | Qualification commune ? | **Chaque équipe qualifie pour elle-même.** Quand une équipe qualifie, l'autre voit « qualifiée par l'autre équipe » avec sa qualification, et un **bouton rapide « Reprendre cette qualification »** la recopie. | ADR-024, spec 01 §5 |
+| Q2b | Synthèses IA et preuves partagées ? | **Visibles par les deux**, avec l'équipe d'origine indiquée. | ADR-024 |
+| Q2c | Bulletins partagés ? | **Séparés** ; un bulletin **publié** est consultable en lecture par l'autre équipe. | spec 04 |
+| Q3 | Qui publie vers le portail ? | **VOC et CERT**, émetteur affiché au client. | spec 06 |
+| Q4 | Double validation ? | **Non** : un seul analyste peut publier (avec MFA récente). La double validation reste une option d'espace, désactivée par défaut. | spec 04 §4, ADR-019 |
+| Q5 | Publication automatique ? | Non, jamais (ADR-019), non remis en cause. | — |
+| Q6 | Données envoyées à un moteur IA cloud ? | Vers Claude : **tout sauf TLP:RED**. Vers un **palier gratuit** (Gemini) : données publiques et TLP:CLEAR uniquement, car le fournisseur peut réutiliser les données du palier gratuit. Jamais de données clients ni de secrets. | spec 07 §4.5 |
+| Q7 | Budget IA ? | **0 €** : uniquement des paliers gratuits pour l'instant. Arrêt dur et alertes sur les quotas gratuits ; aucune facturation activée sur les comptes des fournisseurs. | ADR-025 |
+| Q7a | Moteur IA au démarrage ? | L'abonnement Claude Pro **n'inclut pas l'API** et ne peut pas servir une application multi-utilisateur. Moteur de démarrage : **Gemini, palier gratuit (Google AI Studio)**. Plus tard : un **LLMaaS** (pas encore disponible, compatible OpenAI attendu), puis éventuellement Claude via l'API si un budget existe. | ADR-025, ADR-011 |
+| Q8 | Authentification interne ? | **Comptes locaux + MFA TOTP obligatoire** ; SSO plus tard. | ADR-007 acceptée |
+| Q9 | Hébergement ? | **Serveur on-premise, Docker Compose**, accès Internet **direct** (pas de proxy d'entreprise ; chaînage du proxy de sortie laissé configurable). | ADR-017 acceptée |
+| Q10 | Langues des bulletins ? | **Français et anglais** dès le départ. | spec 04 |
+| Q11 | Diffusion aux clients ? | **Portail + e-mail + export PDF**. | PLAN phase 8 |
+| Q12 | Cibles de publication API ? | Inconnues à ce jour : connecteur HTTP générique. | spec 05 |
+| Q13 | Volumétrie ? | **Moyenne** : 20 à 100 analystes, jusqu'à 1 000 utilisateurs clients. | PLAN §5 |
+| Q14 | Workflows n8n existants ? | **Non.** | — |
+| Q15 | Création des comptes clients ? | **Admin client délégué dès le MVP** : un référent par organisation invite et gère ses utilisateurs (rôle `client_admin`). Les admins plateforme créent les organisations et leurs référents. | RBAC, PLAN phase 8 |
+| Q16 | MFA clients ? | **Facultative** (proposée, jamais imposée). | SECURITY §4.1 |
+| Q17 | Rétention ? | **Longue** : tout est conservé au moins 3 ans (éléments collectés, traces IA, exécutions, audit). | spec 01 |
+| Q18 | Criticité ? | **CVSS 4.0 et 3.1 + priorité interne P1 à P4.** | spec 01 |
+| Q19 | Granularité des technos ? | **Éditeur + produit** (CPE, purl) ; versions plus tard. | spec 06 |
+| Q20 | Notifications des analystes ? | **E-mail (SMTP), Teams (webhook entrant) et notifications dans l'application.** | spec 02 (nœuds `notify.*`) |
+| Q21 | Nom et charte ? | **Vuln-Veille**, thème sobre clair et sombre. | — |
+| Q22 | TLP sur le portail ? | **TLP:CLEAR et TLP:GREEN, plus TLP:AMBER pour les organisations explicitement ciblées** ; jamais RED. | spec 06 |
+| Q23 | Quelles CVE lancent les agents ? | **Périmètre de veille filtré** par espace (technos suivies, éditeurs, CVSS ≥ 7 ou sans score, KEV toujours) ; les autres restent dans le catalogue. | spec 07 §3.4 |
+| Q24 | Délai de détection ? | **Ajouter le connecteur CVE.org** (gratuit) pour détecter plus tôt ; NVD reste la référence d'enrichissement. | ADR-020, PLAN 2.4 bis |
+| Q25 | LLM open source visé ? | Via un **LLMaaS**, pas encore disponible. | ADR-025 |
+| Q26 | Qui bascule le moteur préféré ? | **Les admins, sans contrainte** : le banc d'évaluation est disponible mais facultatif. | spec 07 §4.4 et §4.6 |
+| Q27 | Comptes gratuits disponibles ? | **Clé API NVD, jeton GitHub, clé Stack Exchange, compte Bluesky.** Pas de compte Mastodon (lecture publique seulement). | spec 07 §2 |
+| Q28 | Recherche web IA pour X ? | Oui (via Q32) ; avec le moteur de démarrage Gemini, ce sera la **recherche Google intégrée à Gemini**, dans la limite du quota gratuit. | spec 07 §2.1 |
+| Q29 | Dépôt et CI ? | **Dépôt public** : minutes GitHub Actions illimitées. Conséquence : **aucun secret, aucune donnée interne** ne doit jamais être commité (gitleaks bloquant). | SECURITY, PROCEDURES |
+| Q30 | SearXNG ? | Sans objet. | — |
+| Q31 | Reddit ? | **Flux RSS publics.** | spec 07 §2 |
+| Q32 | Moteur de découverte des posts X ? | **(a) recherche web du moteur IA + (d) liens déjà collectés.** | spec 07 §2.1 |
+
+## Questions encore ouvertes
+
+| # | Question | Hypothèse par défaut |
+|---|---|---|
+| Q33 | Nom du LLMaaS prévu et date de disponibilité ? | Adaptateur compatible OpenAI prêt ; bascule par configuration |
+| Q34 | Charte graphique pour les PDF clients (logo, couleurs) ? | Gabarit sobre, logo configurable |
+| Q35 | Quotas exacts du palier gratuit Gemini (requêtes par minute et par jour, recherche Google intégrée) sur votre compte ? | Vérifiés dans AI Studio en phase 4 ; limiteur de débit configurable |
+
+## Historique des consignes
+
+| Date | Sujet | Consigne |
+|---|---|---|
+| 2026-10-20 | Vecteur d'entrée | « Le 1er vecteur d'entrée est la saisie d'une nouvelle vuln au NVD : c'est l'initiateur qui va lancer les agents pour faire des recherches dessus. » |
+| 2026-10-20 | Connecteurs et agents | Ne pas oublier les connecteurs et le paramétrage des agents de veille. |
+| 2026-10-20 | Moteur IA | « Notre moteur d'IA préféré : aujourd'hui Claude, demain un LLM open source. » Révisé le même jour : budget 0 €, démarrage sur le palier gratuit Gemini (Q7a). |
+| 2026-10-20 | Coûts et X | « Le moteur de lecture sur X doit être gratuit. Aucun abonnement payant en plus de ceux utilisés par l'IA. » |
+| 2026-10-20 | Recherche Google | « Utilise la recherche Google pour contourner la limitation de X et accéder seulement au strict nécessaire. » |
+| 2026-10-20 | Découverte X | « OK pour a + d. » |
+| 2026-10-20 | Phase 0 | « Lance la phase 0 en me posant toutes les questions en interactif. » |

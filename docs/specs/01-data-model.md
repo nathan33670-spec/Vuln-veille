@@ -13,9 +13,9 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 | `webauthn_credentials` [G] | phase 10 |
 | `sessions` [G] | `id_hash` (PK), `user_id`, `audience` (`backoffice`, `portal`), `created_at`, `last_seen_at`, `idle_expires_at`, `absolute_expires_at`, `mfa_verified_at`, `step_up_at`, `ip`, `user_agent`, `revoked_at` |
 | `auth_tokens` [G] | `token_hash`, `user_id`, `purpose` (`invitation`, `password_reset`, `email_change`), `expires_at`, `used_at` |
-| `workspaces` [G] | `slug` (`voc`, `cert`), `name`, `settings` (JSONB : double validation, budgets, politique LLM, rétention) |
+| `workspaces` [G] | `slug` (`voc`, `cert`), `name`, `grants_platform_admin` (vrai pour VOC : ses analystes sont admins plateforme), `settings` (JSONB : double validation, budgets, politique LLM, rétention) |
 | `workspace_memberships` [G] | `user_id`, `workspace_id`, `role` (`analyst`, `viewer`), unique (`user_id`, `workspace_id`) |
-| `client_organizations` [G] | `name`, `status`, `settings` (MFA obligatoire…) |
+| `client_organizations` [G] | `name`, `status`, `settings` (MFA facultative par défaut, peut être imposée par l'organisation) |
 | `client_memberships` [G] | `user_id`, `client_org_id`, `role` (`client_user`, `client_admin`) |
 
 ## 2. Transverse
@@ -47,28 +47,34 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 | `collected_items` [E] | `run_id`, `node_id`, `source_type`, `source_ref`, `url`, `url_hash`, `title`, `content_text` (plafonné), `author`, `published_at`, `fetched_at`, `content_hash`, `cve_ids` (text[]), `language`, `raw` (JSONB plafonné), `trust` (toujours `untrusted`) ; unique (`workspace_id`, `content_hash`) |
 | `dedupe_keys` [E] | `namespace`, `key_hash`, `first_seen_at`, `expires_at` |
 
-## 5. Vulnérabilités
+## 5. Vulnérabilités (fiche partagée VOC/CERT, qualification par équipe — ADR-024)
+
+**[I]** = table interne globale : visible de tous les espaces internes, jamais des clients (RLS sur le type de session).
 
 | Table | Colonnes principales |
 |---|---|
-| `vulnerabilities` [E] | `ref` (`VV-2026-0001`, séquence par espace), `cve_id` (nullable), `aliases` (text[] : GHSA, identifiants éditeur), `title`, `summary`, `status`, `duplicate_of`, `priority` (`P1`…`P4`), `severity`, `cvss_override` (JSONB), `exploitation_status` (`unknown`, `poc_public`, `exploited_itw`, `not_exploitable`), `patch_status` (`unknown`, `available`, `partial`, `none`, `workaround`), `assignee_id`, `first_seen_at`, `qualified_at`, `qualified_by`, `origin` (`workflow`, `user`), `source_run_id` |
-| `vulnerability_technologies` [E] | `vulnerability_id`, `technology_id`, `matched_by` (`cpe`, `purl`, `ai`, `manual`), `confidence` |
-| `vulnerability_evidence` [E] | `vulnerability_id`, `collected_item_id`, `kind` (`advisory`, `poc`, `exploit`, `patch`, `discussion`, `mention`, `news`), `note`, `confidence`, `added_by_type`, `added_by` |
-| `vulnerability_analyses` [E] | `vulnerability_id`, `agent_run_id`, `content` (JSONB conforme au schéma de synthèse), `injection_flags` (JSONB), `created_at` |
-| `vulnerability_comments` [E] | `vulnerability_id`, `author_id`, `body` (Markdown assaini) |
-| `vulnerability_events` [E] | `vulnerability_id`, `type`, `actor`, `data`, `occurred_at` (chronologie) |
+| `vulnerabilities` [I] | `ref` (`VV-2026-0001`, séquence globale), `cve_id` (nullable, unique s'il est renseigné), `aliases` (text[] : GHSA, identifiants éditeur), `title`, `summary`, `duplicate_of`, `exploitation_status` (`unknown`, `poc_public`, `exploited_itw`, `not_exploitable`), `patch_status` (`unknown`, `available`, `partial`, `none`, `workaround`), `first_seen_at`, `origin` (`workflow`, `user`), `origin_workspace_id`, `version` |
+| `vulnerability_assessments` [E] | **Qualification propre à chaque équipe** : `vulnerability_id`, `workspace_id` (unique ensemble), `status`, `priority` (`P1`…`P4`), `severity`, `cvss_override` (JSONB), `assignee_id`, `rationale` (Markdown assaini), `qualified_at`, `qualified_by`, `copied_from_assessment_id` (renseigné quand l'équipe a cliqué « Reprendre cette qualification »), `version` |
+| `vulnerability_technologies` [I] | `vulnerability_id`, `technology_id`, `matched_by` (`cpe`, `purl`, `ai`, `manual`), `confidence` |
+| `vulnerability_evidence` [I] | `vulnerability_id`, `collected_item_id`, `kind` (`advisory`, `poc`, `exploit`, `patch`, `discussion`, `mention`, `news`), `note`, `confidence`, `added_by_type`, `added_by`, `workspace_id` (équipe d'origine) |
+| `vulnerability_analyses` [I] | `vulnerability_id`, `workspace_id` (équipe d'origine), `agent_run_id`, `content` (JSONB conforme au schéma de synthèse), `injection_flags` (JSONB), `created_at` |
+| `vulnerability_comments` [E] | `vulnerability_id`, `workspace_id`, `author_id`, `body` (Markdown assaini) : commentaires internes à l'équipe |
+| `vulnerability_events` [I] | `vulnerability_id`, `workspace_id` (nullable), `type`, `actor`, `data`, `occurred_at` (chronologie) |
 
-Statuts d'une vulnérabilité :
+Statuts d'une évaluation (par équipe) :
 
 ```
 new ──► triage ──► qualified
   │        ├────► rejected      (non pertinente, faux positif)
-  │        ├────► duplicate     (duplicate_of renseigné)
+  │        ├────► duplicate     (duplicate_of renseigné sur la fiche)
   │        └────► monitoring    (en attente d'information) ──► triage
   └───────────────► (mêmes transitions directes depuis new)
 ```
 
-« Non qualifiée » = `new` ou `triage`. Le passage à `qualified` exige au minimum une priorité et un titre.
+- « Non qualifiée » pour une équipe = son évaluation est `new` ou `triage` (ou absente).
+- Le passage à `qualified` exige au minimum une priorité et un titre.
+- **Qualification de l'autre équipe** : la fiche affiche « qualifiée par l'équipe CERT (P2, le …) » ; le bouton « Reprendre cette qualification » crée ou remplace l'évaluation de l'équipe courante avec les mêmes statut, priorité, sévérité et justification, puis l'audite.
+- Échelle : CVSS 4.0 et 3.1 (catalogue CVE) + priorité interne P1 à P4.
 
 ## 6. Workflows
 
@@ -104,7 +110,7 @@ Les moteurs IA sont des connecteurs de famille `ai_engine` (section 9).
 | `bulletin_templates` [E] | `name`, `description`, `status` (`draft`, `active`, `archived`), `active_version_id` |
 | `bulletin_template_versions` [E] | `template_id`, `version_no`, `match_rules` (JSONB), `priority`, `fields` (JSONB), `render_template` (Liquid), `style_guide`, `example`, `language` ; **immuable** |
 | `draft_requests` [E] | `requested_by`, `input` (JSONB : identifiants de vulnérabilités, CVE, URL, texte), `template_version_id`, `extra_instructions`, `status` (`queued`, `running`, `succeeded`, `failed`), `bulletin_id`, `agent_run_id`, `error` |
-| `bulletins` [E] | `ref` (`VOC-2026-0042`), `title`, `status`, `severity`, `tlp`, `audience_type` (`all_clients`, `selected`), `template_version_id`, `current_revision_id`, `published_revision_id`, `author_id`, `reviewer_id`, `approved_at`, `published_at`, `withdrawn_at`, `version` |
+| `bulletins` [E] | `ref` (`VOC-2026-0042`), `language` (`fr`, `en`), `translation_of` (bulletin source si traduction), `title`, `status`, `severity`, `tlp`, `audience_type` (`all_clients`, `selected`), `template_version_id`, `current_revision_id`, `published_revision_id`, `author_id`, `reviewer_id`, `approved_at`, `published_at`, `withdrawn_at`, `version` |
 | `bulletin_revisions` [E] | `bulletin_id`, `rev_no`, `fields` (JSONB), `rendered_markdown`, `rendered_html` (assaini), `content_hash`, `created_by_type` (`ai`, `user`), `created_by`, `agent_run_id`, `change_note` ; **immuable** |
 | `bulletin_vulnerabilities` [E] | `bulletin_id`, `vulnerability_id` |
 | `bulletin_technologies` [E] | `bulletin_id`, `technology_id` |

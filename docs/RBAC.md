@@ -6,7 +6,7 @@
 - **Trois périmètres** : global (plateforme), espace (VOC, CERT…), organisation cliente.
 - **Rôles = paquets de permissions**. Le code vérifie toujours des **permissions**, jamais des noms de rôle, ce qui permet de faire évoluer les rôles sans toucher au code.
 - **Séparation des tâches** : le rôle admin plateforme seul ne donne **pas** accès aux données métier d'un espace. Un admin qui doit qualifier des vulnérabilités VOC doit aussi être membre de l'espace VOC.
-- **Cumul** : un utilisateur interne peut être admin plateforme **et** analyste VOC (cas visé par le besoin « l'analyste VOC a la partie admin »).
+- **Admin = analystes VOC** (décision Q1) : l'espace VOC porte `grants_platform_admin = true` ; toute appartenance `analyst` à cet espace donne aussi les permissions `platform_admin`. Le rôle `platform_admin` peut en plus être attribué nominativement (compte de secours).
 - Un compte est soit **interne**, soit **client** (`user_type`), jamais les deux. Un compte client ne peut pas se connecter au back-office, et inversement.
 
 ## 2. Rôles
@@ -17,15 +17,15 @@
 | `analyst` | Espace | Toutes les capacités métier de l'espace : vulnérabilités (y compris non qualifiées), périmètre de veille, workflows, agents et moteurs IA de l'espace, connecteurs de veille et de publication, modèles, bulletins, configuration de l'espace |
 | `viewer` (optionnel, plus tard) | Espace | Lecture seule de l'espace (stagiaires, auditeurs) |
 | `client_user` | Organisation cliente | Lecture des bulletins publiés destinés à l'organisation ; plus tard, abonnements et demandes de technos |
-| `client_admin` (plus tard) | Organisation cliente | Gère les utilisateurs et abonnements de son organisation |
+| `client_admin` (MVP) | Organisation cliente | Référent : invite et gère les utilisateurs de son organisation, plus tard ses abonnements |
 
 Correspondance avec les profils exprimés :
 
 | Profil exprimé | Attribution |
 |---|---|
-| Analyste VOC | `analyst` sur l'espace `voc` (+ `platform_admin` si cette personne administre la plateforme) |
+| Analyste VOC | `analyst` sur l'espace `voc`, qui donne automatiquement `platform_admin` |
 | Rôle CERT | `analyst` sur l'espace `cert`, sans `platform_admin` |
-| Client | `client_user` sur son organisation |
+| Client | `client_user` sur son organisation ; le référent a `client_admin` |
 
 ## 3. Catalogue des permissions
 
@@ -48,8 +48,8 @@ Correspondance avec les profils exprimés :
 | `connector.source.manage` | Espace | Connecteurs de veille de l'espace (GitHub, X, Stack Exchange, réseaux, RSS, web…) |
 | `source.manage` | Espace | Sources de veille de l'espace |
 | `secret.manage` | Espace | Créer et remplacer les secrets de l'espace (écriture seule) |
-| `vuln.read` | Espace | Lire les vulnérabilités, **y compris non qualifiées** |
-| `vuln.qualify` | Espace | Qualifier, rejeter, fusionner, assigner, commenter |
+| `vuln.read` | Interne | Lire les fiches vulnérabilités partagées (ADR-024), **y compris non qualifiées**, preuves et synthèses IA des deux équipes |
+| `vuln.qualify` | Espace | Qualifier pour son équipe (évaluation de l'espace), reprendre la qualification de l'autre équipe, assigner, commenter |
 | `workflow.read` | Espace | Lire workflows et exécutions |
 | `workflow.edit` | Espace | Créer et modifier des workflows, publier une version |
 | `workflow.run` | Espace | Lancer ou annuler une exécution, approuver une étape |
@@ -67,7 +67,7 @@ Correspondance avec les profils exprimés :
 | `portal.bulletins.read` | Organisation | Bulletins publiés destinés à l'organisation |
 | `portal.subscriptions.manage` | Organisation | Abonnements aux technos (phase 9) |
 | `portal.technology_request.create` | Organisation | Demander une techno absente (phase 9) |
-| `portal.org_users.manage` | Organisation | Gérer les comptes de l'organisation (`client_admin`, plus tard) |
+| `portal.org_users.manage` | Organisation | Inviter, désactiver et gérer les comptes de son organisation (`client_admin`, MVP) |
 
 ## 4. Matrice
 
@@ -90,12 +90,13 @@ Correspondance avec les profils exprimés :
 | `connector.publish.manage`, `connector.publish.push` | | ✅ espace | |
 | `portal.bulletins.read` | | | ✅ organisation |
 | `portal.subscriptions.manage`, `portal.technology_request.create` | | | ✅ organisation (phase 9) |
+| `portal.org_users.manage` | | | ✅ `client_admin` uniquement |
 
 Conséquences :
 
 - L'analyste CERT a exactement les mêmes capacités que l'analyste VOC, limitées à l'espace CERT. Il gère ses agents IA, ses connecteurs de veille, son périmètre de veille, son moteur IA préféré et sa configuration, mais n'a aucune permission globale.
 - Le connecteur NVD est global (une seule clé et une seule synchronisation pour l'organisation, comme le recommande NVD) : seul un admin le configure. Chaque espace décide ensuite, par son périmètre de veille et ses workflows, ce qu'il fait des nouvelles CVE.
-- Les agents, workflows, modèles, connecteurs, secrets et vulnérabilités du CERT sont invisibles depuis l'espace VOC, et inversement (cf. question ouverte sur le partage).
+- Les agents, workflows, modèles, connecteurs, secrets, périmètres de veille, évaluations et bulletins non publiés du CERT sont invisibles depuis l'espace VOC, et inversement. Les **fiches vulnérabilités, preuves et synthèses IA sont partagées** ; les bulletins publiés sont lisibles par l'autre équipe (ADR-024).
 
 ## 5. Implémentation
 

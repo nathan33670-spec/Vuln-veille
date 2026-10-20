@@ -7,7 +7,8 @@
 - **vecteur d'entrée n°1 : chaque nouvelle CVE publiée sur NVD** lance automatiquement les agents de veille (ADR-020) ;
 - un **orchestrateur de workflows** visuel (type n8n, moteur natif) éditable depuis l'application ;
 - des **agents de veille** paramétrables par espace (PoC GitHub, X et réseaux, Stack Overflow, avis éditeurs, synthèse), qui accèdent à l'extérieur uniquement par des **connecteurs** configurés dans l'interface (ADR-021, ADR-022) ;
-- un **moteur IA interchangeable** : Claude aujourd'hui, LLM open source auto-hébergé demain, par configuration (ADR-011) ;
+- un **moteur IA interchangeable** (ADR-011) : démarrage sur le **palier gratuit Gemini** (budget 0 €, ADR-025), puis LLMaaS compatible OpenAI, Claude via l'API si un budget apparaît ;
+- des **vulnérabilités partagées** entre VOC et CERT, qualifiées par chaque équipe (ADR-024) ;
 - une **qualification** des vulnérabilités par les analystes (VOC et CERT, espaces cloisonnés) ;
 - la **rédaction assistée de bulletins** selon des modèles paramétrables ;
 - la **publication** vers un portail client et vers des API distantes (connecteur HTTP générique) ;
@@ -42,7 +43,7 @@ La sécurité est une exigence de premier rang : voir `docs/SECURITY.md`.
 - Aucun code récupéré (PoC, dépôts) n'est jamais exécuté.
 - **Aucun service, API ou abonnement payant en dehors de l'abonnement IA** (ADR-023). X se lit gratuitement (découverte d'URL et oEmbed officiel), jamais par l'API X payante ni par scraping. Chaque type de connecteur déclare sa classe de coût, et un test bloquant refuse les types payants.
 - Le contenu collecté et les sorties des LLM ne sont **pas fiables** : validation par schéma, assainissement, jamais interprétés comme gabarit ou instruction, jamais publiés sans validation humaine.
-- Les secrets sont chiffrés au repos, en écriture seule via l'API, et jamais journalisés. Aucun secret ni identifiant par défaut dans le dépôt.
+- Les secrets sont chiffrés au repos, en écriture seule via l'API, et jamais journalisés. Aucun secret ni identifiant par défaut dans le dépôt. **Le dépôt GitHub est public** : aucune donnée interne non plus.
 - Les réponses de l'API passent par des schémas Pydantic dédiés, jamais par une sérialisation directe de l'ORM, surtout côté portail.
 
 ## Conventions

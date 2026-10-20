@@ -111,18 +111,18 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 1 — Identité, accès et audit
 
-- [ ] 1.1 Modèles `users`, `sessions`, `auth_tokens`, `user_global_roles`
-- [ ] 1.2 Hachage Argon2id, politique de mots de passe (longueur minimale, liste de mots de passe compromis hors ligne)
-- [ ] 1.3 Connexion et déconnexion, sessions côté serveur (cookie `__Host-`, expirations d'inactivité et absolue, rotation), audience de session (back-office ou portail)
-- [ ] 1.4 MFA TOTP : enrôlement, vérification, anti-rejeu, codes de secours ; obligatoire pour les comptes internes
-- [ ] 1.5 Protection CSRF (jeton lié à la session et vérification de l'Origin), limitation de débit (Redis), verrouillage progressif, messages génériques (pas d'énumération de comptes)
-- [ ] 1.6 RBAC : registre des permissions, dépendance `require_permission`, test qui échoue si une route n'a pas de permission, matrice de tests d'autorisation
-- [ ] 1.7 Espaces (`workspaces`, `workspace_memberships`), RLS PostgreSQL et injection du périmètre par transaction
-- [ ] 1.8 Organisations clientes et comptes clients (invitation uniquement)
-- [ ] 1.9 Journal d'audit append-only avec chaîne de hachage, export JSON
-- [ ] 1.10 CLI de bootstrap du premier admin (aucun compte par défaut)
+- [x] 1.1 Modèles `users`, `sessions`, `auth_tokens`, `user_global_roles`
+- [x] 1.2 Hachage Argon2id, politique de mots de passe (longueur minimale, liste de mots de passe compromis hors ligne)
+- [x] 1.3 Connexion et déconnexion, sessions côté serveur (cookie `__Host-`, expirations d'inactivité et absolue, rotation), audience de session (back-office ou portail)
+- [x] 1.4 MFA TOTP : enrôlement, vérification, anti-rejeu, codes de secours ; obligatoire pour les comptes internes
+- [x] 1.5 Protection CSRF (jeton lié à la session et vérification de l'Origin), limitation de débit (Redis), verrouillage progressif, messages génériques (pas d'énumération de comptes)
+- [x] 1.6 RBAC : registre des permissions, dépendance `require_permission`, test qui échoue si une route n'a pas de permission, matrice de tests d'autorisation
+- [x] 1.7 Espaces (`workspaces`, `workspace_memberships`), RLS PostgreSQL et injection du périmètre par transaction
+- [x] 1.8 Organisations clientes et comptes clients (invitation uniquement)
+- [x] 1.9 Journal d'audit append-only avec chaîne de hachage, export JSON
+- [x] 1.10 CLI de bootstrap du premier admin (aucun compte par défaut)
 - [ ] 1.11 Interfaces : connexion et MFA (back-office et portail), « Mon compte » (mot de passe, MFA, sessions actives), administration des utilisateurs, espaces et clients, consultation de l'audit
-- [ ] 1.12 Ré-authentification (step-up MFA) pour les actions sensibles
+- [x] 1.12 Ré-authentification (step-up MFA) pour les actions sensibles
 
 **Critère de sortie** : un admin invite un analyste VOC, un analyste CERT et un client ; chacun ne voit que son périmètre ; la matrice d'autorisation est entièrement testée.
 

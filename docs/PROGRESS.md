@@ -2,17 +2,27 @@
 
 ## État courant
 
-- **Phase** : **phase 0 (fondations) terminée** ; prochaine phase : 1 (identité, accès, audit).
-- **Dernière étape terminée** : 0.9 (hook SessionStart). Pile complète vérifiée localement (`make up` équivalent, smoke test, filtrage de sortie) ; CI GitHub Actions ajoutée.
-- **Étape en cours** : aucune.
-- **Prochaine étape** : 1.1 modèles `users`, `sessions`, `auth_tokens`, `user_global_roles` (spec 01 §1), puis 1.2 à 1.12.
+- **Phase** : 1 (identité, accès, audit) **en cours** — backend terminé, frontend à faire.
+- **Dernière étape terminée** : backend de la phase 1 (étapes 1.1 à 1.10 et 1.12 côté API), poussé et testé (60 tests dont 25 d'intégration).
+- **Étape en cours** : 1.11 interfaces (back-office : connexion, MFA, invitation, mot de passe oublié, « Mon compte », administration utilisateurs, espaces, clients, audit ; portail : connexion, MFA facultative, « Mon compte », « Mon organisation »).
+- **Prochaine étape** : après 1.11, cocher la phase 1 dans PLAN.md, vérifier la CI, puis phase 2.
 - **Points d'attention** :
-  - Décisions de cadrage prises le 2026-10-20 (OPEN_QUESTIONS.md) : VOC = admins, vulnérabilités partagées avec qualification par équipe (ADR-024), Gemini palier gratuit (ADR-025), comptes locaux + TOTP, MFA client facultative, admin client délégué, FR + EN, e-mail + PDF.
+  - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
+  - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
   - Smokescreen accepte les clients sans rôle (ACL `default`) : prévoir des rôles mTLS par type de worker en phase 2.
   - Environnement cloud : builds Docker uniquement via les variantes avec l'autorité du proxy (PROCEDURES §9 bis).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 6 : phase 1, backend
+
+- Migration `0002_iam` : utilisateurs, rôles globaux, sessions, jetons à usage unique (avec audience), TOTP et codes de secours, espaces VOC/CERT (seed), organisations clientes et appartenances, audit chaîné écrit uniquement via `audit_append` (SECURITY DEFINER), politiques RLS (rôle portail limité au contexte de requête), droits.
+- Primitives : AES-256-GCM, HMAC à séparation de domaine, Argon2id, politique de mot de passe (liste SecLists de 10 000 mots de passe courants, motif « mot courant + chiffres »), TOTP avec anti-rejeu.
+- API : connexion, MFA (vérification, enrôlement, codes de secours), invitation, mot de passe oublié et réinitialisation, step-up, compte (mot de passe, sessions, codes de secours, désactivation MFA client), administration (utilisateurs, rôles, espaces, clients), organisation (référent client), audit (liste, export JSON Lines, vérification, audit d'espace), CLI `bootstrap-admin`.
+- Sécurité : cookies `__Host-`, jeton CSRF dérivé de la session, middleware Origin, limitation Redis, verrouillage progressif, matrice d'autorisation sur six profils.
+- Correctif : le test « toute route déclare une politique » ne voyait aucune route depuis la phase 0 (FastAPI 0.142) ; corrigé et durci.
+
 
 ### 2026-10-20 — Session 5 : décisions interactives et phase 0
 

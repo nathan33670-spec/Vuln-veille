@@ -1,9 +1,9 @@
 """Least-privilege database roles, migrations and readiness against real services."""
 
+import asyncio
 import os
-import subprocess
 import sys
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -59,7 +59,7 @@ def redis_url() -> Iterator[str]:
 
 
 @pytest.fixture(scope="module")
-async def database(postgres: PostgresContainer) -> AsyncIterator[Database]:
+async def database(postgres: PostgresContainer) -> Database:
     db = Database(postgres.get_container_host_ip(), int(postgres.get_exposed_port(5432)))
     admin = await asyncpg.connect(db.dsn("admin", "admin-test-pw"))
     try:
@@ -72,13 +72,11 @@ async def database(postgres: PostgresContainer) -> AsyncIterator[Database]:
         **os.environ,
         "VV_DATABASE_URL_MIGRATOR": db.dsn("vv_migrator", PASSWORDS.migrator),
     }
-    subprocess.run(  # noqa: S603 - fixed argv, test-only
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
-        cwd=BACKEND_DIR,
-        env=env,
-        check=True,
+    process = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", "alembic", "upgrade", "head", cwd=BACKEND_DIR, env=env
     )
-    yield db
+    assert await process.wait() == 0
+    return db
 
 
 async def _fails(dsn: str, statement: str) -> bool:
@@ -103,7 +101,9 @@ async def test_roles_are_not_privileged(database: Database) -> None:
         await conn.close()
     assert {r["rolname"] for r in rows} == {"vv_migrator", "vv_app", "vv_worker", "vv_portal"}
     for row in rows:
-        assert not (row["rolsuper"] or row["rolbypassrls"] or row["rolcreaterole"])
+        assert not row["rolsuper"]
+        assert not row["rolbypassrls"]
+        assert not row["rolcreaterole"]
         assert not row["rolcreatedb"]
 
 
@@ -149,7 +149,7 @@ async def test_readyz_with_real_services(database: Database, redis_url: str) -> 
         redis_url=SecretStr(redis_url),
     )
     for audience in ("backoffice", "portal"):
-        app = create_app(audience, settings)  # type: ignore[arg-type]
+        app = create_app(audience, settings)
         async with app.router.lifespan_context(app):
             transport = httpx.ASGITransport(app=app)
             async with httpx.AsyncClient(transport=transport, base_url="http://t") as client:

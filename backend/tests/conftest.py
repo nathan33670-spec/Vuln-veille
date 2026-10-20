@@ -3,10 +3,11 @@ from typing import Any
 
 import httpx
 import pytest
-from app.app_factory import create_app
-from app.core.config import Audience, Settings
 from fastapi import FastAPI
 from pydantic import SecretStr
+
+from app.app_factory import create_app
+from app.core.config import Audience, Settings
 
 PLACEHOLDER_DSN = SecretStr("postgresql://unused:unused@127.0.0.1:1/unused")
 

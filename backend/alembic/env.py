@@ -4,10 +4,11 @@ import asyncio
 import os
 from logging.config import fileConfig
 
-from alembic import context
-from app.core.db import Base, to_async_dsn
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
+
+from alembic import context
+from app.core.db import Base, to_async_dsn
 
 config = context.config
 if config.config_file_name is not None:

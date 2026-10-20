@@ -2,7 +2,6 @@ import json
 
 from app.core.ids import uuid7
 from app.core.logging import REDACTED, redact_secrets
-
 from tests.conftest import make_settings
 
 

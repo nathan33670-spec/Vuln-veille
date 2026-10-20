@@ -1,7 +1,7 @@
 """RFC 9457 problem details. Clients get generic messages; details stay in the logs."""
 
-from http import HTTPStatus
 from collections.abc import Mapping
+from http import HTTPStatus
 from typing import Any
 
 from fastapi import FastAPI, Request

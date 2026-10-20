@@ -2,12 +2,12 @@ from collections.abc import AsyncIterator
 
 import httpx
 import pytest
-from app.app_factory import create_app
-from app.core.access import public_endpoint
-from app.core.middleware import API_SECURITY_HEADERS
 from fastapi import Depends, FastAPI, Request
 from pydantic import BaseModel
 
+from app.app_factory import create_app
+from app.core.access import public_endpoint
+from app.core.middleware import API_SECURITY_HEADERS
 from tests.conftest import make_settings
 
 

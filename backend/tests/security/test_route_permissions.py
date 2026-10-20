@@ -1,9 +1,9 @@
 """Deny-by-default guard: every route must declare an access policy (RBAC.md §5)."""
 
 import pytest
+
 from app.app_factory import create_app
 from app.core.access import route_policies
-
 from tests.conftest import make_settings
 
 # Framework routes that carry no business data; anything else must declare a policy.

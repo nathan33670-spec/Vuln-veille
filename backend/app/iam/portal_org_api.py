@@ -5,12 +5,13 @@ import uuid
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import AuditEntry, record
 from app.core.mailer import Mailer
 from app.iam.admin_api import user_out
-from app.iam.admin_schemas import ClientUserCreate, OrgUserUpdate, UserOut, UserPage
+from app.iam.admin_schemas import ClientUserCreate, OrgUserOut, OrgUserPage, OrgUserUpdate
 from app.iam.deps import DB, SettingsDep, require
 from app.iam.models import ClientMembership, User
 from app.iam.permissions import Permission
@@ -43,28 +44,39 @@ async def _org_user(db: AsyncSession, principal: Principal, user_id: uuid.UUID) 
     return UserRow(user=row[0], mfa_enabled=row[1] is not None)
 
 
+async def _org_out(db: AsyncSession, rows: list[UserRow]) -> list[OrgUserOut]:
+    ids = [r.user.id for r in rows]
+    result = await db.execute(
+        select(ClientMembership.user_id, ClientMembership.role).where(
+            ClientMembership.user_id.in_(ids)
+        )
+    )
+    roles: dict[uuid.UUID, str] = dict(result.all())
+    return [OrgUserOut(**user_out(r).model_dump(), role=roles[r.user.id]) for r in rows]
+
+
 def build_portal_org_router() -> APIRouter:
     router = APIRouter(prefix="/org", tags=["organization"])
 
-    @router.get("/users", response_model=UserPage)
+    @router.get("/users", response_model=OrgUserPage)
     async def list_org_users(
         principal: OrgAdmin,
         db: DB,
         cursor: Annotated[str | None, Query(max_length=64)] = None,
         limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = 50,
-    ) -> UserPage:
+    ) -> OrgUserPage:
         query = (
             users_query()
             .join(ClientMembership, ClientMembership.user_id == User.id)
             .where(ClientMembership.client_org_id == principal.grants.client_org_id)
         )
         items, next_cursor = await page_users(db, query, cursor, limit)
-        return UserPage(items=[user_out(r) for r in items], next_cursor=next_cursor)
+        return OrgUserPage(items=await _org_out(db, items), next_cursor=next_cursor)
 
-    @router.post("/users", response_model=UserOut, status_code=201)
+    @router.post("/users", response_model=OrgUserOut, status_code=201)
     async def invite_org_user(
         body: ClientUserCreate, request: Request, principal: OrgAdmin, db: DB, settings: SettingsDep
-    ) -> UserOut:
+    ) -> OrgUserOut:
         if not await request.app.state.rate_limiter.hit(
             "org_invite", str(principal.grants.client_org_id), 30, 3600
         ):
@@ -91,12 +103,14 @@ def build_portal_org_router() -> APIRouter:
         await send_new_invitation(
             db, settings, cast(Mailer, request.app.state.mailer), user, "portal", principal.user_id
         )
-        return user_out(UserRow(user=user, mfa_enabled=False))
+        return OrgUserOut(
+            **user_out(UserRow(user=user, mfa_enabled=False)).model_dump(), role=body.role
+        )
 
-    @router.patch("/users/{user_id}", response_model=UserOut)
+    @router.patch("/users/{user_id}", response_model=OrgUserOut)
     async def update_org_user(
         user_id: uuid.UUID, body: OrgUserUpdate, request: Request, principal: OrgAdmin, db: DB
-    ) -> UserOut:
+    ) -> OrgUserOut:
         row = await _org_user(db, principal, user_id)
         user = row.user
         if user.id == principal.user_id and (body.status is not None or body.role is not None):
@@ -128,7 +142,7 @@ def build_portal_org_router() -> APIRouter:
             ),
         )
         await db.commit()
-        return user_out(row)
+        return (await _org_out(db, [row]))[0]
 
     @router.post("/users/{user_id}/invitation", status_code=204)
     async def resend_org_invitation(

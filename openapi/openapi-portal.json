@@ -279,6 +279,103 @@
         "title": "MfaCodeIn",
         "type": "object"
       },
+      "OrgUserOut": {
+        "description": "A member of the caller's organization, as its referent sees it.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "mfa_enabled": {
+            "title": "Mfa Enabled",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "user_type": {
+            "title": "User Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "user_type",
+          "status",
+          "mfa_enabled",
+          "locked",
+          "last_login_at",
+          "created_at",
+          "role"
+        ],
+        "title": "OrgUserOut",
+        "type": "object"
+      },
+      "OrgUserPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrgUserOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "OrgUserPage",
+        "type": "object"
+      },
       "OrgUserUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -499,97 +596,6 @@
           "password"
         ],
         "title": "TokenPasswordIn",
-        "type": "object"
-      },
-      "UserOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "display_name": {
-            "title": "Display Name",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "last_login_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Login At"
-          },
-          "locked": {
-            "title": "Locked",
-            "type": "boolean"
-          },
-          "mfa_enabled": {
-            "title": "Mfa Enabled",
-            "type": "boolean"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "user_type": {
-            "title": "User Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "display_name",
-          "user_type",
-          "status",
-          "mfa_enabled",
-          "locked",
-          "last_login_at",
-          "created_at"
-        ],
-        "title": "UserOut",
-        "type": "object"
-      },
-      "UserPage": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/UserOut"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor"
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "title": "UserPage",
         "type": "object"
       },
       "ValidationError": {
@@ -1168,7 +1174,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPage"
+                  "$ref": "#/components/schemas/OrgUserPage"
                 }
               }
             },
@@ -1207,7 +1213,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserOut"
+                  "$ref": "#/components/schemas/OrgUserOut"
                 }
               }
             },
@@ -1260,7 +1266,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserOut"
+                  "$ref": "#/components/schemas/OrgUserOut"
                 }
               }
             },

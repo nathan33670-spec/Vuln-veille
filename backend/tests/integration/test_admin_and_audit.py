@@ -126,9 +126,9 @@ async def test_client_admin_manages_only_its_organization(
     assert "https://portal.test/invitation#token=" in api.mailer.outbox[-1].body
 
     listed = (await api.client.get(api.url("/org/users"))).json()
-    assert {u["email"] for u in listed["items"]} == {
-        "ref@acme.example.com",
-        "colleague@acme.example.com",
+    assert {u["email"]: u["role"] for u in listed["items"]} == {
+        "ref@acme.example.com": "client_admin",
+        "colleague@acme.example.com": "client_user",
     }
     foreign = await api.client.patch(
         api.url(f"/org/users/{other.id}"), json={"status": "disabled"}, headers=headers

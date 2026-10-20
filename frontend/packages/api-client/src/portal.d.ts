@@ -472,6 +472,45 @@ export interface components {
       /** Code */
       code: string;
     };
+    /**
+     * OrgUserOut
+     * @description A member of the caller's organization, as its referent sees it.
+     */
+    OrgUserOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Display Name */
+      display_name: string;
+      /** Email */
+      email: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Last Login At */
+      last_login_at: string | null;
+      /** Locked */
+      locked: boolean;
+      /** Mfa Enabled */
+      mfa_enabled: boolean;
+      /** Role */
+      role: string;
+      /** Status */
+      status: string;
+      /** User Type */
+      user_type: string;
+    };
+    /** OrgUserPage */
+    OrgUserPage: {
+      /** Items */
+      items: components["schemas"]["OrgUserOut"][];
+      /** Next Cursor */
+      next_cursor: string | null;
+    };
     /** OrgUserUpdate */
     OrgUserUpdate: {
       /** Display Name */
@@ -540,40 +579,6 @@ export interface components {
       password: string;
       /** Token */
       token: string;
-    };
-    /** UserOut */
-    UserOut: {
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-      /** Display Name */
-      display_name: string;
-      /** Email */
-      email: string;
-      /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /** Last Login At */
-      last_login_at: string | null;
-      /** Locked */
-      locked: boolean;
-      /** Mfa Enabled */
-      mfa_enabled: boolean;
-      /** Status */
-      status: string;
-      /** User Type */
-      user_type: string;
-    };
-    /** UserPage */
-    UserPage: {
-      /** Items */
-      items: components["schemas"]["UserOut"][];
-      /** Next Cursor */
-      next_cursor: string | null;
     };
     /** ValidationError */
     ValidationError: {
@@ -1029,7 +1034,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["UserPage"];
+          "application/json": components["schemas"]["OrgUserPage"];
         };
       };
       /** @description Validation Error */
@@ -1062,7 +1067,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["UserOut"];
+          "application/json": components["schemas"]["OrgUserOut"];
         };
       };
       /** @description Validation Error */
@@ -1097,7 +1102,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["UserOut"];
+          "application/json": components["schemas"]["OrgUserOut"];
         };
       };
       /** @description Validation Error */

@@ -49,6 +49,17 @@ class UserPage(BaseModel):
     next_cursor: str | None
 
 
+class OrgUserOut(UserOut):
+    """A member of the caller's organization, as its referent sees it."""
+
+    role: str
+
+
+class OrgUserPage(BaseModel):
+    items: list[OrgUserOut]
+    next_cursor: str | None
+
+
 class InternalUserCreate(StrictIn):
     email: EmailStr = Field(max_length=254)
     display_name: str = DisplayName

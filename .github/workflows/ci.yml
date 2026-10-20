@@ -138,5 +138,5 @@ jobs:
             caddy api-backoffice api-portal scheduler worker-default
           ./scripts/smoke-test.sh
       - name: Stack logs on failure
-        if: failure()
+        if: failure() && hashFiles('.env') != ''
         run: docker compose -f deploy/docker-compose.yml --env-file .env logs --tail=200

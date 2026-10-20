@@ -102,7 +102,8 @@ Un nouveau modèle sur un serveur compatible OpenAI (OpenLLM, vLLM, Ollama…) *
 - Ajouter une dépendance uniquement si elle est maintenue (version récente, mainteneurs actifs), avec une licence compatible et sans vulnérabilité connue.
 - Épingler la version dans `uv.lock` ou `pnpm-lock.yaml` ; prendre une version publiée depuis au moins deux semaines. C'est automatique : `exclude-newer` dans `backend/pyproject.toml` (date à avancer délibérément) et `minimumReleaseAge` dans `frontend/pnpm-workspace.yaml`.
 - **Exception : correctif de sécurité.** Un correctif d'une vulnérabilité connue s'applique tout de suite, paquet par paquet (`exclude-newer-package` côté Python), avec la référence de l'avis en commentaire.
-- Images Docker et GitHub Actions : épinglées par digest ou SHA de commit, avec la version en commentaire. Caddy et smokescreen sont compilés depuis les sources avec une chaîne Go corrigée : au moindre avis Go ou `x/net`, monter les versions dans leurs Dockerfiles.
+- Images Docker et GitHub Actions : épinglées par digest ou SHA de commit, avec la version en commentaire.
+- **Caddy et smokescreen** sont compilés depuis les sources avec une chaîne Go corrigée. Leurs dépendances sont figées dans `deploy/caddy/build/` et `deploy/smokescreen/build/` (`go.mod`, `go.sum`) : la compilation vérifie chaque module contre `go.sum` sans jamais résoudre de version. Pour monter une version (avis Go, `x/net`…), dans le dossier `build/` concerné, avec l'image Go du Dockerfile : supprimer `go.mod` et `go.sum`, puis `go mod init <module>`, `go get <paquet>@<version> golang.org/x/net@<version> …`, `go mod tidy`, et commiter les deux fichiers (dans l'environnement cloud : `docker run --network host` avec `HTTPS_PROXY` et `SSL_CERT_FILE` pointant sur l'autorité du proxy).
 - TypeScript est figé en 6.x (`overrides` pnpm) tant que l'outillage ne prend pas en charge TypeScript 7.
 - Justifier l'ajout dans le message de commit.
 

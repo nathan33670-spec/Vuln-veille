@@ -77,7 +77,7 @@ Le payload est **construit comme un objet JSON** puis sérialisé : aucune injec
 
 ## 5. Règles de sécurité
 
-- Permissions : `connector.manage` pour configurer, `connector.push` pour envoyer ; le bulletin doit être `approved` ou `published`.
+- Permissions : `connector.publish.manage` pour configurer, `connector.publish.push` pour envoyer ; le bulletin doit être `approved` ou `published`.
 - Ré-authentification MFA pour créer ou modifier un connecteur et pour le premier envoi d'un bulletin vers un connecteur.
 - SafeHttpClient : l'hôte de `base_url` est épinglé, aucune redirection vers un autre hôte, les plages privées sont refusées. L'exception `allow_private_network` (cible interne) exige un admin plateforme, une liste de CIDR explicite et laisse une trace dans l'audit.
 - Secrets en écriture seule ; masqués dans le dry-run et les journaux ; filtrés des réponses journalisées si l'API distante les renvoie en écho.

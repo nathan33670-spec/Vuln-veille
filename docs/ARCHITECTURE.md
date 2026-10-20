@@ -6,13 +6,15 @@
 flowchart LR
     subgraph Internet
         CL[Clients<br/>navigateur]
-        SRC[Sources externes<br/>NVD, GitHub, X, SO, RSS…]
-        LLM[Fournisseurs LLM]
+        NVDAPI[NVD API 2.0<br/>vecteur d'entrée n°1]
+        SRC[Autres sources<br/>GitHub, X, SO, réseaux, RSS…]
+        LLM[Moteur IA cloud<br/>Claude aujourd'hui]
         RAPI[API distantes<br/>cibles de publication]
     end
 
     subgraph Interne["Réseau interne / VPN"]
         AN[Analystes VOC / CERT<br/>Admins]
+        OLLM[LLM open source<br/>auto-hébergé, demain]
     end
 
     subgraph Plateforme
@@ -42,7 +44,8 @@ flowchart LR
     RD --> WD & WC & WA & WP
     WD & WC & WA & WP --> PG
     WC & WA & WP --> EG
-    EG --> SRC & LLM & RAPI
+    EG --> NVDAPI & SRC & LLM & RAPI
+    WA -. réseau privé autorisé .-> OLLM
 ```
 
 Points structurants :
@@ -51,6 +54,9 @@ Points structurants :
 - **Deux SPA** séparées : le client ne télécharge jamais le code du back-office.
 - **Workers spécialisés par file**. Chaque type de worker ne reçoit que les secrets nécessaires : collecte (secrets des sources), IA (clés LLM), publication (secrets des connecteurs).
 - **Toute sortie réseau** des workers passe par le proxy smokescreen, qui bloque les plages internes ; le réseau Docker des workers n'a pas de route directe vers Internet.
+- **Vecteur d'entrée n°1 : NVD.** Une synchronisation globale détecte chaque nouvelle CVE et émet `cve.published`, ce qui lance dans chaque espace concerné le workflow d'investigation par les agents de veille (§6.1).
+- **Connecteurs** : tout accès externe (sources de veille, moteurs IA, cibles de publication) passe par un connecteur configuré depuis l'interface (ADR-021, spec 07).
+- **Moteur IA interchangeable** : Claude aujourd'hui, LLM open source auto-hébergé demain, par configuration (ADR-011). Un moteur auto-hébergé se branche sur le réseau privé, sur autorisation admin.
 
 ## 2. Stack technique
 
@@ -71,7 +77,7 @@ Les versions exactes sont épinglées en phase 0, en prenant la dernière versio
 | Expressions | jmespath |
 | Markdown | markdown-it-py (HTML brut désactivé) et nh3 (assainissement) |
 | Sécurité | argon2-cffi, pyotp, webauthn (phase 10), cryptography (AES-GCM) |
-| LLM | SDK officiel `anthropic` ; SDK `openai` pour les fournisseurs compatibles (Mistral, Azure, vLLM, Ollama) |
+| Moteurs IA | Abstraction `AIEngine` ; Claude via le SDK officiel `anthropic` (moteur préféré aujourd'hui) ; LLM open source auto-hébergés (OpenLLM, vLLM, Ollama) et Mistral ou Azure via le SDK `openai` en mode compatible |
 | Logs | structlog en JSON, OpenTelemetry (phase 10) |
 | Outillage | uv, ruff, mypy strict, pytest, pytest-asyncio, testcontainers, schemathesis, bandit, pip-audit |
 
@@ -83,7 +89,7 @@ Les versions exactes sont épinglées en phase 0, en prenant la dernière versio
 | Routage et données | React Router, TanStack Query |
 | Client API | Généré depuis OpenAPI (openapi-typescript et openapi-fetch) |
 | Éditeur de workflows | @xyflow/react (React Flow) |
-| Formulaires | react-hook-form et zod ; formulaires de nœuds générés depuis le JSON Schema (RJSF ou moteur maison léger, à trancher en phase 4) |
+| Formulaires | react-hook-form et zod ; formulaires de nœuds générés depuis le JSON Schema (RJSF ou moteur maison léger, à trancher en phase 5) |
 | Éditeurs de code | CodeMirror 6 (Liquid, JSON, JMESPath, Markdown) : léger et compatible avec une CSP stricte |
 | UI | Tailwind CSS et shadcn/ui (Radix) |
 | i18n | react-i18next (français par défaut) |
@@ -123,12 +129,16 @@ Vuln-veille/
 │   │   ├── iam/                 # users, auth, mfa, sessions, csrf, rbac, workspaces, clients
 │   │   ├── audit/
 │   │   ├── secrets/
-│   │   ├── catalog/             # CVE publiques : NVD, KEV, EPSS
+│   │   ├── connectors/          # cadre commun + types : nvd, cisa_kev, epss, github, x,
+│   │   │                        # stackexchange, mastodon, bluesky, reddit, rss, web, osv…
+│   │   ├── catalog/             # CVE publiques, synchro NVD, détection des changements, événements
+│   │   ├── watch_scope/         # périmètre de veille par espace
 │   │   ├── technologies/        # catalogue, demandes, abonnements
 │   │   ├── collect/             # éléments collectés, adaptateurs de sources
 │   │   ├── vulns/
 │   │   ├── workflows/           # models, api, engine/, nodes/
-│   │   ├── ai/                  # providers/, agents, runtime, tools/, guards
+│   │   ├── ai/                  # engines/ (anthropic, openai_compatible), agents, runtime,
+│   │   │                        # tools/, guards, evaluation/ (banc de comparaison des moteurs)
 │   │   ├── bulletins/           # templates, drafting, rendering, lifecycle
 │   │   ├── publishing/          # connectors, mapping, exports (csaf…)
 │   │   └── portal/              # routes et schémas exposés aux clients
@@ -165,26 +175,38 @@ Chaque module backend suit la même structure : `models.py` (ORM), `schemas.py` 
 
 ## 6. Flux principaux
 
-### 6.1 Collecte vers vulnérabilité non qualifiée
+### 6.1 Flux principal : nouvelle CVE sur NVD → investigation par les agents
 
 ```mermaid
 sequenceDiagram
     participant S as Scheduler
-    participant E as Exécuteur (worker default)
     participant C as Worker collect
-    participant A as Worker ai
+    participant NVD as NVD API 2.0
     participant DB as PostgreSQL
-    S->>DB: déclencheurs dus (SKIP LOCKED)
-    S->>E: créer workflow_run (version figée)
-    E->>C: nœuds source.* (RSS, NVD, GitHub, X…)
-    C->>DB: collected_items (dédupliqués, non fiables)
-    E->>E: transform.extract_cve / dedupe / filter
-    E->>A: ai.relevance / ai.classify (optionnel)
-    E->>DB: vuln.upsert (statut new) + preuves
-    DB-->>E: outbox vuln.created
-    E->>A: workflow « Investigation CVE » (agent + outils lecture seule)
+    participant D as Dispatcher (outbox)
+    participant E as Exécuteur (worker default)
+    participant A as Worker ai
+    S->>C: catalog.nvd_sync (toutes les 2 h par défaut)
+    C->>NVD: CVE modifiées depuis le curseur (via proxy)
+    C->>DB: upsert cve_records + cve_changes + outbox cve.published / cve.updated
+    D->>DB: espaces abonnés (trigger.cve_published actif)
+    D->>E: workflow_run par espace (VOC, CERT…)
+    E->>E: vuln.scope_match (périmètre de veille de l'espace)
+    E->>DB: vuln.upsert (statut new), enrich, match_technologies
+    E->>A: agent de triage
+    par agents de veille en parallèle
+        A->>A: PoC GitHub (connecteur github)
+        A->>A: réseaux sociaux (x, mastodon, bluesky)
+        A->>A: forums (stackexchange, reddit)
+        A->>A: avis éditeurs (web, osv)
+    end
+    A->>DB: preuves (collected_items, evidence)
+    E->>A: agent de synthèse (sans outil externe)
     A->>DB: synthèse IA sourcée (vulnerability_analyses)
+    E->>E: notify si KEV, exploitation ou P1
 ```
+
+Chaque appel d'agent passe par le **moteur IA résolu** (épinglé sur l'agent, sinon moteur préféré de l'espace, sinon de la plateforme) : Claude aujourd'hui, un LLM open source demain. Les flux secondaires (saisie manuelle, re-veille, flux RSS et avis, entrée dans le périmètre après enrichissement NVD) réutilisent la même chaîne (spec 02 §8).
 
 ### 6.2 Demande unitaire de draft
 

@@ -47,6 +47,11 @@ Référentiels : OWASP ASVS 5.0 (niveau 2, niveau 3 visé pour l'authentificatio
 | S18 | Dépendance compromise | Lockfiles avec hachages, Renovate, pip-audit et osv-scanner, pnpm audit, SBOM CycloneDX, Trivy, actions CI épinglées par SHA |
 | S19 | Compromission d'un conteneur | Non-root, FS en lecture seule, `no-new-privileges`, capacités supprimées, réseaux séparés, secrets limités à chaque worker, rôles DB distincts |
 | S20 | Énumération de comptes ou d'objets | Réponses identiques et temps constant au login et à la réinitialisation, UUID, 404 hors périmètre |
+| S21 | Faux PoC piégés (dépôt GitHub contenant un malware qui cible les chercheurs) | Aucun code récupéré n'est exécuté ; `github_get` ne renvoie que du texte borné, ni binaire ni archive ; l'agent PoC signale les indices de piège ; l'interface avertit avant d'ouvrir un lien de PoC (`rel="noopener noreferrer"`) |
+| S22 | Moteur IA auto-hébergé exposé ou compromis | TLS et jeton, réseau privé, exception réseau autorisée par un admin et auditée, jamais exposé sur Internet, modèles en `safetensors` d'une source vérifiée (empreinte) |
+| S23 | Inondation d'événements NVD (rattrapage, pic de publications, CVE en masse) | Rattrapage sans événements, périmètre de veille en amont des agents, débit de diffusion borné par espace, budget par CVE et par mois |
+| S24 | Données sensibles envoyées au mauvais moteur IA | Politique de données par moteur (localisation, classes autorisées) vérifiée par le constructeur de contexte avant chaque appel ; abonnements clients jamais envoyés à un LLM |
+| S25 | Abus d'un connecteur payant (X) ou épuisement de quotas | Budget mensuel et plafond par exécution obligatoires, arrêt dur, alertes, quotas par agent |
 
 ## 4. Mesures détaillées
 
@@ -118,13 +123,15 @@ Pas de CORS : les SPA et les API partagent la même origine. Les images externes
 | Risque | Mesure |
 |---|---|
 | LLM01 Injection de prompt | Contenu collecté passé comme document balisé avec sa provenance, consigne système explicite (ces blocs sont des données), mélange par messages système en cours de conversation pour les consignes opérateur, détection heuristique d'injection signalée à l'analyste sans blocage silencieux |
-| LLM02 Divulgation d'informations sensibles | Aucune donnée client, aucun secret ni aucune donnée TLP:RED envoyés au LLM sans politique d'espace l'autorisant ; fournisseurs autorisés par espace |
+| LLM02 Divulgation d'informations sensibles | Aucune donnée client, aucun secret ni aucune donnée TLP:RED envoyés au LLM sans politique l'autorisant ; chaque moteur IA déclare sa localisation (cloud externe ou auto-hébergé) et les classes de données qu'il peut recevoir, ce qui est vérifié avant chaque appel |
 | LLM05 Traitement non sûr des sorties | Sorties structurées validées par Pydantic ; Markdown assaini ; liens vérifiés (schéma, domaine affiché) ; jamais exécutées ni rendues comme gabarit |
 | LLM06 Agentivité excessive | Outils en lecture seule ; les écritures en base sont faites par des nœuds déterministes après validation ; publication uniquement par un humain |
 | LLM09 Désinformation | Citations obligatoires vers les preuves, niveau de confiance, relecture humaine, mention « généré par IA » dans l'interface interne |
 | LLM10 Consommation non bornée | Limites de tours, de tokens et d'appels d'outils, timeouts, budgets mensuels avec arrêt dur, quotas par utilisateur |
 
 Les sujets de vulnérabilités et d'exploits peuvent déclencher les classifieurs de sécurité du fournisseur (stop reason `refusal`, catégorie `cyber`). Le runtime les gère sans planter : fallback serveur activé, statut explicite, possibilité de relancer, journalisation.
+
+Ces mesures sont indépendantes du moteur : le corpus de tests d'injection tourne avec l'adaptateur Claude et l'adaptateur compatible OpenAI, et un changement de moteur préféré exige de repasser le banc d'évaluation.
 
 ### 4.9 Journal d'audit
 

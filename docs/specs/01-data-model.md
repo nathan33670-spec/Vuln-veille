@@ -31,7 +31,9 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 
 | Table | Colonnes principales |
 |---|---|
-| `cve_records` [G] | `cve_id` (PK, texte), `published_at`, `last_modified_at`, `description`, `cvss` (JSONB : v4.0, v3.1 avec vecteurs et scores), `cwes` (text[]), `references` (JSONB), `cpe_configurations` (JSONB), `kev` (JSONB : date d'ajout, échéance, ransomware), `epss_score`, `epss_percentile`, `epss_date`, `vuln_status` (statut NVD), `synced_at` |
+| `cve_records` [G] | `cve_id` (PK, texte), `published_at`, `last_modified_at`, `description`, `cvss` (JSONB : v4.0, v3.1 avec vecteurs, scores et source NVD ou CNA), `cwes` (text[]), `references` (JSONB, avec étiquettes NVD), `cpe_configurations` (JSONB), `kev` (JSONB : date d'ajout, échéance, action requise, ransomware), `epss_score`, `epss_percentile`, `epss_date`, `vuln_status` (statut NVD : Received, Awaiting Analysis, Analyzed, Rejected…), `first_seen_at` (première détection par la plateforme), `from_backfill` (booléen), `synced_at` |
+| `cve_changes` [G] | `id` (bigserial), `cve_id`, `detected_at`, `change_types` (text[] : `published`, `cvss_added`, `severity_raised`, `cpe_added`, `kev_added`, `exploit_reference_added`, `rejected`), `diff` (JSONB) |
+| `sync_cursors` [G] | `connector_id` (PK), `cursor` (JSONB : fin de la dernière fenêtre réussie…), `last_success_at`, `last_error`, `running_since` |
 | `technologies` [G] | `vendor`, `product`, `display_name`, `aliases` (text[]), `cpe_prefixes` (text[]), `purls` (text[]), `category`, `status` (`active`, `deprecated`, `merged`), `merged_into`, `created_from_request_id` ; index trigramme pour la recherche approchée |
 | `technology_requests` [C] | `client_org_id`, `requested_by`, `vendor`, `product`, `url`, `justification`, `status` (`pending`, `approved`, `rejected`, `duplicate`), `resolved_technology_id`, `reviewer_id`, `review_comment`, `resolved_at` |
 | `subscriptions` [C] | `client_org_id`, `user_id` (null = toute l'organisation), `technology_id`, `min_severity`, `channels` (JSONB) |
@@ -40,6 +42,7 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 
 | Table | Colonnes principales |
 |---|---|
+| `watch_scopes` [E] | Périmètre de veille (un par espace) : `mode` (`all`, `scoped`), `technology_ids` (uuid[]), `vendors`, `keywords` (text[]), `cvss_min`, `include_unscored` (`include`, `wait`, `exclude`), `always_include_kev`, `cwe_include`, `cwe_exclude` (text[]), `include_client_subscriptions` (phase 9), `version` |
 | `watch_sources` [E] | `name`, `type` (`rss`, `x_account`, `github_repo`, `mastodon_account`, `website`…), `config` (JSONB), `tags` (text[]), `trust_level`, `enabled` |
 | `collected_items` [E] | `run_id`, `node_id`, `source_type`, `source_ref`, `url`, `url_hash`, `title`, `content_text` (plafonné), `author`, `published_at`, `fetched_at`, `content_hash`, `cve_ids` (text[]), `language`, `raw` (JSONB plafonné), `trust` (toujours `untrusted`) ; unique (`workspace_id`, `content_hash`) |
 | `dedupe_keys` [E] | `namespace`, `key_hash`, `first_seen_at`, `expires_at` |
@@ -80,12 +83,17 @@ new ──► triage ──► qualified
 
 ## 7. IA
 
+Les moteurs IA sont des connecteurs de famille `ai_engine` (section 9).
+
 | Table | Colonnes principales |
 |---|---|
-| `llm_providers` [E] | `kind` (`anthropic`, `openai_compatible`), `name`, `base_url`, `secret_id`, `allowed_models` (text[]), `data_policy` (JSONB : classes de données autorisées), `enabled` |
-| `ai_agents` [E] | `name`, `description`, `active_version_id`, `enabled` |
-| `ai_agent_versions` [E] | `agent_id`, `version_no`, `provider_id`, `model`, `effort`, `system_prompt`, `tools` (text[]), `tool_config` (JSONB : domaines autorisés…), `output_schema` (JSONB), `limits` (JSONB : tours, tokens, appels d'outils, timeout) ; **immuable** |
-| `agent_runs` [E] | `agent_version_id`, `context_type` (`node_run`, `draft_request`, `vulnerability`, `test`), `context_id`, `status`, `stop_reason`, `refusal_category`, `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cost_estimate`, `started_at`, `finished_at`, `error` |
+| `ai_models` [E ou G] | `connector_id` (moteur), `model_id` (par exemple `claude-opus-5-5`), `display_name`, `capabilities` (JSONB : `tools`, `structured_output`, `context_window`, `max_output_tokens`, `reasoning_levels`, `streaming`, `prompt_cache`), `capabilities_verified_at`, `price_input_per_mtok`, `price_output_per_mtok`, `enabled` |
+| `ai_engine_preferences` [G] | `scope` (`platform` ou un `workspace_id`), `connector_id`, `model_id`, `changed_by`, `changed_at`, `evaluation_report_id` (rapport du banc ayant justifié la bascule) |
+| `ai_evaluations` [E ou G] | `dataset_id`, `candidate` (moteur et modèle), `baseline`, `status`, `metrics` (JSONB), `report`, `cost`, `created_by`, `created_at` |
+| `ai_eval_datasets` [E ou G] | `name`, `items` (JSONB : CVE et sorties attendues validées par les analystes) |
+| `ai_agents` [E] | `name`, `description`, `active_version_id`, `enabled`, `preset` (agent prédéfini d'origine, le cas échéant) |
+| `ai_agent_versions` [E] | `agent_id`, `version_no`, `engine_mode` (`inherit`, `pinned`), `engine_connector_id`, `model_id`, `reasoning_level`, `system_prompt`, `prompt_variants` (JSONB par moteur), `allowed_connectors` (uuid[]), `tools` (text[]), `tool_config` (JSONB : domaines autorisés…), `output_schema` (JSONB), `limits` (JSONB : tours, tokens, appels d'outils, timeout, coût maximal), `data_classes` (text[]) ; **immuable** |
+| `agent_runs` [E] | `agent_version_id`, `context_type` (`node_run`, `draft_request`, `vulnerability`, `test`, `evaluation`), `context_id`, `engine_connector_id`, `model_requested`, `model_served`, `status`, `stop_reason`, `refusal_category`, `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cost_estimate`, `started_at`, `finished_at`, `error` |
 | `agent_steps` [E] | `agent_run_id`, `seq`, `type` (`llm_call`, `tool_call`, `tool_result`), `payload` (JSONB plafonné, expurgé), `created_at` |
 | `llm_budgets` [E] | `period` (mois), `limit_usd`, `spent_usd`, `hard_stop` |
 
@@ -110,11 +118,11 @@ generating ──► draft ◄──► in_review ──► approved ──► p
      └──► generation_failed                 └─► draft      └─► (nouvelle révision → in_review → published)
 ```
 
-## 9. Publication
+## 9. Connecteurs et publication
 
 | Table | Colonnes principales |
 |---|---|
-| `connectors` [E] | `name`, `kind` (`http_generic`, `email`, `csaf_export`…), `config` (JSONB non secret), `secret_refs` (JSONB), `allow_private_network`, `private_network_cidrs`, `private_network_approved_by`, `enabled`, `version` |
+| `connectors` [E ou G] | `workspace_id` (nul = global, géré par un admin), `family` (`source`, `ai_engine`, `publish`), `kind` (`nvd`, `cisa_kev`, `epss`, `github`, `x`, `stackexchange`, `mastodon`, `bluesky`, `reddit`, `rss`, `web`, `osv`, `http_api`, `anthropic`, `openai_compatible`, `http_generic`, `csaf_export`…), `name`, `config` (JSONB non secret, validé par le schéma du type), `secret_refs` (JSONB), `quotas` (JSONB : débit, budget mensuel, plafond par exécution), `usage_current_period` (JSONB), `egress_domains` (text[]), `allow_private_network`, `private_network_cidrs`, `private_network_approved_by`, `data_policy` (JSONB, moteurs IA : localisation, classes de données), `last_check_at`, `last_success_at`, `last_error`, `consecutive_failures`, `enabled`, `version` |
 | `publications` [E] | `bulletin_id`, `revision_id`, `connector_id`, `connector_version`, `status` (`pending`, `sending`, `succeeded`, `failed`, `dry_run`), `attempt`, `idempotency_key`, `remote_id`, `request_preview` (JSONB expurgé), `response_status`, `response_excerpt`, `error`, `triggered_by` |
 
 ## 10. Portail

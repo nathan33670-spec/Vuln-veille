@@ -4,8 +4,10 @@
 
 **Vuln-Veille** est une plateforme multi-utilisateur de veille vulnérabilités :
 
+- **vecteur d'entrée n°1 : chaque nouvelle CVE publiée sur NVD** lance automatiquement les agents de veille (ADR-020) ;
 - un **orchestrateur de workflows** visuel (type n8n, moteur natif) éditable depuis l'application ;
-- des **agents IA** qui collectent et synthétisent l'information (X, GitHub, Stack Overflow, flux RSS, NVD…) ;
+- des **agents de veille** paramétrables par espace (PoC GitHub, X et réseaux, Stack Overflow, avis éditeurs, synthèse), qui accèdent à l'extérieur uniquement par des **connecteurs** configurés dans l'interface (ADR-021, ADR-022) ;
+- un **moteur IA interchangeable** : Claude aujourd'hui, LLM open source auto-hébergé demain, par configuration (ADR-011) ;
 - une **qualification** des vulnérabilités par les analystes (VOC et CERT, espaces cloisonnés) ;
 - la **rédaction assistée de bulletins** selon des modèles paramétrables ;
 - la **publication** vers un portail client et vers des API distantes (connecteur HTTP générique) ;
@@ -35,7 +37,9 @@ La sécurité est une exigence de premier rang : voir `docs/SECURITY.md`.
 - Autorisation **refusée par défaut** : chaque route déclare sa permission, et un test fait échouer la CI si une route n'en déclare pas.
 - Toute donnée d'espace (VOC/CERT) est filtrée par `workspace_id` dans le code **et** par la Row-Level Security PostgreSQL.
 - Aucune exécution de code fourni par l'utilisateur : pas de nœud « Code », pas d'`eval`. Les expressions passent par JMESPath et les gabarits par Liquid.
-- Tout appel HTTP sortant passe par `SafeHttpClient` (anti-SSRF) **et** par le proxy de sortie.
+- Tout appel HTTP sortant passe par `SafeHttpClient` (anti-SSRF) **et** par le proxy de sortie, et tout accès à un service externe passe par un **connecteur** (jamais d'identifiants dans les paramètres d'un nœud).
+- Aucun code propre à un fournisseur IA en dehors de `backend/app/ai/engines/` : les agents n'utilisent que les paramètres abstraits d'`AIEngine`, pour que le passage de Claude à un LLM open source reste une simple configuration.
+- Aucun code récupéré (PoC, dépôts) n'est jamais exécuté.
 - Le contenu collecté et les sorties des LLM ne sont **pas fiables** : validation par schéma, assainissement, jamais interprétés comme gabarit ou instruction, jamais publiés sans validation humaine.
 - Les secrets sont chiffrés au repos, en écriture seule via l'API, et jamais journalisés. Aucun secret ni identifiant par défaut dans le dépôt.
 - Les réponses de l'API passent par des schémas Pydantic dédiés, jamais par une sérialisation directe de l'ORM, surtout côté portail.

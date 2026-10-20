@@ -4,10 +4,13 @@
 
 Donner aux analystes vulnérabilités (VOC) et au CERT un outil unique qui :
 
-1. **collecte** automatiquement l'information utile (sources officielles, éditeurs, réseaux sociaux, GitHub, forums) grâce à des workflows et des agents IA ;
-2. **pré-mâche** le travail : regroupement par vulnérabilité, enrichissement (CVSS, EPSS, KEV), détection de PoC et d'exploitation, synthèse sourcée ;
-3. **accélère la rédaction** de bulletins selon des modèles paramétrables propres à chaque sujet ;
-4. **diffuse** les bulletins validés vers les clients (portail) et vers des systèmes tiers (API).
+1. **détecte chaque nouvelle CVE publiée sur NVD** : c'est le **vecteur d'entrée n°1**, qui déclenche automatiquement les agents de veille ;
+2. **fait chercher les agents IA** sur X, GitHub, Stack Overflow, les avis éditeurs et les flux, pour trouver PoC, exploitation, correctifs et discussions ;
+3. **pré-mâche** le travail : vulnérabilité non qualifiée créée, enrichie (CVSS, EPSS, KEV, technos) et accompagnée d'une synthèse sourcée ;
+4. **accélère la rédaction** de bulletins selon des modèles paramétrables propres à chaque sujet ;
+5. **diffuse** les bulletins validés vers les clients (portail) et vers des systèmes tiers (API).
+
+Le moteur IA est **interchangeable** : Claude est le moteur préféré aujourd'hui, et un LLM open source auto-hébergé pourra le remplacer demain par simple configuration.
 
 L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et publie.
 
@@ -18,14 +21,18 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 | VOC | Vulnerability Operations Center : équipe des analystes vulnérabilités |
 | CERT | Équipe CERT, avec son propre espace cloisonné (agents, workflows, configuration) |
 | Espace (workspace) | Périmètre de cloisonnement des données métier (VOC, CERT, d'autres possibles) |
-| Vulnérabilité non qualifiée | Vulnérabilité détectée par un workflow (statut `new` ou `triage`) et pas encore évaluée par un analyste |
+| Vecteur d'entrée NVD | Publication d'une nouvelle CVE sur NVD, détectée par la synchronisation et transformée en événement `cve.published` qui lance les workflows |
+| Périmètre de veille | Règles d'un espace (technos suivies, mots-clés, seuils CVSS, KEV…) qui décident si une nouvelle CVE mérite une investigation |
+| Vulnérabilité non qualifiée | Vulnérabilité créée par un workflow (statut `new` ou `triage`) et pas encore évaluée par un analyste |
 | Qualification | Décision de l'analyste : pertinente (`qualified`), rejetée, doublon ou en surveillance |
+| Connecteur | Configuration d'accès à un service externe. Trois familles : **veille** (NVD, GitHub, X…), **moteur IA** (Claude, LLM open source), **publication** (API distantes) |
+| Moteur IA préféré | Moteur et modèle utilisés par défaut par les agents (plateforme, surchargeable par espace et par agent) |
+| Agent de veille | Agent IA spécialisé (PoC GitHub, réseaux sociaux, forums, avis éditeurs, synthèse…) configurable par espace |
 | Élément collecté | Contenu brut récupéré par une source (post, advisory, issue GitHub…), considéré comme non fiable |
 | Preuve (evidence) | Élément collecté rattaché à une vulnérabilité (PoC, exploit, correctif, discussion…) |
-| Synthèse IA | Dossier structuré produit par un agent pour une vulnérabilité, avec citations des sources |
+| Synthèse IA | Dossier structuré produit par les agents pour une vulnérabilité, avec citations des sources |
 | Modèle de bulletin | Gabarit paramétrable : champs, consignes de génération, rendu, règles d'application par sujet |
 | Draft | Bulletin généré par l'IA, en attente d'édition et de validation |
-| Connecteur | Configuration d'envoi vers une API distante (URL, authentification, mapping des champs) |
 | Techno | Entrée du catalogue des technologies (éditeur et produit, CPE/purl, alias) |
 | TLP | Traffic Light Protocol 2.0 : marquage de diffusion des bulletins |
 
@@ -33,35 +40,36 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 
 | Profil | Ce qu'il fait |
 |---|---|
-| **Admin plateforme** | Gère les utilisateurs, rôles, espaces, organisations clientes et paramètres de sécurité globaux. Rôle cumulable, attribuable à des analystes VOC. |
-| **Analyste VOC** | Voit les vulnérabilités non qualifiées de l'espace VOC, les qualifie, édite les workflows, agents et configuration VOC, demande des drafts, édite, valide, publie et pousse via API. |
-| **Analyste CERT** | Mêmes capacités que l'analyste VOC, dans l'espace CERT uniquement, sans la partie admin plateforme. Gère ses propres agents et sa configuration. |
+| **Admin plateforme** | Gère les utilisateurs, rôles, espaces, organisations clientes, connecteurs globaux (NVD, KEV, EPSS), moteur IA préféré de la plateforme et paramètres de sécurité. Rôle cumulable, attribuable à des analystes VOC. |
+| **Analyste VOC** | Voit les vulnérabilités non qualifiées de l'espace VOC, les qualifie, paramètre le périmètre de veille, les connecteurs de veille, les agents et les workflows VOC, demande des drafts, édite, valide, publie et pousse via API. |
+| **Analyste CERT** | Mêmes capacités que l'analyste VOC, dans l'espace CERT uniquement, sans la partie admin plateforme. Gère ses propres agents, connecteurs et configuration. |
 | **Client** | Voit uniquement les bulletins publiés qui lui sont destinés. Plus tard : abonnement à des technos et demande d'ajout d'une techno absente. |
 
 ## 4. Périmètre fonctionnel
 
 ### 4.1 MVP (phases 0 à 8)
 
+- **Flux principal** : nouvelle CVE sur NVD → filtrage par le périmètre de veille de chaque espace → vulnérabilité non qualifiée enrichie → agents de veille → synthèse sourcée → qualification par l'analyste. Une saisie manuelle (CVE ou vulnérabilité sans CVE) emprunte le même chemin.
 - Authentification sécurisée : mot de passe, MFA TOTP obligatoire en interne, sessions, invitations.
 - RBAC multi-espace (VOC/CERT) et organisations clientes, journal d'audit.
-- Catalogue CVE public (NVD, CISA KEV, EPSS) et catalogue des technos.
-- Gestion des vulnérabilités : file des non qualifiées, qualification, assignation, preuves, synthèse IA, historique.
-- Moteur de workflows natif : déclencheurs, nœuds de collecte, transformation, IA, vulnérabilités, bulletins, sortie ; versions, exécutions, journaux.
-- Éditeur visuel de workflows (canvas type n8n), formulaires de paramètres, test d'un nœud, visualisation des exécutions.
-- Agents IA configurables par espace : fournisseur, modèle, prompt, outils autorisés, limites et budgets.
+- **Connecteurs** paramétrables depuis l'interface : veille (NVD, KEV, EPSS, GitHub, X, Stack Exchange, Mastodon, Bluesky, Reddit, RSS, web), moteurs IA, publication ; test de connexion, quotas, budgets, état de santé.
+- **Moteur IA interchangeable** : Claude par défaut, adaptateur compatible OpenAI pour les LLM open source (OpenLLM, vLLM, Ollama…), moteur préféré par plateforme, par espace et par agent, banc d'évaluation avant tout changement.
+- **Agents de veille paramétrables** par espace : moteur, modèle, niveau de raisonnement, prompt, connecteurs autorisés, domaines, schéma de sortie, limites et budgets ; agents prédéfinis fournis.
+- Gestion des vulnérabilités : file des non qualifiées, qualification, assignation, preuves, synthèse IA, historique, re-veille périodique (nouveaux PoC, ajout au KEV).
+- Moteur de workflows natif, puis éditeur visuel (canvas type n8n).
 - Modèles de bulletins paramétrables par sujet, demande unitaire de draft, édition, relecture, validation, publication.
-- Connecteur HTTP générique pour pousser les bulletins vers des API distantes (mapping configurable, dry-run, journal).
+- Connecteur HTTP générique pour pousser les bulletins vers des API distantes.
 - Portail client : liste, recherche et détail des bulletins publiés.
 
 ### 4.2 Après MVP
 
 - Abonnements clients par techno et notifications filtrées (phase 9, modèle de données prêt dès la phase 2).
 - Demande d'ajout de techno par un client et circuit de modération (phase 9).
-- SSO OIDC (Entra ID, Keycloak), WebAuthn/passkeys, export PDF, CSAF/STIX, connecteurs prédéfinis (MISP, OpenCTI, TheHive, Jira…), flux RSS/Atom client, navigateur headless isolé pour les sites JavaScript.
+- SSO OIDC, WebAuthn/passkeys, export PDF, STIX, connecteurs de publication prédéfinis (MISP, OpenCTI, TheHive, Jira…), flux RSS/Atom client, navigateur headless isolé.
 
 ### 4.3 Hors périmètre (sauf décision contraire)
 
-- Exécution de code arbitraire dans les workflows (nœud « Code »).
+- Exécution de code arbitraire dans les workflows (nœud « Code »), ou exécution de PoC récupérés.
 - Publication automatique vers les clients sans validation humaine.
 - Inscription libre des clients (comptes créés uniquement sur invitation).
 
@@ -72,15 +80,19 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 | Sécurité | OWASP ASVS 5.0 niveau 2 (niveau 3 visé pour l'authentification, les sessions et la cryptographie), OWASP Top 10, API Security Top 10, Top 10 LLM 2025, recommandations ANSSI (MFA, IA générative). Détail dans SECURITY.md. |
 | Cloisonnement | Isolation stricte VOC/CERT et entre clients, appliquée par le code et par la RLS PostgreSQL. |
 | Traçabilité | Journal d'audit inaltérable (chaîne de hachage) pour les actions sensibles ; provenance de chaque information produite par l'IA. |
-| Fiabilité | Exécutions de workflows reprises après crash, retries, timeouts, idempotence. |
-| Volumétrie cible (hypothèse) | Moins de 100 utilisateurs internes, moins de 1 000 utilisateurs clients, environ 10 000 éléments collectés par jour. |
+| Fiabilité | Exécutions de workflows reprises après crash, retries, timeouts, idempotence ; synchronisation NVD reprise sur curseur, sans trou ni doublon. |
+| Réactivité | Délai entre publication sur NVD et vulnérabilité visible, synthèse comprise : de l'ordre de l'intervalle de synchronisation NVD (2 h par défaut, recommandation NVD) plus quelques minutes d'investigation. Voir Q24 pour réduire ce délai. |
+| Portabilité IA | Changer de moteur IA ne demande aucune modification de code ; prompts et schémas sont indépendants du fournisseur. |
+| Volumétrie cible (hypothèse) | Moins de 100 utilisateurs internes, moins de 1 000 utilisateurs clients, environ 130 nouvelles CVE par jour sur NVD, environ 10 000 éléments collectés par jour. |
 | Disponibilité | Instance unique avec sauvegardes chiffrées et restauration testée (haute disponibilité hors MVP). |
 | Exploitabilité | Déploiement Docker Compose, configuration par variables d'environnement, métriques et logs structurés. |
 | Langue | Interface en français, i18n prête ; bulletins multilingues selon le modèle. |
 
 ## 6. Feuille de route
 
-Chaque étape se termine par du code testé, poussé, et une mise à jour de PROGRESS.md. La sécurité est traitée à chaque phase, pas seulement en phase 10. On ne coche une case que si la Definition of Done de PROCEDURES.md est remplie.
+Chaque étape se termine par du code testé, poussé, et une mise à jour de PROGRESS.md. La sécurité est traitée à chaque phase. On ne coche une case que si la Definition of Done de PROCEDURES.md est remplie.
+
+**Jalon 1 (fin de la phase 4)** : le flux principal fonctionne de bout en bout (nouvelle CVE NVD → vulnérabilité non qualifiée → agents de veille → synthèse sourcée), avec des workflows livrés en JSON. L'éditeur visuel arrive ensuite (phase 5), pour apporter de la valeur aux analystes au plus tôt.
 
 ### Phase 0 — Fondations
 
@@ -98,7 +110,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 1 — Identité, accès et audit
 
-- [ ] 1.1 Modèles `users`, `sessions`, `invitations`, `password_reset_tokens`, `user_global_roles`
+- [ ] 1.1 Modèles `users`, `sessions`, `auth_tokens`, `user_global_roles`
 - [ ] 1.2 Hachage Argon2id, politique de mots de passe (longueur minimale, liste de mots de passe compromis hors ligne)
 - [ ] 1.3 Connexion et déconnexion, sessions côté serveur (cookie `__Host-`, expirations d'inactivité et absolue, rotation), audience de session (back-office ou portail)
 - [ ] 1.4 MFA TOTP : enrôlement, vérification, anti-rejeu, codes de secours ; obligatoire pour les comptes internes
@@ -113,62 +125,73 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 **Critère de sortie** : un admin invite un analyste VOC, un analyste CERT et un client ; chacun ne voit que son périmètre ; la matrice d'autorisation est entièrement testée.
 
-### Phase 2 — Socle de données de veille
+### Phase 2 — Socle de veille et vecteur d'entrée NVD
 
 - [ ] 2.1 Coffre de secrets : chiffrement d'enveloppe AES-256-GCM, clés par usage, API en écriture seule, CLI de rotation
 - [ ] 2.2 `SafeHttpClient` anti-SSRF (résolution DNS et blocage des plages internes, épinglage d'IP, redirections revalidées, limites de taille et de temps) et proxy smokescreen, avec sa suite de tests SSRF
-- [ ] 2.3 Catalogue CVE global : synchronisation NVD API 2.0, CISA KEV, FIRST EPSS (tâches planifiées, incrémentales)
-- [ ] 2.4 Catalogue des technos : CRUD, alias, préfixes CPE, purl, recherche approchée, import depuis le dictionnaire CPE
-- [ ] 2.5 Éléments collectés (`collected_items`) avec déduplication et marquage « non fiable »
-- [ ] 2.6 Vulnérabilités : modèle, statuts, file des non qualifiées, qualification, assignation, commentaires, historique, rattachement aux technos
-- [ ] 2.7 Preuves et synthèses IA rattachées aux vulnérabilités (modèle et API ; la génération vient en phase 5)
-- [ ] 2.8 Sources de veille de l'espace (catalogue de flux et de comptes à suivre, avec tags)
-- [ ] 2.9 Interfaces : liste des vulnérabilités (filtres, tri, assignation), fiche vulnérabilité (enrichissement, preuves, chronologie, actions de qualification), catalogue des technos, sources
+- [ ] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés
+- [ ] 2.4 **Connecteur NVD (global)** : synchronisation incrémentale (`lastModStartDate`/`lastModEndDate`, pagination, pauses, backoff), curseur avec recouvrement, rattrapage initial par fenêtres de 120 jours **sans** émettre d'événements, intervalle configurable (2 h par défaut)
+- [ ] 2.5 Détection des nouveautés et changements NVD : `cve.published` (nouvelle CVE), `cve.updated` avec types de changement (CVSS ajouté ou modifié, CPE ajoutées, entrée KEV, référence d'exploit, rejet), écrits dans l'outbox et historisés (`cve_changes`)
+- [ ] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées)
+- [ ] 2.7 Catalogue des technos : CRUD, alias, préfixes CPE, purl, recherche approchée, import depuis le dictionnaire CPE
+- [ ] 2.8 Périmètre de veille par espace : technos suivies, éditeurs et mots-clés, seuil CVSS, KEV toujours inclus, filtres CWE, mode « toutes les CVE » ou « filtré »
+- [ ] 2.9 Éléments collectés (`collected_items`) avec déduplication et marquage « non fiable »
+- [ ] 2.10 Vulnérabilités : modèle, statuts, file des non qualifiées, qualification, assignation, commentaires, historique, rattachement aux technos ; création manuelle à partir d'un identifiant CVE
+- [ ] 2.11 Preuves et synthèses IA rattachées aux vulnérabilités (modèle et API ; la génération vient en phase 4)
+- [ ] 2.12 Sources de veille de l'espace (catalogue de flux et de comptes à suivre, avec tags)
+- [ ] 2.13 Interfaces : connecteurs (liste, configuration, test, santé), catalogue CVE (nouveautés NVD, recherche, bouton « Promouvoir en vulnérabilité »), périmètre de veille, liste des vulnérabilités (filtres, tri, assignation), fiche vulnérabilité (enrichissement, preuves, chronologie, actions), catalogue des technos, sources
 
-**Critère de sortie** : un analyste VOC qualifie une vulnérabilité créée à la main, enrichie par le catalogue CVE ; l'analyste CERT ne la voit pas.
+**Critère de sortie** : une CVE réellement publiée sur NVD apparaît dans le catalogue après la synchronisation, avec son événement `cve.published` ; un analyste VOC la promeut et la qualifie ; l'analyste CERT ne voit pas la vulnérabilité VOC.
 
 ### Phase 3 — Moteur de workflows
 
 - [ ] 3.1 Modèles `workflows`, `workflow_versions` (immuables), `workflow_triggers`, `workflow_runs`, `node_runs`, `workflow_approvals`
-- [ ] 3.2 Schéma JSON du graphe (v1) et validation : acyclicité, ports, paramètres, permissions, références de secrets et connecteurs du même espace
+- [ ] 3.2 Schéma JSON du graphe (v1) et validation : acyclicité, ports, paramètres, permissions, références de secrets et de connecteurs du même espace
 - [ ] 3.3 Registre des types de nœuds, avec export du JSON Schema des paramètres via l'API
 - [ ] 3.4 Exécuteur : orchestration du DAG, tâches Celery par nœud, retries, timeouts, idempotence, annulation, reprise après crash
 - [ ] 3.5 Expressions JMESPath dans les paramètres, gabarits Liquid pour les chaînes
 - [ ] 3.6 Scheduler (cron, intervalle minimal configurable), déclencheurs manuel, événement (outbox) et webhook signé HMAC
-- [ ] 3.7 Nœuds de base : déclencheurs, `source.rss`, `source.nvd`, `source.cisa_kev`, `source.github_advisories`, `source.github_search`, `source.stackexchange`, `source.http`, `transform.filter`, `transform.map`, `transform.dedupe`, `transform.extract_cve`, `transform.merge`, `transform.limit`, `vuln.upsert`, `vuln.enrich`, `vuln.match_technologies`, `control.if`, `control.approval`, `notify.email`
-- [ ] 3.8 Limites : nœuds par workflow, éléments par sortie, taille par élément, durée d'exécution, concurrence par espace
-- [ ] 3.9 API : CRUD, versions, publication d'une version, lancement, annulation, exécutions et journaux, import/export JSON
-- [ ] 3.10 Workflow d'exemple « Veille quotidienne » livré en seed (désactivé par défaut)
+- [ ] 3.7 **Déclencheurs `trigger.cve_published` et `trigger.cve_updated`** : diffusion des événements NVD globaux vers chaque espace qui a un workflow actif abonné, avec filtre et débit borné
+- [ ] 3.8 Nœuds de base : `source.rss`, `source.nvd`, `source.cisa_kev`, `source.github_advisories`, `source.http`, `transform.filter`, `transform.map`, `transform.dedupe`, `transform.extract_cve`, `transform.merge`, `transform.limit`, `vuln.scope_match`, `vuln.upsert`, `vuln.enrich`, `vuln.match_technologies`, `vuln.list`, `control.if`, `control.approval`, `notify.email`
+- [ ] 3.9 Limites : nœuds par workflow, éléments par sortie, taille par élément, durée d'exécution, concurrence par espace
+- [ ] 3.10 API : CRUD, versions, publication d'une version, lancement, annulation, exécutions et journaux, import/export JSON
+- [ ] 3.11 Workflows livrés en seed par espace (désactivés par défaut) : « Nouvelle CVE NVD » (version sans IA : périmètre, création, enrichissement, technos, notification) et « Veille quotidienne » (flux RSS et avis)
 
-**Critère de sortie** : le workflow « Veille quotidienne », défini en JSON, crée des vulnérabilités non qualifiées dédupliquées et enrichies, sur planification, avec journal par nœud.
+**Critère de sortie** : une nouvelle CVE NVD crée automatiquement, dans chaque espace dont le périmètre correspond, une vulnérabilité non qualifiée enrichie, via le workflow seed, avec un journal par nœud ; une CVE hors périmètre devient éligible quand NVD lui ajoute des CPE correspondants.
 
-### Phase 4 — Éditeur visuel de workflows
+### Phase 4 — Moteurs IA, connecteurs de veille et agents de veille (Jalon 1)
 
-- [ ] 4.1 Canvas React Flow : palette de nœuds issue du registre, glisser-déposer, connexions validées par type de port
-- [ ] 4.2 Panneau de paramètres généré depuis le JSON Schema, avec sélecteurs de secrets, connecteurs et agents
-- [ ] 4.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
-- [ ] 4.4 Exécution d'un nœud en test avec données épinglées, mode dry-run pour les nœuds de sortie
-- [ ] 4.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
-- [ ] 4.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
-- [ ] 4.7 Verrou d'édition optimiste (détection d'édition concurrente)
+- [ ] 4.1 Abstraction `AIEngine` (spec 07 §4) : complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés, paramètres abstraits (niveau de raisonnement)
+- [ ] 4.2 Adaptateur **Claude** (SDK officiel `anthropic`) : modèle par défaut `claude-opus-5-5`, effort, sorties structurées, cache de prompt, streaming, gestion du refus et fallback serveur
+- [ ] 4.3 Adaptateur **compatible OpenAI** pour les LLM open source (OpenLLM, vLLM, Ollama, et aussi Mistral, Azure OpenAI) ; mode outils émulé par sortie JSON contrainte quand le modèle n'a pas d'appel d'outils natif
+- [ ] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
+- [ ] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
+- [ ] 4.6 Connecteurs de veille : GitHub, X (budget obligatoire), Stack Exchange, Mastodon, Bluesky, Reddit, OSV, web (avis éditeurs, liste de domaines)
+- [ ] 4.7 Agents : configuration versionnée (moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt système, connecteurs autorisés, domaines, schéma de sortie, limites, budget par exécution)
+- [ ] 4.8 Runtime d'agent : boucle d'outils avec hooks (autorisation, budget, journalisation), timeouts, limites de tours
+- [ ] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_search`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
+- [ ] 4.10 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste ; détection des faux PoC piégés
+- [ ] 4.11 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
+- [ ] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
+- [ ] 4.13 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; sources `source.github_search`, `source.x`, `source.stackexchange`, `source.social`
+- [ ] 4.14 Workflow seed complet **« Nouvelle CVE NVD → investigation »** (agents de veille en parallèle, puis synthèse) et workflow de **re-veille** des vulnérabilités ouvertes (nouveaux PoC, exploitation, ajout au KEV)
+- [ ] 4.15 Interfaces : moteurs IA (moteur préféré, test de capacités), connecteurs de veille, agents (édition, bac à sable de test, historique des versions), traces d'exécution d'agent, tableau de bord des coûts
+- [ ] 4.16 **Banc d'évaluation des moteurs** : jeu de CVE de référence validé par les analystes, critères (validité du schéma, citations, exactitude, coût, latence), rapport comparatif ; prérequis à tout changement de moteur préféré
+- [ ] 4.17 Corpus de tests d'injection de prompt (contenus collectés piégés) intégré à la CI
 
-**Critère de sortie** : un analyste construit, teste et publie le workflow « Veille quotidienne » entièrement depuis l'interface.
+**Critère de sortie (Jalon 1)** : une nouvelle CVE NVD dans le périmètre produit, sans intervention, une vulnérabilité non qualifiée accompagnée d'une synthèse structurée et sourcée par les agents de veille ; un contenu piégé ne déclenche aucune action non prévue ; basculer le moteur préféré vers un point d'accès compatible OpenAI (simulé en CI) ne demande aucune modification de code.
 
-### Phase 5 — Agents IA
+### Phase 5 — Éditeur visuel de workflows
 
-- [ ] 5.1 Abstraction `LLMProvider` ; adaptateur Anthropic (SDK officiel, sorties structurées, cache de prompt, streaming, gestion du stop reason `refusal` et fallback serveur) ; adaptateur compatible OpenAI pour Mistral, Azure OpenAI, vLLM ou Ollama
-- [ ] 5.2 Fournisseurs LLM par espace (secret, modèles autorisés, politique de données)
-- [ ] 5.3 Agents : configuration versionnée (modèle, effort, prompt système, outils, liste de domaines autorisés, schéma de sortie, limites)
-- [ ] 5.4 Runtime d'agent : boucle d'outils avec hooks (autorisation, budget, journalisation), timeouts, limites de tours
-- [ ] 5.5 Outils en lecture seule : `web_fetch` (via SafeHttpClient), `github_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `stackexchange_search`, `x_search`, `internal_vuln_search`
-- [ ] 5.6 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste
-- [ ] 5.7 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
-- [ ] 5.8 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; source `source.x` (API payante, désactivée sans identifiants)
-- [ ] 5.9 Workflow d'exemple « Investigation CVE » produisant une synthèse IA sourcée
-- [ ] 5.10 Interfaces : fournisseurs, agents (édition, test interactif), traces d'exécution d'agent, tableau de bord des coûts
-- [ ] 5.11 Corpus de tests d'injection de prompt (contenus collectés piégés) intégré à la CI
+- [ ] 5.1 Canvas React Flow : palette de nœuds issue du registre, glisser-déposer, connexions validées par type de port
+- [ ] 5.2 Panneau de paramètres généré depuis le JSON Schema, avec sélecteurs de secrets, connecteurs, agents et modèles
+- [ ] 5.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
+- [ ] 5.4 Exécution d'un nœud en test avec données épinglées (par exemple, une CVE NVD réelle), mode dry-run pour les nœuds de sortie
+- [ ] 5.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
+- [ ] 5.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
+- [ ] 5.7 Verrou d'édition optimiste (détection d'édition concurrente)
 
-**Critère de sortie** : à la création d'une vulnérabilité, l'agent produit une synthèse structurée et sourcée ; un contenu piégé ne déclenche aucune action non prévue.
+**Critère de sortie** : un analyste modifie le workflow « Nouvelle CVE NVD → investigation » (ajout d'un agent, changement de filtre), le teste sur une CVE et publie la nouvelle version entièrement depuis l'interface.
 
 ### Phase 6 — Modèles de bulletins et drafts
 
@@ -176,7 +199,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 6.2 Règles de sélection par sujet (techno, éditeur, catégorie, sévérité, KEV…) avec priorités
 - [ ] 6.3 Éditeur de modèle avec aperçu calculé côté serveur sur une vulnérabilité réelle
 - [ ] 6.4 Demande unitaire de draft (depuis une vulnérabilité, un CVE, des URL ou un texte libre), exécution asynchrone, progression en SSE
-- [ ] 6.5 Génération par sortie structurée, puis rendu déterministe ; Markdown assaini en HTML
+- [ ] 6.5 Génération par sortie structurée avec le moteur IA de l'espace, puis rendu déterministe ; Markdown assaini en HTML
 - [ ] 6.6 Cycle de vie : `draft`, `in_review`, `approved`, `published`, `withdrawn` ; révisions et diff ; double validation configurable
 - [ ] 6.7 Marquage TLP, audience (tous les clients ou une sélection), technos associées
 - [ ] 6.8 Nœud `bulletin.generate_draft` pour les workflows
@@ -194,14 +217,14 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 7.6 Réseau privé autorisé uniquement par décision admin, tracée dans l'audit
 - [ ] 7.7 Export CSAF 2.0 et Markdown/JSON
 - [ ] 7.8 Nœud `publish.api` (avec approbation obligatoire) et action « Pousser » sur un bulletin
-- [ ] 7.9 Interfaces : liste et édition des connecteurs, éditeur de mapping avec aperçu, historique des envois
+- [ ] 7.9 Interfaces : liste et édition des connecteurs de publication, éditeur de mapping avec aperçu, historique des envois
 
 **Critère de sortie** : sans connaître l'API cible à l'avance, un analyste configure un connecteur depuis l'interface et pousse un bulletin validé, avec un journal complet.
 
 ### Phase 8 — Portail client
 
 - [ ] 8.1 Application portail séparée (bundle distinct, aucun code back-office), connexion, MFA (selon la décision)
-- [ ] 8.2 Vue PostgreSQL `portal_bulletins_v` et rôle `vv_portal` limité à cette vue et aux tables portail
+- [ ] 8.2 Vue PostgreSQL `portal_bulletins_v` et rôle `vv_portal` limité à cette vue et aux tables du portail
 - [ ] 8.3 Liste, recherche, filtres (techno, sévérité, date) et détail des bulletins publiés destinés à l'organisation
 - [ ] 8.4 Export Markdown et HTML, impression
 - [ ] 8.5 Tests de non-fuite : aucun champ interne, aucune vulnérabilité non publiée, aucune donnée d'une autre organisation
@@ -215,12 +238,13 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 9.3 Demande de techno absente : recherche approchée préalable (éviter les doublons), formulaire, limitation de débit
 - [ ] 9.4 Modération : file des demandes, approbation (création de la techno et abonnement automatique du demandeur), rejet motivé, fusion avec une techno existante
 - [ ] 9.5 Confidentialité : les abonnements d'un client révèlent son parc, ils ne sont visibles que de cette organisation et des rôles autorisés
+- [ ] 9.6 Option : inclure automatiquement les technos suivies par les clients dans le périmètre de veille de l'espace
 
 ### Phase 10 — Durcissement et mise en production (en continu, puis finalisation)
 
 - [ ] 10.1 DAST (OWASP ZAP baseline en CI), fuzzing de l'API depuis OpenAPI (schemathesis)
 - [ ] 10.2 WebAuthn/passkeys, SSO OIDC optionnel
 - [ ] 10.3 Sauvegardes chiffrées, restauration testée, rotation des clés documentée
-- [ ] 10.4 Observabilité : métriques (Prometheus), traces OpenTelemetry, alertes (échecs de workflows, budget LLM, échecs de connexion)
+- [ ] 10.4 Observabilité : métriques (Prometheus), traces OpenTelemetry, alertes (synchro NVD en retard, échecs de workflows, budget LLM, échecs de connexion, connecteur en erreur)
 - [ ] 10.5 Documentation d'exploitation (installation, mise à jour, réponse à incident, procédure d'urgence)
 - [ ] 10.6 Revue de sécurité complète et test d'intrusion externe avant l'ouverture du portail sur Internet

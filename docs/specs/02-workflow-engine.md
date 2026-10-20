@@ -51,7 +51,7 @@ Règles de validation à l'enregistrement :
 - types et versions de nœuds connus, paramètres conformes à leur JSON Schema ;
 - ports existants, au moins un déclencheur ;
 - références (secrets, connecteurs, agents, modèles, sources) appartenant au **même espace** ;
-- l'éditeur possède les permissions requises par chaque nœud (par exemple, `publish.api` exige `connector.push`) ;
+- l'éditeur possède les permissions requises par chaque nœud (par exemple, `publish.api` exige `connector.publish.push`) ;
 - tout `publish.api` est précédé d'un `control.approval` sur chaque chemin ;
 - limites : 200 nœuds au maximum, 64 Kio de paramètres par nœud.
 
@@ -100,12 +100,14 @@ Limites par défaut (configurables par espace) : 5 000 éléments par sortie, 25
 |---|---|
 | `trigger.manual` | Bouton « Exécuter » avec données d'entrée optionnelles (formulaire défini dans le nœud) |
 | `trigger.schedule` | Cron (intervalle minimal de 5 minutes par défaut), fuseau horaire explicite |
-| `trigger.event` | Événement de l'outbox (`vuln.created`, `vuln.qualified`, `bulletin.approved`…) avec un filtre JMESPath |
+| `trigger.cve_published` | **Vecteur d'entrée n°1** : nouvelle CVE détectée par la synchronisation NVD (événement global diffusé à l'espace, spec 07 §3), filtre JMESPath optionnel |
+| `trigger.cve_updated` | Changement significatif d'une CVE sur NVD (`cvss_added`, `severity_raised`, `cpe_added`, `kev_added`, `exploit_reference_added`, `rejected`), filtre sur les types de changement |
+| `trigger.event` | Événement de l'outbox de l'espace (`vuln.created`, `vuln.qualified`, `bulletin.approved`…) avec un filtre JMESPath |
 | `trigger.webhook` | URL unique par déclencheur, HMAC-SHA256 obligatoire, anti-rejeu, 256 Kio au maximum, débit limité |
 
 ## 7. Catalogue des nœuds
 
-Les nœuds marqués (MVP) sont livrés en phases 3, 5, 6 et 7 ; les autres viennent ensuite.
+Les nœuds marqués (MVP) sont livrés en phases 3, 4, 6 et 7 ; les autres viennent ensuite. Tout nœud qui contacte un service externe le fait par un connecteur de l'espace ou global (spec 07), sélectionné dans ses paramètres.
 
 ### Sources (file `collect`)
 
@@ -113,14 +115,15 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 5, 6 et 7 ; les autres vienn
 |---|---|
 | `source.rss` (MVP) | Flux RSS ou Atom (CERT-FR, éditeurs, blogs) |
 | `source.catalog` (MVP) | Itère sur les sources de veille de l'espace filtrées par tag |
-| `source.nvd` (MVP) | NVD API 2.0 : CVE modifiées depuis la dernière exécution |
+| `source.nvd` (MVP) | Lecture du catalogue CVE local alimenté par le connecteur NVD (recherche par critères) ; la synchronisation elle-même est une tâche globale, pas un nœud |
 | `source.cisa_kev` (MVP) | Nouvelles entrées du catalogue KEV |
 | `source.epss` | Scores EPSS (mise à jour du catalogue) |
 | `source.github_advisories` (MVP) | GitHub Security Advisories (GHSA) |
-| `source.github_search` (MVP) | Dépôts, code et commits mentionnant une CVE (détection de PoC) |
-| `source.stackexchange` (MVP) | Questions et réponses Stack Overflow ou Security StackExchange par tags et mots-clés |
-| `source.x` (MVP, ph. 5) | Recherche de posts X via l'API v2 (payante, budget plafonné) |
-| `source.mastodon`, `source.bluesky`, `source.reddit`, `source.hackernews` | Réseaux et forums via leurs API publiques |
+| `source.github_search` (MVP, ph. 4) | Dépôts, code et commits mentionnant une CVE (détection de PoC) |
+| `source.stackexchange` (MVP, ph. 4) | Questions et réponses Stack Overflow ou Security StackExchange par tags et mots-clés |
+| `source.x` (MVP, ph. 4) | Recherche de posts X via l'API v2 (payante, budget plafonné) |
+| `source.social` (MVP, ph. 4) | Mastodon, Bluesky, Reddit via leurs API |
+| `source.hackernews` | Hacker News (API Algolia) |
 | `source.osv` | Base OSV (écosystèmes open source) |
 | `source.http` (MVP) | Requête HTTP générique et extraction (sélecteurs CSS, chemins JSON) |
 | `source.web_page` | Page rendue par un navigateur headless isolé (plus tard) |
@@ -131,11 +134,11 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 5, 6 et 7 ; les autres vienn
 
 ### IA (file `ai`)
 
-`ai.agent` (agent configuré, avec outils), `ai.summarize`, `ai.classify` (étiquettes définies), `ai.extract` (schéma JSON défini), `ai.relevance` (score par rapport au catalogue des technos ou à un profil) : tous MVP en phase 5.
+`ai.agent` (agent configuré de l'espace, avec ses connecteurs et outils ; moteur hérité ou épinglé), `ai.summarize`, `ai.classify` (étiquettes définies), `ai.extract` (schéma JSON défini), `ai.relevance` (score par rapport au catalogue des technos ou à un profil) : tous MVP en phase 4.
 
 ### Vulnérabilités (file `default`)
 
-`vuln.upsert` (crée ou met à jour une vulnérabilité `new` et rattache les preuves), `vuln.enrich` (CVSS, EPSS, KEV depuis le catalogue), `vuln.match_technologies` (CPE, purl, puis IA en repli), `vuln.attach_analysis` : tous MVP.
+`vuln.scope_match` (périmètre de veille de l'espace, ports `in_scope` et `out_of_scope`, spec 07 §3.4), `vuln.upsert` (crée ou met à jour une vulnérabilité `new` et rattache les preuves), `vuln.enrich` (CVSS, EPSS, KEV depuis le catalogue), `vuln.match_technologies` (CPE, purl, puis IA en repli), `vuln.list` (vulnérabilités de l'espace selon des critères, pour la re-veille), `vuln.attach_analysis` : tous MVP.
 
 ### Bulletins et sorties
 
@@ -152,9 +155,12 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 5, 6 et 7 ; les autres vienn
 
 ## 8. Workflows livrés en exemple (seeds, désactivés par défaut)
 
-1. **Veille quotidienne** : `trigger.schedule` → (`source.catalog[tag=vendors]`, `source.nvd`, `source.cisa_kev`, `source.github_advisories`) → `transform.extract_cve` → `transform.dedupe` → `ai.relevance` → `control.if(score ≥ seuil)` → `vuln.upsert` → `vuln.enrich` → `notify.email` (si KEV ou critique).
-2. **Investigation CVE** : `trigger.event(vuln.created)` → `vuln.enrich` → `source.github_search` + `source.x` + `source.stackexchange` → `ai.agent(investigateur)` → `vuln.attach_analysis` → `vuln.match_technologies`.
-3. **Draft automatique pour KEV** : `trigger.event(vuln.qualified, kev=true)` → `bulletin.generate_draft` → `notify.email` (draft prêt à relire).
+1. **Nouvelle CVE NVD → investigation** (flux principal, détail dans la spec 07 §5) : `trigger.cve_published` → `vuln.scope_match` → `vuln.upsert` → `vuln.enrich` → `vuln.match_technologies` → agent de triage → agents de veille en parallèle (PoC GitHub, réseaux sociaux, forums, avis éditeurs) → agent de synthèse → `vuln.attach_analysis` → `notify.email` (si KEV, exploitation ou P1). Livré en version sans IA en phase 3, puis complet en phase 4.
+2. **Saisie manuelle** : `trigger.event(vuln.created, origin=user)` → même chaîne à partir de `vuln.enrich`.
+3. **Re-veille** : `trigger.schedule` (toutes les 6 h) → `vuln.list` (ouvertes, moins de 14 jours) → agents PoC et réseaux sociaux → mise à jour de la synthèse → notification ; et `trigger.cve_updated(kev_added | exploit_reference_added)` → même traitement immédiat.
+4. **Entrée dans le périmètre** : `trigger.cve_updated(cpe_added | cvss_added)` → `vuln.scope_match` → si la CVE entre dans le périmètre, même chaîne que le flux principal.
+5. **Veille complémentaire** : `trigger.schedule` → (`source.catalog[tag=vendors]`, `source.github_advisories`, flux RSS) → `transform.extract_cve` → `transform.dedupe` → `vuln.upsert` (rattache les preuves aux vulnérabilités existantes ou en crée).
+6. **Draft automatique pour KEV** : `trigger.cve_updated(kev_added)` ou `trigger.event(vuln.qualified, kev=true)` → `bulletin.generate_draft` → `notify.email` (draft prêt à relire).
 
 ## 9. API
 

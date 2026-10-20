@@ -85,12 +85,17 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 - **Alternatives écartées** : JavaScript sandboxé façon n8n (évasions régulières) ; simpleeval ou ast Python (surface d'évasion) ; CEL (bonne option, mais l'écosystème Python est moins mûr).
 - **Conséquences** : un éditeur JMESPath avec aperçu dans l'interface ; les fonctions personnalisées sont ajoutées au cas par cas.
 
-## ADR-011 — Couche LLM multi-fournisseur, Claude par défaut
+## ADR-011 — Moteur IA interchangeable : Claude aujourd'hui, LLM open source demain
 
-- **Statut** : Proposée (dépend de Q6 sur la confidentialité et les fournisseurs autorisés)
-- **Décision** : une interface `LLMProvider` (complétion, sortie structurée, outils, streaming, comptage de l'usage). Le premier adaptateur est Anthropic, via le SDK officiel `anthropic`, avec le modèle par défaut `claude-opus-5-5` : réflexion adaptative, `effort` configurable par agent, sorties structurées (`output_config.format`), cache de prompt sur le prompt système et les outils, streaming pour les sorties longues, gestion du stop reason `refusal` avec le fallback serveur. Un second adaptateur, compatible OpenAI, couvre Mistral, Azure OpenAI, vLLM et Ollama. Le modèle est un paramètre de chaque agent, choisi par l'espace.
-- **Alternatives écartées** : LangChain ou LlamaIndex (abstraction lourde et instable, contrôle de sécurité plus difficile sur la boucle d'outils) ; la boucle d'agent hébergée par un fournisseur (perte de contrôle des outils et de la sortie réseau).
-- **Conséquences** : notre runtime d'agent (boucle d'outils avec hooks) contrôle chaque appel d'outil, le budget et la journalisation.
+- **Statut** : Proposée, mise à jour le 2026-10-20 après la consigne du porteur : « notre moteur d'IA préféré, aujourd'hui Claude, demain un LLM open source ». Q6 reste ouverte sur la confidentialité.
+- **Décision** :
+  - Une interface `AIEngine` (complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés) et des agents configurés par **paramètres abstraits** (niveau de raisonnement, schéma de sortie, limites), traduits par chaque adaptateur.
+  - Adaptateur **Claude** (SDK officiel `anthropic`), moteur préféré par défaut avec `claude-opus-5-5` : réflexion adaptative, `effort` d'après le niveau de raisonnement, sorties structurées (`output_config.format`), cache de prompt, streaming pour les sorties longues, gestion du stop reason `refusal` avec le fallback serveur.
+  - Adaptateur **compatible OpenAI**, livré dès le MVP, pour les LLM open source auto-hébergés (OpenLLM, vLLM, Ollama) et aussi Mistral ou Azure OpenAI, avec un mode outils émulé (JSON contraint) quand le modèle n'a pas d'appel d'outils natif.
+  - Les moteurs sont des **connecteurs** (famille `ai_engine`) : capacités déclarées puis vérifiées, politique de données par moteur.
+  - **Moteur préféré** à trois niveaux (plateforme, espace, agent). La bascule se fait par configuration, après un **banc d'évaluation** comparatif et un rapport de compatibilité.
+- **Alternatives écartées** : LangChain ou LlamaIndex (abstraction lourde et instable, contrôle de sécurité plus difficile sur la boucle d'outils) ; boucle d'agent hébergée par un fournisseur (perte de contrôle des outils et de la sortie réseau, verrouillage) ; coder uniquement pour Claude (bascule future coûteuse).
+- **Conséquences** : notre runtime d'agent contrôle chaque appel d'outil, le budget et la journalisation, quel que soit le moteur. Les fonctions propres à Claude (effort, cache, fallback) restent dans l'adaptateur. Les tests tournent avec les deux adaptateurs simulés.
 
 ## ADR-012 — Sortie réseau : SafeHttpClient et proxy smokescreen
 
@@ -136,3 +141,30 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 - **Statut** : Proposée
 - **Décision** : aucun contenu produit par l'IA n'atteint un client ou une API distante sans action explicite d'un analyste (approbation de bulletin, nœud `control.approval` obligatoire avant `publish.api`). La double validation est configurable par espace et activée par défaut pour le portail.
+
+## ADR-020 — NVD, vecteur d'entrée n°1 des investigations
+
+- **Statut** : Proposée (2026-10-20), à la demande du porteur : « le 1er vecteur d'entrée est la saisie d'une nouvelle vuln au NVD, c'est l'initiateur qui va lancer les agents ».
+- **Contexte** : les agents doivent travailler dès qu'une vulnérabilité apparaît, sans attendre qu'un analyste la repère.
+- **Décision** :
+  - Une synchronisation **globale** et incrémentale de NVD (API 2.0, `lastModStartDate`/`lastModEndDate`, curseur avec recouvrement, 2 h par défaut selon la recommandation NVD) alimente le catalogue `cve_records`.
+  - Chaque nouvelle CVE émet un événement `cve.published` ; les changements significatifs (CVSS, CPE, KEV, référence d'exploit, rejet) émettent `cve.updated`. Les deux passent par l'outbox.
+  - Les événements sont diffusés aux espaces : les déclencheurs `trigger.cve_published` et `trigger.cve_updated` lancent, dans chaque espace, le workflow « Nouvelle CVE NVD → investigation », filtré par le **périmètre de veille** de l'espace.
+  - Le rattrapage initial n'émet pas d'événements. La saisie manuelle d'une CVE emprunte le même chemin.
+- **Alternatives écartées** : un nœud de workflow qui interroge NVD dans chaque espace (multiplie les appels, contraire à la recommandation NVD d'une clé unique par organisation, risque de trous ou de doublons) ; investiguer toutes les CVE sans filtre (environ 130 par jour, coût IA élevé et bruit pour les analystes, mais disponible en mode `all`).
+- **Conséquences** : le délai de détection dépend de l'intervalle de synchronisation et des délais de publication et d'enrichissement de NVD. Les CPE arrivent parfois plusieurs jours après la publication, d'où la ré-évaluation du périmètre sur `cve_updated(cpe_added)`. Q24 étudie CVE.org comme accélérateur.
+
+## ADR-021 — Cadre de connecteurs unifié (veille, moteurs IA, publication)
+
+- **Statut** : Proposée (2026-10-20)
+- **Contexte** : les sources (NVD, GitHub, X…), les moteurs IA (Claude, LLM open source) et les cibles de publication partagent les mêmes besoins : identifiants, quotas, budgets, santé, audit, sortie réseau contrôlée, paramétrage depuis l'interface.
+- **Décision** : une table `connectors` et un cadre de code communs, avec trois familles (`source`, `ai_engine`, `publish`), une portée globale ou espace, un schéma de configuration par type (qui génère le formulaire), des références de secrets, un test de connexion, un suivi de santé et de consommation, et des domaines de sortie déclarés qui alimentent le proxy. Les nœuds et les outils d'agents n'accèdent à l'extérieur **que** par un connecteur.
+- **Alternatives écartées** : identifiants dans les paramètres des nœuds façon n8n (dispersion des secrets, pas de quotas centralisés) ; un modèle par famille (duplication).
+- **Conséquences** : ajouter une source ou un moteur revient à écrire un type de connecteur, puis l'interface et la gouvernance suivent sans travail supplémentaire.
+
+## ADR-022 — Agents de veille spécialisés orchestrés par workflow
+
+- **Statut** : Proposée (2026-10-20)
+- **Décision** : plutôt qu'un agent unique doté de tous les outils, des agents spécialisés (triage, PoC GitHub, réseaux sociaux, forums, avis éditeurs) tournent en parallèle dans le workflow, puis un agent de synthèse sans outil externe produit le dossier sourcé. Ils sont livrés en seed et entièrement paramétrables par espace.
+- **Raisons** : moindre privilège (chaque agent n'a que ses connecteurs), parallélisme, coût maîtrisé (l'agent de triage peut arrêter la chaîne), qualité et évaluation agent par agent, choix du moteur et du modèle par agent, analyste capable de comprendre et de modifier chaque étape dans l'éditeur.
+- **Conséquences** : plusieurs appels LLM par CVE, d'où le budget par CVE et le filtrage par le périmètre de veille en amont.

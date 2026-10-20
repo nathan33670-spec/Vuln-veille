@@ -73,12 +73,23 @@ Une étape est terminée quand :
 6. Documenter le nœud dans `docs/specs/02-workflow-engine.md` (catalogue).
 7. Tout changement incompatible des paramètres crée une nouvelle `version` du nœud ; les anciennes versions restent exécutables pour les workflows existants.
 
-## 6. Ajouter un fournisseur LLM
+## 6. Ajouter un moteur IA (nouvel adaptateur)
 
-1. Implémenter `LLMProvider` dans `backend/app/ai/providers/<nom>.py` : `complete`, `stream`, prise en charge des outils et des sorties structurées, mapping de l'usage (tokens, cache) et des stop reasons, y compris le refus.
-2. Déclarer ses capacités (outils, sortie structurée, streaming, cache).
-3. Tests avec des réponses enregistrées ; aucun appel réel en CI.
-4. Ajouter son formulaire de configuration (URL de base, secret, modèles autorisés) et la politique de données associée.
+Un nouveau modèle sur un serveur compatible OpenAI (OpenLLM, vLLM, Ollama…) **ne demande pas de code** : on crée un connecteur `openai_compatible` dans l'interface, on lance le test de capacités puis le banc d'évaluation. Un adaptateur n'est à écrire que pour une API non compatible.
+
+1. Implémenter `AIEngine` dans `backend/app/ai/engines/<nom>.py` : `complete`, `stream`, outils (natifs ou émulés), sortie structurée, traduction des paramètres abstraits (niveau de raisonnement…), mapping de l'usage (tokens, cache) et des stop reasons, y compris le refus.
+2. Déclarer ses capacités et implémenter le test automatique de capacités.
+3. Tests avec des réponses enregistrées ; aucun appel réel en CI. Faire passer le corpus d'injection de prompt avec ce moteur simulé.
+4. Déclarer le type de connecteur `ai_engine` (schéma de configuration, emplacements de secrets, domaines de sortie, politique de données par défaut).
+5. Avant d'en faire le moteur préféré d'un espace ou de la plateforme : banc d'évaluation, puis rapport de compatibilité des agents.
+
+## 6 bis. Ajouter un connecteur de veille
+
+1. Créer `backend/app/connectors/<type>/` : `ConfigModel` (Pydantic, qui génère le formulaire), emplacements de secrets, `egress_domains`, `health_check()` sans effet de bord, client utilisant `SafeHttpClient`, gestion des quotas et du budget.
+2. Exposer ses capacités aux nœuds (`source.<type>`) et aux outils d'agents (`<type>_search`…) ; les éléments produits sont marqués `trust="untrusted"`.
+3. Respecter les conditions d'utilisation et le robots.txt, avec un User-Agent identifiable et une limitation de débit.
+4. Tests : configuration valide et invalide, test de connexion, pagination, quotas épuisés, erreurs HTTP, contenus piégés.
+5. Ajouter le type au catalogue de la spec 07 §2 et l'icône et les libellés côté interface.
 
 ## 7. Ajouter un préréglage de connecteur de publication
 

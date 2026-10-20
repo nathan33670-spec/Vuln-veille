@@ -10,7 +10,8 @@
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
   - Smokescreen accepte les clients sans rôle (ACL `default`) : prévoir des rôles mTLS par type de worker en phase 2.
-  - Environnement cloud : builds Docker uniquement via les variantes avec l'autorité du proxy (PROCEDURES §9 bis).
+  - Environnement cloud : builds Docker uniquement via les variantes avec l'autorité du proxy (PROCEDURES §9 bis). Avant un test de la pile locale, partir d'un `.env` régénéré et de volumes vides (`down -v`) : un `.env` ou un volume Postgres d'une session précédente fait échouer `migrate`.
+  - Dépendances Go de Caddy et smokescreen figées dans `deploy/*/build/go.{mod,sum}` (montée de version : PROCEDURES §8).
   - Frontend : aucun attribut `style` (CSP) ; les styles vont dans `packages/ui/src/styles.css`. jsdom n'implémente pas `<dialog>.showModal` : polyfill dans `packages/auth/src/test-setup.ts`.
   - Les requêtes typées d'openapi-fetch attendent `null` (et non `undefined`) pour les paramètres facultatifs (`exactOptionalPropertyTypes`).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
@@ -23,6 +24,7 @@
 - Back-office : utilisateurs (recherche, pagination, invitation), fiche utilisateur (statut, déverrouillage, réinitialisation MFA, fermeture des sessions, accès VOC/CERT, rôle d'administrateur), espaces, organisations clientes et leurs utilisateurs, journal d'audit (filtres, vérification de la chaîne, export JSON Lines). Navigation masquée selon les permissions ; l'API reste la seule autorité.
 - Portail : page des bulletins (en attente de la phase 6), « Mon organisation » pour les référents (rôles, invitations, désactivation), « Mon compte ».
 - API portail : la liste des membres de l'organisation expose désormais leur rôle (`OrgUserOut`).
+- Images : modules Go de Caddy et smokescreen figés (`go.mod`/`go.sum` commités) après deux échecs CI transitoires de `sum.golang.org` ; manifeste `@vv/auth` ajouté à l'étape SPA de l'image Caddy ; test de fumée de la pile complète vert en local.
 - Tests : 16 tests frontend (redirection des anonymes, navigation selon les permissions, refus d'accès, échec de connexion, step-up) ; 60 tests backend.
 
 ### 2026-10-21 — Session 6 : phase 1, backend

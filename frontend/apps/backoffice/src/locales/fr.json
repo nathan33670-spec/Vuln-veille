@@ -1,12 +1,99 @@
 {
   "app": {
     "title": "Vuln-Veille",
-    "subtitle": "Back-office VOC / CERT",
-    "placeholder": "Socle technique en place. Les écrans arrivent à partir de la phase 1."
+    "subtitle": "Back-office VOC / CERT"
   },
-  "health": {
-    "loading": "Vérification de l'API…",
-    "ok": "API disponible",
-    "error": "API injoignable"
+  "nav": {
+    "home": "Accueil",
+    "users": "Utilisateurs",
+    "clients": "Clients",
+    "workspaces": "Espaces",
+    "audit": "Audit",
+    "account": "Mon compte"
+  },
+  "home": {
+    "title": "Bonjour {{name}}",
+    "workspaces": "Vos espaces",
+    "noWorkspace": "Vous n'êtes membre d'aucun espace. Demandez un accès à un administrateur.",
+    "next": "La veille des vulnérabilités (synchronisation NVD, qualification, bulletins) arrive dans les prochaines phases."
+  },
+  "roles": {
+    "none": "Aucun accès",
+    "analyst": "Analyste",
+    "viewer": "Lecteur",
+    "platform_admin": "Administrateur de la plateforme",
+    "client_user": "Utilisateur client",
+    "client_admin": "Référent client"
+  },
+  "workspaces": {
+    "voc": "Espace VOC",
+    "cert": "Espace CERT"
+  },
+  "admin": {
+    "usersTitle": "Utilisateurs",
+    "invite": "Inviter",
+    "inviteInternal": "Inviter un utilisateur interne",
+    "inviteHint": "La personne reçoit un lien d'activation par e-mail. Attribuez ensuite ses accès depuis sa fiche.",
+    "sendInvitation": "Envoyer l'invitation",
+    "invitationSent": "Invitation envoyée.",
+    "resendInvitation": "Renvoyer l'invitation",
+    "userType": "Type de compte",
+    "internal": "Internes",
+    "client": "Clients",
+    "search": "Rechercher (nom ou e-mail)",
+    "noUsers": "Aucun utilisateur.",
+    "name": "Nom",
+    "statusLabel": "Statut",
+    "status": {
+      "active": "Actif",
+      "invited": "Invité",
+      "disabled": "Désactivé"
+    },
+    "locked": "Verrouillé",
+    "lastLogin": "Dernière connexion",
+    "more": "Afficher plus",
+    "account": "Compte",
+    "disable": "Désactiver",
+    "enable": "Réactiver",
+    "unlock": "Déverrouiller",
+    "resetMfa": "Réinitialiser la double authentification",
+    "mfaResetDone": "Double authentification réinitialisée : la personne devra la reconfigurer.",
+    "revokeSessions": "Fermer toutes les sessions",
+    "sessionsRevoked": "Sessions fermées.",
+    "saved": "Modification enregistrée.",
+    "access": "Accès",
+    "accessHint": "Les analystes VOC sont administrateurs de la plateforme. Chaque modification d'accès demande une confirmation.",
+    "grantRole": "Accorder",
+    "revokeRole": "Retirer",
+    "organization": "Organisation cliente",
+    "workspacesTitle": "Espaces",
+    "members": "Membres",
+    "analystsAreAdmins": "Analystes administrateurs",
+    "clientsTitle": "Organisations clientes",
+    "newClient": "Nouvelle organisation",
+    "noClients": "Aucune organisation cliente.",
+    "mfaPolicy": "Double authentification",
+    "mfaRequired": "Obligatoire",
+    "mfaOptional": "Facultative",
+    "makeMfaRequired": "Rendre la double authentification obligatoire",
+    "makeMfaOptional": "Rendre la double authentification facultative",
+    "create": "Créer",
+    "settings": "Paramètres",
+    "clientUsers": "Utilisateurs de l'organisation",
+    "inviteClientUser": "Inviter un utilisateur",
+    "role": "Rôle",
+    "auditTitle": "Journal d'audit",
+    "verifyChain": "Vérifier l'intégrité",
+    "chainIntact": "Chaîne d'audit intègre.",
+    "chainBroken": "Chaîne d'audit rompue à l'événement {{id}}.",
+    "export": "Exporter (JSON Lines)",
+    "action": "Action",
+    "outcome": "Résultat",
+    "all": "Tous",
+    "noEvents": "Aucun événement.",
+    "when": "Date",
+    "actor": "Auteur",
+    "target": "Cible",
+    "details": "Détails"
   }
 }

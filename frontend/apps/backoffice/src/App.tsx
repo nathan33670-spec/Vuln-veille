@@ -1,17 +1,21 @@
-import { AppShell } from "@vv/ui";
-import { useTranslation } from "react-i18next";
+import { AuthProvider } from "@vv/auth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router";
 
-import { useApiHealth } from "./useApiHealth";
+import { authApi } from "./api";
+import { routes } from "./routes";
 
-export function App() {
-  const { t } = useTranslation();
-  const health = useApiHealth();
+export function App({ router }: { router?: ReturnType<typeof createBrowserRouter> }) {
+  const [queryClient] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
+  );
+  const [browserRouter] = useState(() => router ?? createBrowserRouter(routes));
   return (
-    <AppShell title={t("app.title")} subtitle={t("app.subtitle")}>
-      <p>{t("app.placeholder")}</p>
-      <p className={health === "error" ? "vv-status-error" : "vv-status-ok"} role="status">
-        {t(`health.${health}`)}
-      </p>
-    </AppShell>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider api={authApi} appKind="backoffice">
+        <RouterProvider router={browserRouter} />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

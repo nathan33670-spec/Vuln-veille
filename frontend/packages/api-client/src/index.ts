@@ -1,29 +1,39 @@
 import createClient, { type Middleware } from "openapi-fetch";
 
-import type { paths as BackofficePaths } from "./backoffice";
-import type { paths as PortalPaths } from "./portal";
+import type { components as BackofficeComponents, paths as BackofficePaths } from "./backoffice";
+import { ApiError, csrfHeaders } from "./http";
+import type { components as PortalComponents, paths as PortalPaths } from "./portal";
 
 export type { BackofficePaths, PortalPaths };
-
-const CSRF_HEADER = "X-CSRF-Token";
-const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-
-/** Reads the CSRF token the server exposes in a <meta> tag (wired in phase 1). */
-function csrfToken(): string | undefined {
-  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || undefined;
-}
+export type Schemas = BackofficeComponents["schemas"];
+export type PortalSchemas = PortalComponents["schemas"];
+export { ApiError, setCsrfToken } from "./http";
+export { createAuthApi } from "./auth";
+export type { AccountSession, AuthApi, Enrollment, LoginResult, Me, RecoveryCodes } from "./auth";
 
 const csrfMiddleware: Middleware = {
   onRequest({ request }) {
-    const token = csrfToken();
-    if (!SAFE_METHODS.has(request.method) && token) {
-      request.headers.set(CSRF_HEADER, token);
+    for (const [name, value] of Object.entries(csrfHeaders(request.method))) {
+      request.headers.set(name, value);
     }
     return request;
   },
 };
 
-// Same-origin only: session cookies are HttpOnly and never readable from JavaScript.
+interface Problem {
+  detail?: unknown;
+}
+
+/** Turns an openapi-fetch result into data or a thrown ApiError. */
+export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
+  if (result.response.ok) return result.data as T;
+  const detail = (result.error as Problem | undefined)?.detail;
+  throw new ApiError(
+    result.response.status,
+    typeof detail === "string" ? detail : `http_${result.response.status}`,
+  );
+}
+
 const baseOptions = {
   // Absolute same-origin URLs: relative URLs are not valid for the Fetch API outside a document.
   baseUrl: globalThis.location?.origin ?? "",
@@ -43,3 +53,6 @@ export function createPortalClient() {
   client.use(csrfMiddleware);
   return client;
 }
+
+export type BackofficeClient = ReturnType<typeof createBackofficeClient>;
+export type PortalClient = ReturnType<typeof createPortalClient>;

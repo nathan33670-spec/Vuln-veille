@@ -1,27 +1,86 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import "./i18n";
 import { App } from "./App";
+import { routes } from "./routes";
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("App", () => {
-  it("shows the API status once /healthz answers", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ status: "ok", service: "test" })),
-    );
-    render(<App />);
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("API disponible"));
+const me = (role: string, permissions: string[]) => ({
+  id: "u1",
+  email: "ref@acme.example.com",
+  display_name: "Réf Acme",
+  user_type: "client",
+  locale: "fr",
+  mfa_enabled: false,
+  pending_mfa: false,
+  csrf_token: "csrf",
+  permissions,
+  workspaces: [],
+  client_org: { id: "o1", name: "Acme", role },
+});
+
+function stub(body: unknown, status = 200) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: Request | string) => {
+      const path = new URL(typeof input === "string" ? input : input.url).pathname;
+      if (path === "/api/portal/v1/auth/me") return Response.json(body, { status });
+      return Response.json({
+        items: [
+          {
+            id: "u2",
+            email: "col@acme.example.com",
+            display_name: "Collègue",
+            user_type: "client",
+            status: "active",
+            mfa_enabled: false,
+            locked: false,
+            last_login_at: null,
+            created_at: "2026-10-20T00:00:00Z",
+            role: "client_user",
+          },
+        ],
+        next_cursor: null,
+      });
+    }),
+  );
+}
+
+function renderAt(path: string) {
+  render(<App router={createMemoryRouter(routes, { initialEntries: [path] })} />);
+}
+
+describe("portal", () => {
+  it("redirects anonymous visitors to the login page", async () => {
+    stub({ detail: "not_authenticated" }, 401);
+    renderAt("/");
+    expect(await screen.findByRole("button", { name: "Se connecter" })).toBeInTheDocument();
   });
 
-  it("reports an unreachable API", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Promise.reject(new TypeError("network"))),
+  it("shows the organization page to client referents only", async () => {
+    stub(me("client_user", ["portal.bulletins.read"]));
+    renderAt("/");
+    expect(await screen.findByRole("link", { name: "Bulletins" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Mon organisation" })).not.toBeInTheDocument();
+  });
+
+  it("lets a referent see the members of the organization", async () => {
+    stub(me("client_admin", ["portal.bulletins.read", "portal.org_users.manage"]));
+    renderAt("/organization");
+    expect(await screen.findByText("col@acme.example.com")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rôle de Collègue")).toHaveValue("client_user");
+  });
+
+  it("refuses the organization page without the permission", async () => {
+    stub(me("client_user", ["portal.bulletins.read"]));
+    renderAt("/organization");
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Vous n'avez pas les droits nécessaires.",
+      ),
     );
-    render(<App />);
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("API injoignable"));
   });
 });

@@ -1,12 +1,40 @@
 {
   "app": {
     "title": "Vuln-Veille",
-    "subtitle": "Portail client",
-    "placeholder": "Vos bulletins de sécurité seront consultables ici."
+    "subtitle": "Portail client"
   },
-  "health": {
-    "loading": "Vérification du service…",
-    "ok": "API disponible",
-    "error": "API injoignable"
+  "nav": {
+    "bulletins": "Bulletins",
+    "organization": "Mon organisation",
+    "account": "Mon compte"
+  },
+  "bulletins": {
+    "title": "Bulletins de sécurité",
+    "empty": "Aucun bulletin publié pour le moment. Les bulletins de sécurité de vos équipes VOC et CERT apparaîtront ici."
+  },
+  "roles": {
+    "client_user": "Utilisateur",
+    "client_admin": "Référent"
+  },
+  "org": {
+    "title": "Mon organisation",
+    "noUsers": "Aucun utilisateur.",
+    "name": "Nom",
+    "role": "Rôle",
+    "roleOf": "Rôle de {{name}}",
+    "status": "Statut",
+    "statuses": {
+      "active": "Actif",
+      "invited": "Invité",
+      "disabled": "Désactivé"
+    },
+    "invite": "Inviter un collègue",
+    "sendInvitation": "Envoyer l'invitation",
+    "invitationSent": "Invitation envoyée.",
+    "resend": "Renvoyer l'invitation",
+    "disable": "Désactiver",
+    "enable": "Réactiver",
+    "saved": "Modification enregistrée.",
+    "more": "Afficher plus"
   }
 }

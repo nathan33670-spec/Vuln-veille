@@ -65,3 +65,225 @@ body {
 .vv-status-error {
   color: var(--vv-error);
 }
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.vv-muted {
+  color: var(--vv-muted);
+}
+
+.vv-nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.vv-nav a {
+  color: var(--vv-text);
+  text-decoration: none;
+}
+
+.vv-nav a.active {
+  color: var(--vv-accent);
+  font-weight: 600;
+}
+
+.vv-header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.vv-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.vv-page-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.vv-card {
+  background: var(--vv-surface);
+  border: 1px solid var(--vv-border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.vv-card-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem;
+}
+
+.vv-auth {
+  max-width: 26rem;
+  margin: 3rem auto;
+}
+
+.vv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.vv-field label {
+  font-weight: 600;
+}
+
+.vv-field input,
+.vv-field select {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--vv-border);
+  border-radius: 6px;
+  background: var(--vv-bg);
+  color: var(--vv-text);
+}
+
+.vv-field input[aria-invalid="true"] {
+  border-color: var(--vv-error);
+}
+
+.vv-field-hint {
+  color: var(--vv-muted);
+  font-size: 0.875rem;
+}
+
+.vv-field-error {
+  color: var(--vv-error);
+  font-size: 0.875rem;
+}
+
+.vv-button {
+  font: inherit;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.vv-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vv-button-primary {
+  background: var(--vv-accent);
+  color: #fff;
+}
+
+.vv-button-secondary {
+  background: transparent;
+  color: var(--vv-text);
+  border-color: var(--vv-border);
+}
+
+.vv-button-danger {
+  background: var(--vv-error);
+  color: #fff;
+}
+
+.vv-alert {
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.vv-alert-error {
+  border-color: var(--vv-error);
+  color: var(--vv-error);
+}
+
+.vv-alert-info {
+  border-color: var(--vv-accent);
+}
+
+.vv-alert-success {
+  border-color: var(--vv-ok);
+  color: var(--vv-ok);
+}
+
+.vv-badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  border: 1px solid var(--vv-border);
+}
+
+.vv-badge-ok {
+  border-color: var(--vv-ok);
+  color: var(--vv-ok);
+}
+
+.vv-badge-warn {
+  border-color: #b7791f;
+  color: #b7791f;
+}
+
+.vv-badge-error {
+  border-color: var(--vv-error);
+  color: var(--vv-error);
+}
+
+.vv-table-wrap {
+  overflow-x: auto;
+}
+
+.vv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vv-table th,
+.vv-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--vv-border);
+  vertical-align: top;
+}
+
+.vv-dialog {
+  border: 1px solid var(--vv-border);
+  border-radius: 8px;
+  background: var(--vv-surface);
+  color: var(--vv-text);
+  max-width: 28rem;
+  width: calc(100% - 2rem);
+}
+
+.vv-qr {
+  width: 200px;
+  height: 200px;
+  image-rendering: pixelated;
+}
+
+.vv-codes {
+  font-family: ui-monospace, monospace;
+  columns: 2;
+  list-style: none;
+  padding: 0;
+}
+
+.vv-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}

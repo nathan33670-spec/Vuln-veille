@@ -103,13 +103,15 @@ Pas de CORS : les SPA et les API partagent la même origine. Les images externes
 
 ### 4.6 SafeHttpClient (toute requête sortante)
 
-1. Schémas autorisés : `https` (et `http` seulement pour les sources explicitement marquées) ; ports 443/80 sauf configuration.
-2. Résolution DNS par le client, puis refus si **une** des adresses est loopback, privée (RFC 1918), lien-local (169.254.0.0/16, y compris les métadonnées cloud), CGNAT (100.64.0.0/10), multicast, réservée, `0.0.0.0/8`, IPv6 `::1`, `fc00::/7`, `fe80::/10`, IPv4 mappée en IPv6.
-3. Connexion à l'IP validée (épinglage) avec SNI et `Host` d'origine : protège du DNS rebinding.
-4. Redirections suivies manuellement (5 au maximum), chacune revalidée.
-5. Plafonds : 10 Mio par défaut, taille décompressée bornée, timeouts de connexion et de lecture, types de contenu attendus.
-6. Passage par le proxy smokescreen (seconde barrière réseau) ; exception pour le réseau privé uniquement par connecteur autorisé par un admin, avec une liste d'IP ou de CIDR explicite.
-7. TLS toujours vérifié ; un bundle d'AC personnalisé est possible par connecteur.
+Implémentation : `backend/app/net/safe_http.py` ; suite de tests : `backend/tests/security/test_ssrf*.py`. Un test bloquant refuse toute bibliothèque réseau importée hors de `app/net/` (seule exception : le relais SMTP configuré par l'exploitant).
+
+1. Schémas autorisés : `https` (et `http` seulement pour les sources explicitement marquées) ; ports 443/80 sauf configuration ; aucun identifiant dans l'URL ; domaines déclarés du connecteur (noms exacts ou `*.domaine`).
+2. Adresses : seules les adresses unicast publiques passent. Refus de loopback, RFC 1918, lien-local (169.254.0.0/16, métadonnées cloud), CGNAT, multicast, réservées, documentation, `0.0.0.0/8`, IPv6 `::1`, `fc00::/7`, `fe80::/10`, IPv4 mappée, 6to4, Teredo et NAT64. Une plage privée accordée par un admin à un connecteur n'ouvre **jamais** loopback, lien-local ni adresse non spécifiée.
+3. **Mode direct** (développement) : résolution DNS par le client, refus si **une** des adresses est interdite, puis connexion à l'IP validée (épinglage) avec `Host` et SNI d'origine ; le certificat est vérifié sur le nom d'hôte. Protège du DNS rebinding.
+4. **Mode proxy** (workers en production, sans DNS ni route vers Internet) : les littéraux IP sont vérifiés par le client, puis le tunnel s'ouvre par nom d'hôte ; smokescreen résout le nom, applique la liste de domaines autorisés et refuse les plages internes sur l'adresse qu'il compose réellement. En production, un client sans proxy est refusé (`egress_proxy_required`).
+5. Redirections suivies manuellement (5 au maximum), chacune revalidée ; jamais de passage de `https` à `http` ; en-têtes d'authentification (`Authorization`, `Cookie`, `X-Api-Key`, `apiKey`…) retirés quand l'origine change ; l'appelant ne peut pas imposer `Host`.
+6. Plafonds : échéance totale, timeouts de connexion et de lecture, 10 Mio par défaut sur le réseau **et** après décompression. Seuls `gzip` et `deflate` sont acceptés, décodés par le client avec une limite de sortie stricte (bombes de décompression) ; `br`, `zstd` et les encodages multiples sont refusés. Types de contenu attendus vérifiés quand le connecteur les déclare.
+7. TLS toujours vérifié ; un bundle d'AC personnalisé est possible par connecteur. Une exception de réseau privé exige aussi une plage `allow_ranges` dans la configuration de smokescreen (deux barrières à ouvrir explicitement).
 
 ### 4.7 Secrets et cryptographie
 

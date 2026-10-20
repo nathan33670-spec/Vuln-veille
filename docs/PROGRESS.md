@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
-- **Dernière étape terminée** : 2.1 coffre de secrets (enveloppe X25519 par usage, API en écriture seule, rotation).
-- **Étape en cours** : 2.2 `SafeHttpClient` anti-SSRF et proxy de sortie.
-- **Prochaine étape** : 2.3 cadre des connecteurs, puis 2.4 connecteur NVD.
+- **Dernière étape terminée** : 2.2 `SafeHttpClient` anti-SSRF et proxy de sortie (2.1 coffre de secrets avant).
+- **Étape en cours** : 2.3 cadre commun des connecteurs.
+- **Prochaine étape** : 2.4 connecteur NVD, 2.5 détection des nouveautés.
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -15,11 +15,16 @@
   - Frontend : aucun attribut `style` (CSP) ; les styles vont dans `packages/ui/src/styles.css`. jsdom n'implémente pas `<dialog>.showModal` : polyfill dans `packages/auth/src/test-setup.ts`.
   - Les requêtes typées d'openapi-fetch attendent `null` (et non `undefined`) pour les paramètres facultatifs (`exactOptionalPropertyTypes`).
   - Coffre : l'API n'a que les clés publiques ; un trousseau privé ne se monte que dans le worker de son usage (PROCEDURES §9). `make env` refuse d'écraser des trousseaux existants.
+  - Sortie réseau : les workers n'ont **ni DNS externe ni route** ; en mode proxy, `SafeHttpClient` ne résout pas les noms et laisse smokescreen résoudre et filtrer. Obtenir un client par `egress_client(settings, policy)`, jamais directement.
+  - L'environnement cloud ne donne pas Internet à smokescreen : un appel réel (NVD…) échoue en `network_error` dans le bac à sable, pas en CI ni en production.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
 
-### 2026-10-22 — Session 8 : phase 2, coffre de secrets
+### 2026-10-22 — Session 8 : phase 2, coffre de secrets et sortie réseau
+
+- `SafeHttpClient` (`app/net/`) : politique d'URL, validation des adresses (unicast public seulement, jamais loopback ni métadonnées même sur exception), épinglage d'IP en mode direct, résolution laissée à smokescreen en mode proxy, redirections revalidées sans fuite d'identifiants, décompression bornée (gzip et deflate seulement), échéance totale ; proxy obligatoire en production.
+- Tests : suite SSRF hors ligne (adresses piégées, écritures numériques, rebinding, redirections, bombes de décompression), test TLS réel de l'épinglage (SNI et nom du certificat), garde « aucune bibliothèque réseau hors `app/net/` » ; vérification sur la pile réelle (refus par smokescreen d'un domaine non autorisé, pas de route directe).
 
 - ADR-013 révisée : chaque secret a sa clé de données AES-256-GCM, enveloppée pour la clé publique X25519 de son usage. L'API du back-office ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire.
 - Migration `0003_vault` : table `secrets`, RLS (un administrateur VOC ne voit pas les secrets du CERT ; les workers lisent et ré-enveloppent mais ne créent ni ne suppriment).

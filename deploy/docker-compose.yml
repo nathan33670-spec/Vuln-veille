@@ -40,6 +40,7 @@ x-worker: &worker
     HTTPS_PROXY: http://smokescreen:4750
     HTTP_PROXY: http://smokescreen:4750
     NO_PROXY: postgres,redis
+    VV_EGRESS_PROXY_URL: http://smokescreen:4750
     # Vault keyrings (ADR-013): each worker only gets the Docker secret of its purpose.
     VV_VAULT_KEYRING_DIR: /run/secrets
   networks: [data, egress]

@@ -99,9 +99,11 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-012 — Sortie réseau : SafeHttpClient et proxy smokescreen
 
-- **Statut** : Proposée
-- **Décision** : double barrière anti-SSRF, applicative (validation DNS et IP, épinglage, redirections revalidées) et réseau (proxy de sortie obligatoire pour les workers, sans route directe).
-- **Conséquences** : les sources ou connecteurs internes demandent une exception explicite, autorisée par un admin et auditée.
+- **Statut** : Acceptée (phase 2)
+- **Décision** : double barrière anti-SSRF, applicative (`SafeHttpClient` : politique d'URL, validation des adresses, redirections revalidées, plafonds) et réseau (proxy smokescreen obligatoire pour les workers, sans DNS ni route directe).
+  - En mode direct (développement), le client résout et épingle l'IP validée.
+  - En mode proxy, le client ne résout pas les noms (les workers n'ont pas de DNS externe) : smokescreen résout, applique la liste de domaines et refuse les plages internes sur l'adresse composée, ce qui ferme la fenêtre de rebinding côté réseau.
+- **Conséquences** : les sources ou connecteurs internes demandent une exception explicite, autorisée par un admin, auditée, et ouverte aux deux barrières (plage du connecteur et `allow_ranges` de smokescreen).
 
 ## ADR-013 — Secrets par chiffrement d'enveloppe et clés par usage
 

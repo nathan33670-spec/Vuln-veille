@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     vault_public_key_webhook: str | None = None
     vault_keyring_dir: Path | None = None
 
+    # Egress proxy (smokescreen) for every outbound request of the workers (ADR-012).
+    # Mandatory in production; without it, development connects directly (IP pinned).
+    egress_proxy_url: str | None = None
+
     backoffice_origin: AnyHttpUrl = AnyHttpUrl("https://backoffice.localhost")
     portal_origin: AnyHttpUrl = AnyHttpUrl("https://portal.localhost")
 
@@ -136,6 +140,10 @@ class Settings(BaseSettings):
     def model_post_init(self, __context: object) -> None:
         if self.is_prod and self.password_hash_profile != "strong":  # noqa: S105
             raise ValueError("weak password hashing is forbidden in production")
+        if self.egress_proxy_url is not None and not self.egress_proxy_url.startswith(
+            ("http://", "https://")
+        ):
+            raise ValueError("egress_proxy_url must be an http(s) URL")
 
 
 @lru_cache(maxsize=1)

@@ -40,6 +40,8 @@ x-worker: &worker
     HTTPS_PROXY: http://smokescreen:4750
     HTTP_PROXY: http://smokescreen:4750
     NO_PROXY: postgres,redis
+    # Vault keyrings (ADR-013): each worker only gets the Docker secret of its purpose.
+    VV_VAULT_KEYRING_DIR: /run/secrets
   networks: [data, egress]
   mem_limit: 768m
 
@@ -93,14 +95,34 @@ services:
   worker-collect:
     <<: *worker
     command: ["celery", "-A", "app.worker", "worker", "-Q", "collect", "--concurrency", "4", "--loglevel", "INFO"]
+    secrets: [{ source: keyring_source, target: source.keyring }]
 
   worker-ai:
     <<: *worker
     command: ["celery", "-A", "app.worker", "worker", "-Q", "ai", "--concurrency", "2", "--loglevel", "INFO"]
+    secrets: [{ source: keyring_llm, target: llm.keyring }]
 
   worker-publish:
     <<: *worker
     command: ["celery", "-A", "app.worker", "worker", "-Q", "publish", "--concurrency", "2", "--loglevel", "INFO"]
+    secrets: [{ source: keyring_connector, target: connector.keyring }]
+
+  # One-off administration (key rotation): `docker compose --profile tools run --rm
+  # vault-admin python -m app.cli vault-rotate --purpose source` (PROCEDURES §9).
+  vault-admin:
+    <<: *backend
+    profiles: [tools]
+    restart: "no"
+    command: ["python", "-m", "app.cli", "--help"]
+    environment:
+      <<: *backend-env
+      VV_VAULT_KEYRING_DIR: /run/secrets
+    secrets:
+      - { source: keyring_llm, target: llm.keyring }
+      - { source: keyring_source, target: source.keyring }
+      - { source: keyring_connector, target: connector.keyring }
+      - { source: keyring_webhook, target: webhook.keyring }
+    networks: [data]
 
   scheduler:
     <<: *backend
@@ -196,3 +218,9 @@ volumes:
   redis_data: {}
   caddy_data: {}
   caddy_config: {}
+
+secrets:
+  keyring_llm: { file: ../secrets/keyrings/llm.keyring }
+  keyring_source: { file: ../secrets/keyrings/source.keyring }
+  keyring_connector: { file: ../secrets/keyrings/connector.keyring }
+  keyring_webhook: { file: ../secrets/keyrings/webhook.keyring }

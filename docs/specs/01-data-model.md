@@ -23,7 +23,7 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 | Table | Colonnes principales |
 |---|---|
 | `audit_events` [G] | `id` (bigserial), `occurred_at`, `actor_type` (`user`, `system`, `workflow`), `actor_user_id`, `action`, `target_type`, `target_id`, `workspace_id`, `client_org_id`, `ip`, `request_id`, `details` (JSONB, expurgé), `prev_hash`, `hash` |
-| `secrets` [E ou G] | `workspace_id` (null = global), `purpose` (`llm`, `source`, `connector`, `webhook`), `name`, `ciphertext`, `dek_enc`, `kek_id`, `nonce`, `hint_last4`, `created_by`, `rotated_at` |
+| `secrets` [E ou G] | `workspace_id` (null = global, usages `llm` et `source` seulement), `purpose` (`llm`, `source`, `connector`, `webhook`), `name` (unique par espace), `description`, `ciphertext`, `nonce`, `dek_enc` (clé de données enveloppée X25519), `kek_id`, `hint_last4` (valeurs de 16 caractères ou plus), `created_by`, `updated_by`, `value_updated_at`, `rotated_at`, `version` |
 | `outbox_events` [G] | `id` (bigserial), `type`, `workspace_id`, `payload`, `created_at`, `dispatched_at`, `attempts` |
 | `notifications` [G] | `user_id`, `type`, `payload`, `read_at` |
 

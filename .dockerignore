@@ -1,0 +1,9 @@
+# Build context of the Caddy image is the repository root: never send secrets.
+.env
+.env.*
+secrets/
+.git/
+**/node_modules/
+**/.venv/
+**/dist/
+**/__pycache__/

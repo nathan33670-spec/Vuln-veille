@@ -26,6 +26,8 @@ from app.core.rate_limit import RateLimiter
 from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
 from app.iam.portal_org_api import build_portal_org_router
+from app.vault.api import build_vault_router
+from app.vault.service import Vault
 
 API_PREFIX: dict[Audience, str] = {
     "backoffice": "/api/v1",
@@ -67,6 +69,7 @@ def create_app(
     app.state.audience = audience
     app.state.settings = settings
     app.state.mailer = mailer or mailer_for(settings)
+    app.state.vault = Vault.from_settings(settings)
 
     register_error_handlers(app)
     app.include_router(health.router)
@@ -74,6 +77,7 @@ def create_app(
     if audience == "backoffice":
         app.include_router(build_admin_router(), prefix=prefix)
         app.include_router(build_audit_router(), prefix=prefix)
+        app.include_router(build_vault_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
 

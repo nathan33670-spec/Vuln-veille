@@ -16,6 +16,9 @@ from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.db_roles import RolePasswords, provision_roles
 from app.iam.bootstrap import AdminAlreadyExistsError, bootstrap_admin
+from app.vault.admin import add_key, rotate
+from app.vault.keys import KeyFormatError, SecretPurpose
+from app.vault.service import VaultConfigError
 
 
 def _require_env(name: str) -> str:
@@ -77,6 +80,25 @@ async def _bootstrap_admin(email: str, name: str) -> None:
     print(link)  # noqa: T201
 
 
+def _vault_keygen(purpose: SecretPurpose, key_id: str, keyring_dir: Path) -> None:
+    try:
+        public = add_key(keyring_dir, purpose, key_id)
+    except (KeyFormatError, VaultConfigError) as exc:
+        sys.exit(str(exc))
+    # The private key only goes to the keyring file; the public key is not secret.
+    print(f"added key {key_id} to {purpose}.keyring; set in .env:")  # noqa: T201
+    print(f"VV_VAULT_PUBLIC_KEY_{purpose.upper()}={public}")  # noqa: T201
+
+
+def _vault_rotate(purpose: SecretPurpose) -> None:
+    configure_logging("WARNING")
+    try:
+        count = asyncio.run(rotate(get_settings(), purpose))
+    except VaultConfigError as exc:
+        sys.exit(str(exc))
+    print(f"{count} {purpose} secret(s) re-wrapped for the current key")  # noqa: T201
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli", description="Vuln-Veille administration")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -87,6 +109,14 @@ def main(argv: list[str] | None = None) -> None:
     boot.add_argument("--email", required=True)
     boot.add_argument("--name", required=True)
 
+    purposes = [p.value for p in SecretPurpose]
+    keygen = sub.add_parser("vault-keygen", help="add a new vault key for a purpose")
+    keygen.add_argument("--purpose", required=True, choices=purposes)
+    keygen.add_argument("--key-id", required=True, help="e.g. k20270101")
+    keygen.add_argument("--keyring-dir", type=Path, required=True)
+    rot = sub.add_parser("vault-rotate", help="re-wrap a purpose's secrets for its current key")
+    rot.add_argument("--purpose", required=True, choices=purposes)
+
     args = parser.parse_args(argv)
     if args.command == "provision-db-roles":
         asyncio.run(_provision_db_roles())
@@ -94,6 +124,10 @@ def main(argv: list[str] | None = None) -> None:
         _export_openapi(args.output_dir)
     elif args.command == "bootstrap-admin":
         asyncio.run(_bootstrap_admin(args.email, args.name))
+    elif args.command == "vault-keygen":
+        _vault_keygen(SecretPurpose(args.purpose), args.key_id, args.keyring_dir)
+    elif args.command == "vault-rotate":
+        _vault_rotate(SecretPurpose(args.purpose))
 
 
 if __name__ == "__main__":

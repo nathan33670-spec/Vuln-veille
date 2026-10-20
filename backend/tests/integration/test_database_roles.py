@@ -1,8 +1,12 @@
 """Least-privilege database roles, migrations and readiness against real services."""
 
+from pathlib import Path
+
 import asyncpg
 import httpx
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from pydantic import SecretStr
 from sqlalchemy import text
 
@@ -13,6 +17,8 @@ from tests.conftest import make_settings
 from tests.integration.conftest import PASSWORDS, Database
 
 pytestmark = pytest.mark.integration
+
+BACKEND = Path(__file__).resolve().parents[2]
 
 
 async def _fails(dsn: str, statement: str) -> bool:
@@ -51,7 +57,9 @@ async def test_baseline_migration_applied(database: Database) -> None:
     finally:
         await conn.close()
     assert {"citext", "pg_trgm"} <= extensions
-    assert version == "0002_iam"
+    assert (
+        version == ScriptDirectory.from_config(Config(BACKEND / "alembic.ini")).get_current_head()
+    )
 
 
 async def test_runtime_roles_cannot_change_schema(database: Database) -> None:

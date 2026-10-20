@@ -113,7 +113,15 @@ Un nouveau modèle sur un serveur compatible OpenAI (OpenLLM, vLLM, Ollama…) *
 - Le proxy réseau du conteneur intercepte TLS avec sa propre autorité (`/root/.ccr/ca-bundle.crt`) : les **builds Docker** échouent avec `SELF_SIGNED_CERT_IN_CHAIN`. Ce n'est pas un défaut du dépôt. Pour vérifier localement, générer dans le scratchpad des variantes des Dockerfiles qui copient cette autorité (contexte additionnel `--build-context sandboxca=/root/.ccr`), construire avec `docker build`, puis `docker compose ... up --no-build`. Ne jamais commiter ces variantes.
 - Les tests d'intégration (testcontainers) fonctionnent dès que `dockerd` tourne.
 
-## 9. Gestion des secrets en développement
+## 9. Gestion des secrets et du coffre
 
-- `make dev` génère un `.env` local à partir de `.env.example`, avec des KEK aléatoires de développement.
-- Les identifiants de sources et de LLM se saisissent par l'interface (coffre de secrets), jamais dans le code ni dans le `.env` commité.
+- `make env` génère `.env` à partir de `.env.example` (mots de passe et clés aléatoires) et les trousseaux du coffre dans `secrets/keyrings/` (un fichier par usage). Le script refuse d'écraser un `.env` ou des trousseaux existants.
+- Les identifiants de sources, de moteurs IA et de connecteurs se saisissent par l'interface (coffre de secrets), jamais dans le code ni dans `.env`.
+- **Sauvegarde** : `.env` et `secrets/` se sauvegardent ensemble, hors ligne. Sans le trousseau d'un usage, ses secrets sont perdus (il faut les ressaisir).
+- **Qui détient quoi** (ADR-013) : l'API du back-office n'a que les clés publiques (`VV_VAULT_PUBLIC_KEY_*`) ; `worker-collect` reçoit le trousseau `source`, `worker-ai` le trousseau `llm`, `worker-publish` le trousseau `connector` (secrets Docker). Ne jamais monter un trousseau dans une API.
+- **Rotation d'une clé** (exemple : `source`) :
+  1. `scripts/vault-keygen.sh source` ajoute une clé en tête de `secrets/keyrings/source.keyring` et affiche la ligne `VV_VAULT_PUBLIC_KEY_SOURCE=…` à reporter dans `.env` ;
+  2. `docker compose -f deploy/docker-compose.yml --env-file .env up -d` : les nouveaux secrets sont scellés pour la nouvelle clé, les anciens restent lisibles ;
+  3. `docker compose -f deploy/docker-compose.yml --env-file .env --profile tools run --rm vault-admin python -m app.cli vault-rotate --purpose source` ré-enveloppe toutes les clés de données ;
+  4. retirer l'ancienne ligne du trousseau, sauvegarder, redémarrer.
+- En cas de compromission d'une valeur (jeton fuité), la rotation de clé ne suffit pas : remplacer la valeur dans l'interface et révoquer le jeton chez le fournisseur.

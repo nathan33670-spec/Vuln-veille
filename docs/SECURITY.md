@@ -113,9 +113,10 @@ Pas de CORS : les SPA et les API partagent la même origine. Les images externes
 
 ### 4.7 Secrets et cryptographie
 
-- Chiffrement d'enveloppe : une clé de données AES-256-GCM par secret, chiffrée par une clé maître (KEK) **par usage** (`llm`, `source`, `connector`, `webhook`, `totp`). Données associées (AAD) : `secret_id` et `workspace_id`.
-- KEK fournies par Docker secrets ou variables d'environnement en MVP, Vault ou KMS ensuite. Chaque worker ne reçoit que les KEK de son usage.
-- Rotation : CLI de rechiffrement des clés de données ; `kek_id` stocké avec chaque secret.
+- Chiffrement d'enveloppe : une clé de données AES-256-GCM par secret, enveloppée pour la **clé publique X25519 de son usage** (`llm`, `source`, `connector`, `webhook` ; ECDH éphémère, HKDF-SHA256, AES-256-GCM). Données associées (AAD) : usage, `secret_id`, `workspace_id` et identifiant de clé.
+- L'API ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire. Les trousseaux privés sont des secrets Docker montés uniquement dans le worker de leur usage. Les secrets TOTP ont leur propre clé symétrique (`VV_KEK_TOTP`).
+- RLS : un administrateur VOC ne voit jamais les secrets du CERT ; les workers ne créent ni ne suppriment de secret.
+- Rotation : `scripts/vault-keygen.sh` puis `vault-rotate` (ré-enveloppement des clés de données) ; `kek_id` stocké avec chaque secret (PROCEDURES §9).
 - API en écriture seule : seuls l'indice (4 derniers caractères) et la date de mise à jour sont renvoyés.
 - Aléa : module `secrets` uniquement. Comparaisons en temps constant (`hmac.compare_digest`).
 

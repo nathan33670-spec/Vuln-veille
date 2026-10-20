@@ -105,9 +105,13 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-013 — Secrets par chiffrement d'enveloppe et clés par usage
 
-- **Statut** : Proposée
-- **Décision** : AES-256-GCM, une clé de données par secret, une KEK par usage injectée uniquement dans les composants concernés. Vault ou KMS en option plus tard.
-- **Conséquences** : CLI de rotation ; la perte d'une KEK rend ses secrets irrécupérables, d'où une procédure de sauvegarde des KEK hors ligne.
+- **Statut** : Acceptée (révisée en phase 2 : enveloppe asymétrique)
+- **Décision** : chaque secret est chiffré en AES-256-GCM par sa propre clé de données (DEK). La DEK est enveloppée pour la **clé publique X25519 de son usage** (`llm`, `source`, `connector`, `webhook`) : échange ECDH avec une clé éphémère, dérivation HKDF-SHA256, AES-256-GCM. Données associées : usage, identifiant du secret, espace et identifiant de clé.
+  - L'API du back-office ne détient que les **clés publiques** : elle chiffre les nouveaux secrets mais ne peut en déchiffrer aucun. L'écriture seule est garantie par la cryptographie, pas seulement par le code.
+  - Chaque worker ne reçoit que le **trousseau privé** de son usage, sous forme de secret Docker (`worker-collect` : `source` ; `worker-ai` : `llm` ; `worker-publish` : `connector`).
+  - Les secrets TOTP restent chiffrés par une clé symétrique propre (`VV_KEK_TOTP`), car l'API doit les vérifier.
+  - Vault ou KMS en option plus tard.
+- **Conséquences** : rotation par la CLI (`vault-keygen`, puis `vault-rotate` qui ré-enveloppe les DEK) ; la perte d'un trousseau rend ses secrets irrécupérables, d'où une sauvegarde hors ligne des trousseaux (PROCEDURES §9).
 
 ## ADR-014 — Connecteur de publication HTTP générique et déclaratif
 

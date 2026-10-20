@@ -8,6 +8,7 @@ import base64
 import binascii
 from datetime import timedelta
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import AnyHttpUrl, Field, SecretStr, field_validator
@@ -47,9 +48,17 @@ class Settings(BaseSettings):
 
     # HMAC key for CSRF tokens, one-time tokens and recovery codes (>= 32 bytes).
     secret_key: SecretStr
-    # AES-256-GCM key encrypting TOTP secrets at rest (base64, 32 bytes). Phase 2 adds
-    # one key per purpose for the general secret vault (ADR-013).
+    # AES-256-GCM key encrypting TOTP secrets at rest (base64, 32 bytes).
     kek_totp: SecretStr
+
+    # Secret vault (ADR-013). Public keys ("<id>:<base64>") let a component seal secrets;
+    # private keyrings are files "<purpose>.keyring" in this directory (Docker secrets),
+    # mounted only into the components that use that purpose.
+    vault_public_key_llm: str | None = None
+    vault_public_key_source: str | None = None
+    vault_public_key_connector: str | None = None
+    vault_public_key_webhook: str | None = None
+    vault_keyring_dir: Path | None = None
 
     backoffice_origin: AnyHttpUrl = AnyHttpUrl("https://backoffice.localhost")
     portal_origin: AnyHttpUrl = AnyHttpUrl("https://portal.localhost")

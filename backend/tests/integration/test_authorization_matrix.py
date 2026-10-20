@@ -34,6 +34,21 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
         "viewer": 404,
         "no_workspace": 404,
     },
+    "/workspaces/voc/secrets": {
+        ANON: 401,
+        "voc": 200,
+        "cert": 404,
+        "viewer": 403,
+        "no_workspace": 404,
+    },
+    "/workspaces/cert/secrets": {
+        ANON: 401,
+        "voc": 404,
+        "cert": 200,
+        "viewer": 404,
+        "no_workspace": 404,
+    },
+    "/admin/secrets": {ANON: 401, "voc": 200, "cert": 403, "viewer": 403, "no_workspace": 403},
     "/account/sessions": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 200},
 }
 

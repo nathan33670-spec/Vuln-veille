@@ -200,6 +200,59 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/secrets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Global Secrets */
+    get: operations["list_global_secrets_api_v1_admin_secrets_get"];
+    put?: never;
+    /** Create Global Secret */
+    post: operations["create_global_secret_api_v1_admin_secrets_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/secrets/{secret_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Global Secret */
+    delete: operations["delete_global_secret_api_v1_admin_secrets__secret_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Global Secret */
+    patch: operations["update_global_secret_api_v1_admin_secrets__secret_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/admin/secrets/{secret_id}/value": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Replace Global Secret */
+    put: operations["replace_global_secret_api_v1_admin_secrets__secret_id__value_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/users": {
     parameters: {
       query?: never;
@@ -561,6 +614,59 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/secrets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Workspace Secrets */
+    get: operations["list_workspace_secrets_api_v1_workspaces__workspace__secrets_get"];
+    put?: never;
+    /** Create Workspace Secret */
+    post: operations["create_workspace_secret_api_v1_workspaces__workspace__secrets_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/secrets/{secret_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Workspace Secret */
+    delete: operations["delete_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Workspace Secret */
+    patch: operations["update_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/secrets/{secret_id}/value": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Replace Workspace Secret */
+    put: operations["replace_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__value_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/healthz": {
     parameters: {
       query?: never;
@@ -805,6 +911,71 @@ export interface components {
       csrf_token: string;
       /** Recovery Codes */
       recovery_codes: string[];
+    };
+    /** SecretCreate */
+    SecretCreate: {
+      /**
+       * Description
+       * @default
+       */
+      description: string;
+      /** Name */
+      name: string;
+      purpose: components["schemas"]["SecretPurpose"];
+      /**
+       * Value
+       * Format: password
+       */
+      value: string;
+    };
+    /** SecretOut */
+    SecretOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Description */
+      description: string;
+      /**
+       * Hint Last4
+       * @description Last 4 characters, only for values of 16 or more.
+       */
+      hint_last4: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /** Purpose */
+      purpose: string;
+      /**
+       * Value Updated At
+       * Format: date-time
+       */
+      value_updated_at: string;
+      /** Version */
+      version: number;
+    };
+    /**
+     * SecretPurpose
+     * @enum {string}
+     */
+    SecretPurpose: "llm" | "source" | "connector" | "webhook";
+    /** SecretUpdate */
+    SecretUpdate: {
+      /** Description */
+      description: string;
+    };
+    /** SecretValueIn */
+    SecretValueIn: {
+      /**
+       * Value
+       * Format: password
+       */
+      value: string;
     };
     /** SessionOut */
     SessionOut: {
@@ -1411,6 +1582,158 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["UserDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_global_secrets_api_v1_admin_secrets_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"][];
+        };
+      };
+    };
+  };
+  create_global_secret_api_v1_admin_secrets_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_global_secret_api_v1_admin_secrets__secret_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_global_secret_api_v1_admin_secrets__secret_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  replace_global_secret_api_v1_admin_secrets__secret_id__value_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretValueIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
         };
       };
       /** @description Validation Error */
@@ -2161,6 +2484,174 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditPage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_workspace_secrets_api_v1_workspaces__workspace__secrets_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_workspace_secret_api_v1_workspaces__workspace__secrets_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  replace_workspace_secret_api_v1_workspaces__workspace__secrets__secret_id__value_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        secret_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretValueIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SecretOut"];
         };
       };
       /** @description Validation Error */

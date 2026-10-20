@@ -9,8 +9,14 @@ from pydantic import SecretStr
 
 from app.app_factory import create_app
 from app.core.config import Audience, Settings
+from app.vault.keys import Keyring, SecretPurpose, generate
 
 PLACEHOLDER_DSN = SecretStr("postgresql://unused:unused@127.0.0.1:1/unused")
+
+
+# One vault key pair per purpose for the whole test session (never written to disk).
+_VAULT_KEYS = {purpose: generate(f"test-{purpose}") for purpose in SecretPurpose}
+TEST_KEYRINGS = {purpose: Keyring.parse(line) for purpose, (line, _) in _VAULT_KEYS.items()}
 
 
 def make_settings(**overrides: Any) -> Settings:
@@ -24,6 +30,8 @@ def make_settings(**overrides: Any) -> Settings:
         "secret_key": SecretStr("test-secret-key-0123456789abcdef-0123456789"),
         "kek_totp": SecretStr(base64.b64encode(b"k" * 32).decode()),
         "password_hash_profile": "fast-insecure-tests-only",
+        # The APIs only get public keys, like in production (ADR-013).
+        **{f"vault_public_key_{p}": public for p, (_, public) in _VAULT_KEYS.items()},
     }
     values.update(overrides)
     return Settings(**values)

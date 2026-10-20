@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+# Least privilege for the workflow token.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.30"
+  TRIVY_IMAGE: aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa
+  GITLEAKS_IMAGE: zricethezav/gitleaks:v8.30.0@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - name: Unit and security tests
+        run: uv run pytest -m "not integration"
+      - name: Integration tests (PostgreSQL and Redis containers)
+        run: uv run pytest -m integration
+      - name: OpenAPI schemas are up to date
+        run: |
+          uv run python -m app.cli export-openapi --output-dir ../openapi > /dev/null
+          git diff --exit-code -- ../openapi
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Generated API client matches the OpenAPI schemas
+        run: |
+          pnpm --filter @vv/api-client generate
+          git diff --exit-code -- packages/api-client/src
+
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # full history for the secret scan
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Secret scan (gitleaks, whole history)
+        run: docker run --rm -v "$PWD:/repo:ro" "$GITLEAKS_IMAGE" git /repo --no-banner --redact
+      - name: Python dependency audit (pip-audit)
+        working-directory: backend
+        run: |
+          uv export --frozen --no-dev --no-hashes --no-emit-project --format requirements-txt -o /tmp/requirements.txt > /dev/null
+          uvx --from pip-audit==2.10.1 pip-audit --strict --progress-spinner off --disable-pip --no-deps -r /tmp/requirements.txt
+      - name: JavaScript dependency audit
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --prod
+      - name: Static analysis (Semgrep)
+        run: uvx --from semgrep==1.179.0 semgrep scan --config p/python --config p/typescript --config p/secrets --config p/dockerfile --error --metrics off backend/app frontend/apps frontend/packages deploy
+      - name: Infrastructure as code scan (Trivy config)
+        run: docker run --rm -v "$PWD:/repo:ro" "$TRIVY_IMAGE" config --exit-code 1 --severity HIGH,CRITICAL /repo
+
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build images
+        run: |
+          docker build -t vuln-veille-backend:ci backend
+          docker build -t vuln-veille-caddy:ci -f deploy/caddy/Dockerfile .
+          docker build -t vuln-veille-smokescreen:ci deploy/smokescreen
+      - name: Scan images (Trivy, fixable HIGH/CRITICAL)
+        run: |
+          for image in vuln-veille-backend:ci vuln-veille-caddy:ci vuln-veille-smokescreen:ci; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" \
+              image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed "$image"
+          done
+      - name: Smoke test of the full stack
+        run: |
+          ./scripts/gen-env.sh
+          docker tag vuln-veille-backend:ci vuln-veille-backend:local
+          docker tag vuln-veille-caddy:ci vuln-veille-caddy
+          docker tag vuln-veille-smokescreen:ci vuln-veille-smokescreen
+          docker compose -f deploy/docker-compose.yml --env-file .env up -d --no-build --wait --wait-timeout 180 \
+            caddy api-backoffice api-portal scheduler worker-default
+          ./scripts/smoke-test.sh
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml --env-file .env logs --tail=200

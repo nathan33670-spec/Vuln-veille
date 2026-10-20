@@ -31,6 +31,9 @@ export interface SafeHtmlProps {
 /** The only sanctioned way to render HTML coming from the API (already sanitized server-side). */
 export function SafeHtml({ html, className }: SafeHtmlProps) {
   const clean = useMemo(() => sanitizeHtml(html), [html]);
-  // eslint-disable-next-line no-restricted-syntax -- this component is the audited exception
+  // Audited exception: the value is sanitized by DOMPurify just above (and server-side).
+  /* eslint-disable no-restricted-syntax */
+  // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
   return <div className={className} dangerouslySetInnerHTML={{ __html: clean }} />;
+  /* eslint-enable no-restricted-syntax */
 }

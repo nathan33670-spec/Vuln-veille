@@ -1,0 +1,20 @@
+# Install once: `pipx install pre-commit && pre-commit install` (or `uvx pre-commit install`).
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: backend-ruff
+        name: ruff (backend)
+        entry: sh -c 'cd backend && uv run ruff check --fix . && uv run ruff format .'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+      - id: frontend-format-lint
+        name: prettier + eslint (frontend)
+        entry: sh -c 'cd frontend && pnpm exec prettier --write . && pnpm exec eslint .'
+        language: system
+        files: ^frontend/
+        pass_filenames: false

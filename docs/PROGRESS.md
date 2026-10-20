@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 1 (identité, accès, audit) **terminée**. Phase 2 non commencée.
-- **Dernière étape terminée** : 1.11 interfaces (back-office et portail), poussée et testée.
-- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 2.
-- **Prochaine étape** : phase 2, étape 2.1 (coffre de secrets), puis 2.2 (`SafeHttpClient`) et 2.3 (cadre des connecteurs).
+- **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
+- **Dernière étape terminée** : 2.1 coffre de secrets (enveloppe X25519 par usage, API en écriture seule, rotation).
+- **Étape en cours** : 2.2 `SafeHttpClient` anti-SSRF et proxy de sortie.
+- **Prochaine étape** : 2.3 cadre des connecteurs, puis 2.4 connecteur NVD.
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -14,9 +14,18 @@
   - Dépendances Go de Caddy et smokescreen figées dans `deploy/*/build/go.{mod,sum}` (montée de version : PROCEDURES §8).
   - Frontend : aucun attribut `style` (CSP) ; les styles vont dans `packages/ui/src/styles.css`. jsdom n'implémente pas `<dialog>.showModal` : polyfill dans `packages/auth/src/test-setup.ts`.
   - Les requêtes typées d'openapi-fetch attendent `null` (et non `undefined`) pour les paramètres facultatifs (`exactOptionalPropertyTypes`).
+  - Coffre : l'API n'a que les clés publiques ; un trousseau privé ne se monte que dans le worker de son usage (PROCEDURES §9). `make env` refuse d'écraser des trousseaux existants.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 8 : phase 2, coffre de secrets
+
+- ADR-013 révisée : chaque secret a sa clé de données AES-256-GCM, enveloppée pour la clé publique X25519 de son usage. L'API du back-office ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire.
+- Migration `0003_vault` : table `secrets`, RLS (un administrateur VOC ne voit pas les secrets du CERT ; les workers lisent et ré-enveloppent mais ne créent ni ne suppriment).
+- API : secrets d'espace (`secret.manage`) et globaux (`connector.global.manage`), step-up à chaque écriture, audit sans valeur.
+- Exploitation : trousseaux en secrets Docker par worker, `scripts/vault-keygen.sh`, `vault-rotate`, service `vault-admin` (profil `tools`), `.dockerignore` racine.
+- Tests : 84 tests backend (cryptographie, liaison des données associées, rotation, isolation VOC/CERT, écriture seule, step-up).
 
 ### 2026-10-21 — Session 7 : phase 1, interfaces
 

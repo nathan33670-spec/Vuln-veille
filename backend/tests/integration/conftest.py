@@ -87,7 +87,8 @@ async def clean_state(database: Database, redis_url: str) -> None:
     admin = await asyncpg.connect(database.admin_dsn)
     try:
         await admin.execute(
-            "TRUNCATE users, client_organizations, audit_events RESTART IDENTITY CASCADE"
+            "TRUNCATE users, client_organizations, audit_events, connectors, cve_records, "
+            "outbox_events RESTART IDENTITY CASCADE"
         )
     finally:
         await admin.close()

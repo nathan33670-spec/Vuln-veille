@@ -101,7 +101,8 @@ Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage dep
 - Fenêtre : `lastModStartDate` = fin de la dernière synchro réussie moins 5 minutes de recouvrement, `lastModEndDate` = maintenant. Les deux bornes sont toujours envoyées.
 - Pagination (`resultsPerPage` au maximum, `startIndex`), pause entre les requêtes, backoff exponentiel sur 403, 429 et 503, reprise sur le curseur en cas d'échec : aucune fenêtre n'est perdue.
 - **Rattrapage initial** : profondeur configurable (par exemple 90 jours), découpé en fenêtres de 120 jours au maximum, **sans** émettre d'événements, pour ne pas lancer des centaines d'investigations d'un coup.
-- Les limites exactes (requêtes par fenêtre de 30 secondes avec et sans clé, taille de page, durée maximale d'une fenêtre) sont vérifiées dans la documentation NVD au moment de l'implémentation, puis paramétrées.
+- Limites retenues (documentation NVD, toutes paramétrables dans la configuration du connecteur) : 5 requêtes par fenêtre glissante de 30 secondes sans clé (pause de 6 s), 50 avec une clé (pause de 0,6 s) ; 2 000 résultats par page ; fenêtres de 120 jours au plus, deux bornes toujours envoyées ; recouvrement de 5 minutes ; backoff exponentiel à partir de 6 s, 6 tentatives.
+- Implémentation : type `nvd` (`backend/app/connectors/types/nvd.py`), synchronisation `backend/app/catalog/nvd_sync.py` (tâche `collect.nvd_sync`, une seule à la fois par connecteur grâce à un verrou consultatif), planification par le scheduler (`backend/app/catalog/schedule.py`). Le curseur (`connector_cursors`, flux `cves`) avance après chaque fenêtre terminée ; chaque page est validée avec son historique et ses événements.
 
 ### 3.2 Détection des nouveautés et changements
 
@@ -109,14 +110,15 @@ Pour chaque CVE reçue, on compare avec l'état connu dans `cve_records` :
 
 | Situation | Événement | Usage typique |
 |---|---|---|
-| CVE inconnue | `cve.published` | **Lance l'investigation** |
+| CVE inconnue, publiée depuis moins de `announce_published_within_days` (14 jours par défaut) | `cve.published` | **Lance l'investigation** |
+| CVE inconnue plus ancienne (modifiée récemment, hors du rattrapage) | aucun (cataloguée, historisée) | Évite de lancer une investigation sur une CVE de 2015 modifiée aujourd'hui |
 | CVSS ajouté (NVD ou CNA) ou sévérité relevée | `cve.updated` (`cvss_added`, `severity_raised`) | Re-évaluer le périmètre et la priorité |
 | Configurations CPE ajoutées | `cve.updated` (`cpe_added`) | Re-évaluer le périmètre : une CVE peut y entrer quand NVD l'enrichit |
 | Champs KEV renseignés | `cve.updated` (`kev_added`) | Alerte, priorité relevée, draft automatique possible |
 | Référence étiquetée « Exploit » ajoutée | `cve.updated` (`exploit_reference_added`) | Re-veille ciblée |
 | Statut « Rejected » | `cve.updated` (`rejected`) | Proposer la clôture de la vulnérabilité |
 
-Les événements sont écrits dans l'outbox dans la même transaction que la mise à jour du catalogue, et chaque changement est historisé dans `cve_changes` (chronologie visible sur la fiche).
+Les événements sont écrits dans l'outbox dans la même transaction que la mise à jour du catalogue, et chaque changement est historisé dans `cve_changes` (chronologie visible sur la fiche). Une baisse de sévérité ou une modification sans effet listé ci-dessus ne produit pas d'événement. NVD n'efface jamais les données KEV fournies par le flux de la CISA.
 
 ### 3.3 Diffusion vers les espaces
 

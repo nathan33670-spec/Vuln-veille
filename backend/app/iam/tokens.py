@@ -52,6 +52,7 @@ async def issue_token(
             audience=audience,
             expires_at=now + ttl,
             created_by=created_by,
+            created_at=now,  # no RETURNING needed (see users.create_invited_user)
         )
     )
     await db.flush()

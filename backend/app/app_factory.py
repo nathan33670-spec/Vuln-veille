@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio import Redis
 
+from app.audit.api import build_audit_router
 from app.core import health
 from app.core.config import Audience, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
@@ -22,7 +23,9 @@ from app.core.middleware import (
     SecurityHeadersMiddleware,
 )
 from app.core.rate_limit import RateLimiter
+from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
+from app.iam.portal_org_api import build_portal_org_router
 
 API_PREFIX: dict[Audience, str] = {
     "backoffice": "/api/v1",
@@ -68,6 +71,11 @@ def create_app(
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(build_auth_router(), prefix=prefix)
+    if audience == "backoffice":
+        app.include_router(build_admin_router(), prefix=prefix)
+        app.include_router(build_audit_router(), prefix=prefix)
+    else:
+        app.include_router(build_portal_org_router(), prefix=prefix)
 
     # Starlette runs the last-added middleware first.
     # Order (outermost first): request id, security headers, origin check, catch-all errors,

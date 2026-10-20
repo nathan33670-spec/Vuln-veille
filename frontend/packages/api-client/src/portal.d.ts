@@ -262,6 +262,58 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/portal/v1/org/users": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Org Users */
+    get: operations["list_org_users_api_portal_v1_org_users_get"];
+    put?: never;
+    /** Invite Org User */
+    post: operations["invite_org_user_api_portal_v1_org_users_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/portal/v1/org/users/{user_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Org User */
+    patch: operations["update_org_user_api_portal_v1_org_users__user_id__patch"];
+    trace?: never;
+  };
+  "/api/portal/v1/org/users/{user_id}/invitation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Resend Org Invitation */
+    post: operations["resend_org_invitation_api_portal_v1_org_users__user_id__invitation_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/healthz": {
     parameters: {
       query?: never;
@@ -314,6 +366,22 @@ export interface components {
       name: string;
       /** Role */
       role: string;
+    };
+    /** ClientUserCreate */
+    ClientUserCreate: {
+      /** Display Name */
+      display_name: string;
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+      /**
+       * Role
+       * @default client_user
+       * @enum {string}
+       */
+      role: "client_user" | "client_admin";
     };
     /** CsrfOut */
     CsrfOut: {
@@ -404,6 +472,15 @@ export interface components {
       /** Code */
       code: string;
     };
+    /** OrgUserUpdate */
+    OrgUserUpdate: {
+      /** Display Name */
+      display_name?: string | null;
+      /** Role */
+      role?: ("client_user" | "client_admin") | null;
+      /** Status */
+      status?: ("active" | "disabled") | null;
+    };
     /** PasswordChangeIn */
     PasswordChangeIn: {
       /** Current Password */
@@ -463,6 +540,40 @@ export interface components {
       password: string;
       /** Token */
       token: string;
+    };
+    /** UserOut */
+    UserOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Display Name */
+      display_name: string;
+      /** Email */
+      email: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Last Login At */
+      last_login_at: string | null;
+      /** Locked */
+      locked: boolean;
+      /** Mfa Enabled */
+      mfa_enabled: boolean;
+      /** Status */
+      status: string;
+      /** User Type */
+      user_type: string;
+    };
+    /** UserPage */
+    UserPage: {
+      /** Items */
+      items: components["schemas"]["UserOut"][];
+      /** Next Cursor */
+      next_cursor: string | null;
     };
     /** ValidationError */
     ValidationError: {
@@ -888,6 +999,135 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["CsrfOut"];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_org_users_api_portal_v1_org_users_get: {
+    parameters: {
+      query?: {
+        cursor?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserPage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  invite_org_user_api_portal_v1_org_users_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ClientUserCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_org_user_api_portal_v1_org_users__user_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OrgUserUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  resend_org_invitation_api_portal_v1_org_users__user_id__invitation_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

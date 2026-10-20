@@ -12,8 +12,10 @@ import asyncpg
 from pydantic import SecretStr
 
 from app.app_factory import create_app
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
+from app.core.logging import configure_logging
 from app.db_roles import RolePasswords, provision_roles
+from app.iam.bootstrap import AdminAlreadyExistsError, bootstrap_admin
 
 
 def _require_env(name: str) -> str:
@@ -62,18 +64,36 @@ def _export_openapi(output_dir: Path) -> None:
         print(f"wrote {target}")  # noqa: T201 - CLI output
 
 
+async def _bootstrap_admin(email: str, name: str) -> None:
+    settings = get_settings()
+    configure_logging("WARNING")
+    try:
+        link = await bootstrap_admin(settings, email, name)
+    except AdminAlreadyExistsError:
+        sys.exit("an administrator already exists: use the back-office to invite users")
+    # Printed once, never logged. Valid for the invitation lifetime; then re-run is refused,
+    # so resend from another admin or reset the database.
+    print("Administrator invited. Open this link to choose a password and enrol MFA:")  # noqa: T201
+    print(link)  # noqa: T201
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli", description="Vuln-Veille administration")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("provision-db-roles", help="create or update the PostgreSQL roles")
     export = sub.add_parser("export-openapi", help="write the OpenAPI schemas of both APIs")
     export.add_argument("--output-dir", type=Path, default=Path("openapi"))
+    boot = sub.add_parser("bootstrap-admin", help="invite the first platform administrator")
+    boot.add_argument("--email", required=True)
+    boot.add_argument("--name", required=True)
 
     args = parser.parse_args(argv)
     if args.command == "provision-db-roles":
         asyncio.run(_provision_db_roles())
     elif args.command == "export-openapi":
         _export_openapi(args.output_dir)
+    elif args.command == "bootstrap-admin":
+        asyncio.run(_bootstrap_admin(args.email, args.name))
 
 
 if __name__ == "__main__":

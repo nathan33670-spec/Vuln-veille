@@ -301,7 +301,12 @@ CREATE POLICY sessions_portal ON sessions TO vv_portal
 ALTER TABLE auth_tokens ENABLE ROW LEVEL SECURITY;
 CREATE POLICY auth_tokens_internal ON auth_tokens TO vv_app, vv_worker USING (true) WITH CHECK (true);
 CREATE POLICY auth_tokens_portal ON auth_tokens TO vv_portal
-    USING (audience = 'portal' AND (token_hash = {CTX_TOKEN} OR user_id = {CTX_USER}))
+    USING (audience = 'portal' AND (
+        token_hash = {CTX_TOKEN}
+        OR user_id = {CTX_USER}
+        -- client admins re-issue invitations of their organization's users
+        OR user_id IN (SELECT user_id FROM client_memberships WHERE client_org_id = {CTX_ORG})
+    ))
     WITH CHECK (audience = 'portal' AND {CLIENT_USER});
 
 ALTER TABLE user_mfa_totp ENABLE ROW LEVEL SECURITY;

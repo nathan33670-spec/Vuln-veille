@@ -63,6 +63,19 @@ Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage dep
 
 **Lecture d'un post** : une fois l'URL connue, le texte est obtenu par l'**oEmbed officiel** de X (`publish.x.com/oembed`), gratuit, sans authentification et documenté par X pour les traitements en masse. On garde le texte, l'auteur, la date et l'URL ; le HTML renvoyé est réduit à du texte puis assaini. Le résultat est mis en cache selon `cache_age` et marqué non fiable. Un post supprimé ou devenu privé (échec de l'oEmbed) est marqué « retiré ». Le respect de la politique développeur de X (affichage, suppression) est revérifié à l'implémentation.
 
+**Principe du strict nécessaire** (consigne du porteur, s'applique à toutes les couches) :
+- **Requêtes** : uniquement l'identifiant CVE, plus éditeur et produit si l'identifiant ne donne rien, toujours restreintes à `x.com` et `twitter.com`. Une requête par CVE dans le périmètre à sa publication ; la re-veille n'en relance que pour les CVE KEV, P1 ou P2.
+- **Résultats** : on ne garde que l'URL, le titre et l'extrait. L'extrait suffit souvent à juger de la pertinence, sans aucun appel à X.
+- **Lecture** : oEmbed uniquement pour les posts jugés pertinents, au plus 5 par CVE (configurable). Jamais de profil, de timeline, de liste d'abonnés, de réponses en cascade ni de média.
+- **Conservation** : URL, identifiant public de l'auteur, date et texte, sans autre donnée personnelle ; durée alignée sur les éléments collectés (Q17) ; purge des posts retirés.
+- **Plafonds** : nombre de requêtes et de lectures par CVE, par jour et par espace ; arrêt dur une fois le plafond atteint.
+
+**Recherche Google, évaluée le 2026-10-20 à la demande du porteur, non retenue en l'état** :
+- L'API officielle (Custom Search JSON API avec un Programmable Search Engine restreint à `x.com`, 100 requêtes gratuites par jour) **n'accepte plus de nouveaux clients et s'arrête le 1er janvier 2027**. Le remplaçant proposé par Google (Vertex AI Search) est payant.
+- Interroger google.com par automate, directement ou via SearXNG, va à l'encontre des conditions de Google, qui interdisent l'accès automatisé contraire au robots.txt ; il se heurte aussi rapidement aux captchas et aux blocages d'IP.
+- Brave Search API (alternative proche) exige désormais une carte bancaire et facture au-delà des crédits gratuits, ce qui est contraire à la règle « zéro abonnement payant ».
+- Le choix final est demandé au porteur (Q32). La recommandation est la couche 2 (recherche web du moteur IA, sur l'abonnement IA existant), avec le principe du strict nécessaire ci-dessus.
+
 **Exclus** :
 - l'API X payante ;
 - le scraping de x.com, y compris avec un navigateur headless ;

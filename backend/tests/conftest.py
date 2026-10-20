@@ -16,7 +16,8 @@ PLACEHOLDER_DSN = SecretStr("postgresql://unused:unused@127.0.0.1:1/unused")
 
 # One vault key pair per purpose for the whole test session (never written to disk).
 _VAULT_KEYS = {purpose: generate(f"test-{purpose}") for purpose in SecretPurpose}
-TEST_KEYRINGS = {purpose: Keyring.parse(line) for purpose, (line, _) in _VAULT_KEYS.items()}
+TEST_KEYRING_LINES = {purpose: line for purpose, (line, _) in _VAULT_KEYS.items()}
+TEST_KEYRINGS = {purpose: Keyring.parse(line) for purpose, line in TEST_KEYRING_LINES.items()}
 
 
 def make_settings(**overrides: Any) -> Settings:

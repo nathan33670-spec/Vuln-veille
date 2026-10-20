@@ -9,10 +9,11 @@ Every write requires a recent step-up and is audited (name and purpose, never th
 import uuid
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import AuditEntry, record
+from app.connectors.service import secret_in_use
 from app.iam.deps import (
     DB,
     SettingsDep,
@@ -129,6 +130,8 @@ class _Ops:
         workspace_id: uuid.UUID | None,
     ) -> None:
         secret = await get_secret(db, secret_id, workspace_id)
+        if await secret_in_use(db, secret.id):
+            raise HTTPException(status_code=409, detail="secret_in_use")
         await _audit(db, request, principal, "secret.deleted", secret)
         await db.delete(secret)
         await db.commit()

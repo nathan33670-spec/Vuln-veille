@@ -26,7 +26,16 @@ Propriétés communes :
 
 Actions communes : **Tester la connexion** (appel sans effet de bord, par exemple une requête d'un seul résultat), activer ou désactiver, voir l'historique des modifications, voir la consommation des quotas.
 
-Implémentation : `backend/app/connectors/` contient le cadre (`base.py` : `ConnectorType` avec `ConfigModel`, `secret_slots`, `egress_domains`, `health_check()`) et un sous-module par type. Les outils d'agents et les nœuds de workflows n'accèdent aux services externes **que** par un connecteur de leur espace (ou global), jamais avec des identifiants en paramètre.
+Implémentation (`backend/app/connectors/`) :
+- `base.py` : `ConnectorType` (`kind`, `family`, `scopes`, `cost_class`, `config_model`, `secret_slots`, `egress_domains` ou `egress_for(config)`, `default_quotas`, `health_check()`) et registre. L'enregistrement **échoue à l'import** pour un type payant, un champ de configuration au nom d'identifiant (`token`, `password`, `api_key`…), un domaine invalide, ou un type `ai_billed` sans budget. Un sous-module par type dans `types/`.
+- `api.py` : la famille figure dans le chemin, pour que chaque route déclare sa permission exacte. `/workspaces/{espace}/connectors/{source|ai_engine|publish}` (permissions `connector.source.manage`, `ai.engine.manage`, `connector.publish.manage`) et `/admin/connectors/{famille}` (`connector.global.manage`) ; `/connector-types` donne le catalogue des types avec le schéma JSON de leur configuration (formulaire généré). Écritures sous step-up, auditées, verrouillage optimiste par `version`.
+- Références de secrets : un connecteur ne référence que des secrets de **sa** portée (même espace, ou global pour un connecteur global) et de l'usage de sa famille (`source`, `llm`, `connector`). Un secret référencé ne peut pas être supprimé.
+- **Tester la connexion** : l'API met en file une tâche `<file>.connector_check` sur le worker de la famille (seul détenteur du trousseau, ADR-013) ; le résultat met à jour la santé (`unknown`, `ok`, `degraded`, `failing` à partir de 3 échecs consécutifs). Limité à 10 tests par minute et par connecteur.
+- `runtime.py` (workers) : déchiffrement des secrets, client `SafeHttpClient` limité aux domaines déclarés par le type (aucun domaine déclaré : aucun accès réseau), plages privées seulement après approbation d'un admin.
+- `quotas.py` : compteurs Redis par minute, jour et mois calendaires (UTC) ; une requête refusée ne consomme pas de quota ; consommation consultable par `…/{id}/usage`.
+- `egress_acl.py` : `python -m app.cli egress-acl` génère la liste blanche de smokescreen à partir des domaines déclarés et de ceux des connecteurs activés ; un test vérifie que `deploy/smokescreen/acl.yaml` couvre tous les domaines déclarés par les types.
+
+Les outils d'agents et les nœuds de workflows n'accèdent aux services externes **que** par un connecteur de leur espace (ou global), jamais avec des identifiants en paramètre.
 
 ## 2. Catalogue des connecteurs de veille
 

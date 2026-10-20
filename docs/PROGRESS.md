@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
-- **Dernière étape terminée** : 2.2 `SafeHttpClient` anti-SSRF et proxy de sortie (2.1 coffre de secrets avant).
-- **Étape en cours** : 2.3 cadre commun des connecteurs.
-- **Prochaine étape** : 2.4 connecteur NVD, 2.5 détection des nouveautés.
+- **Dernière étape terminée** : 2.3 cadre commun des connecteurs (2.1 coffre de secrets et 2.2 `SafeHttpClient` avant).
+- **Étape en cours** : 2.4 connecteur NVD (global).
+- **Prochaine étape** : 2.5 détection des nouveautés NVD, 2.6 KEV, EPSS et CVE.org.
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -17,6 +17,8 @@
   - Coffre : l'API n'a que les clés publiques ; un trousseau privé ne se monte que dans le worker de son usage (PROCEDURES §9). `make env` refuse d'écraser des trousseaux existants.
   - Sortie réseau : les workers n'ont **ni DNS externe ni route** ; en mode proxy, `SafeHttpClient` ne résout pas les noms et laisse smokescreen résoudre et filtrer. Obtenir un client par `egress_client(settings, policy)`, jamais directement.
   - L'environnement cloud ne donne pas Internet à smokescreen : un appel réel (NVD…) échoue en `network_error` dans le bac à sable, pas en CI ni en production.
+  - Connecteurs : aucun type réel n'est encore enregistré (le premier arrive avec NVD). Après l'ajout d'un type, régénérer `deploy/smokescreen/acl.yaml` par `python -m app.cli egress-acl --static-only --output ../deploy/smokescreen/acl.yaml` (un test vérifie la couverture).
+  - Reste à faire (hors 2.3) : approbation du réseau privé par un admin (route et interface). Les colonnes existent ; décider comment un admin VOC approuve un connecteur du CERT qu'il ne voit pas (RLS) avant de l'implémenter.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
@@ -24,6 +26,7 @@
 ### 2026-10-22 — Session 8 : phase 2, coffre de secrets et sortie réseau
 
 - `SafeHttpClient` (`app/net/`) : politique d'URL, validation des adresses (unicast public seulement, jamais loopback ni métadonnées même sur exception), épinglage d'IP en mode direct, résolution laissée à smokescreen en mode proxy, redirections revalidées sans fuite d'identifiants, décompression bornée (gzip et deflate seulement), échéance totale ; proxy obligatoire en production.
+- Cadre des connecteurs : types et registre (refus à l'import des types payants, des identifiants en configuration, des domaines invalides), migration `0004_connectors` (connecteurs, curseurs, RLS), API par famille et par portée, test de connexion exécuté par le worker de la famille, quotas Redis, génération de la liste blanche du proxy.
 - Tests : suite SSRF hors ligne (adresses piégées, écritures numériques, rebinding, redirections, bombes de décompression), test TLS réel de l'épinglage (SNI et nom du certificat), garde « aucune bibliothèque réseau hors `app/net/` » ; vérification sur la pile réelle (refus par smokescreen d'un domaine non autorisé, pas de route directe).
 
 - ADR-013 révisée : chaque secret a sa clé de données AES-256-GCM, enveloppée pour la clé publique X25519 de son usage. L'API du back-office ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire.

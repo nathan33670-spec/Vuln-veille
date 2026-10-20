@@ -12,6 +12,7 @@ import asyncpg
 from pydantic import SecretStr
 
 from app.app_factory import create_app
+from app.connectors.egress_acl import connector_domains, render_acl, static_domains
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.db_roles import RolePasswords, provision_roles
@@ -99,6 +100,14 @@ def _vault_rotate(purpose: SecretPurpose) -> None:
     print(f"{count} {purpose} secret(s) re-wrapped for the current key")  # noqa: T201
 
 
+def _egress_acl(output: Path, with_connectors: bool) -> None:
+    domains = static_domains()
+    if with_connectors:
+        domains |= asyncio.run(connector_domains(get_settings()))
+    output.write_text(render_acl(domains))
+    print(f"wrote {output} ({len(domains)} domains); restart smokescreen to apply")  # noqa: T201
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli", description="Vuln-Veille administration")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -117,6 +126,12 @@ def main(argv: list[str] | None = None) -> None:
     rot = sub.add_parser("vault-rotate", help="re-wrap a purpose's secrets for its current key")
     rot.add_argument("--purpose", required=True, choices=purposes)
 
+    acl = sub.add_parser("egress-acl", help="write the smokescreen allow-list")
+    acl.add_argument("--output", type=Path, required=True)
+    acl.add_argument(
+        "--static-only", action="store_true", help="only the domains declared by the types"
+    )
+
     args = parser.parse_args(argv)
     if args.command == "provision-db-roles":
         asyncio.run(_provision_db_roles())
@@ -128,6 +143,8 @@ def main(argv: list[str] | None = None) -> None:
         _vault_keygen(SecretPurpose(args.purpose), args.key_id, args.keyring_dir)
     elif args.command == "vault-rotate":
         _vault_rotate(SecretPurpose(args.purpose))
+    elif args.command == "egress-acl":
+        _egress_acl(args.output, with_connectors=not args.static_only)
 
 
 if __name__ == "__main__":

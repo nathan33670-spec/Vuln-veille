@@ -28,6 +28,16 @@ class ProblemDetail(BaseModel):
     errors: list[dict[str, Any]] | None = None
 
 
+class ApiError(StarletteHTTPException):
+    """A client error with a stable code and optional field errors (locations, types)."""
+
+    def __init__(
+        self, status_code: int, detail: str, errors: list[dict[str, Any]] | None = None
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail)
+        self.errors = errors
+
+
 def problem_response(
     request: Request,
     status: int,
@@ -56,7 +66,8 @@ async def _http_exception_handler(request: Request, exc: Exception) -> JSONRespo
         raise exc
     is_client_error = exc.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
     detail = exc.detail if isinstance(exc.detail, str) and is_client_error else None
-    return problem_response(request, exc.status_code, detail, headers=exc.headers)
+    errors = exc.errors if isinstance(exc, ApiError) and is_client_error else None
+    return problem_response(request, exc.status_code, detail, errors=errors, headers=exc.headers)
 
 
 async def _validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:

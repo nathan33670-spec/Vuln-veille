@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from redis.asyncio import Redis
 
 from app.audit.api import build_audit_router
+from app.connectors.api import build_connector_router
 from app.core import health
 from app.core.config import Audience, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
@@ -23,6 +24,7 @@ from app.core.middleware import (
     SecurityHeadersMiddleware,
 )
 from app.core.rate_limit import RateLimiter
+from app.core.tasks import CeleryTaskQueue, TaskQueue
 from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
 from app.iam.portal_org_api import build_portal_org_router
@@ -36,7 +38,10 @@ API_PREFIX: dict[Audience, str] = {
 
 
 def create_app(
-    audience: Audience, settings: Settings | None = None, mailer: Mailer | None = None
+    audience: Audience,
+    settings: Settings | None = None,
+    mailer: Mailer | None = None,
+    tasks: TaskQueue | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
@@ -70,6 +75,7 @@ def create_app(
     app.state.settings = settings
     app.state.mailer = mailer or mailer_for(settings)
     app.state.vault = Vault.from_settings(settings)
+    app.state.tasks = tasks or CeleryTaskQueue()
 
     register_error_handlers(app)
     app.include_router(health.router)
@@ -78,6 +84,7 @@ def create_app(
         app.include_router(build_admin_router(), prefix=prefix)
         app.include_router(build_audit_router(), prefix=prefix)
         app.include_router(build_vault_router(), prefix=prefix)
+        app.include_router(build_connector_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
 

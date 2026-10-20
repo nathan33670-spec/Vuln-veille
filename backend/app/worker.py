@@ -5,6 +5,9 @@ secrets) it needs: ``default``, ``collect``, ``ai`` and ``publish``.
 State of record lives in PostgreSQL, so Celery results are not stored.
 """
 
+import asyncio
+import uuid
+
 from celery import Celery
 from kombu import Queue
 
@@ -58,3 +61,31 @@ def ping() -> str:
 )
 def send_email(to: str, subject: str, body: str) -> None:
     deliver_smtp(get_settings(), Mail(to=to, subject=subject, body=body))
+
+
+def _check(connector_id: str, workspace_id: str | None) -> None:
+    from app.connectors.runtime import check_connector  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(
+        check_connector(
+            get_settings(),
+            uuid.UUID(connector_id),
+            uuid.UUID(workspace_id) if workspace_id else None,
+        )
+    )
+
+
+# "Test the connection", on the worker holding the family's keyring (ADR-013).
+@app.task(name="collect.connector_check")
+def collect_connector_check(connector_id: str, workspace_id: str | None) -> None:
+    _check(connector_id, workspace_id)
+
+
+@app.task(name="ai.connector_check")
+def ai_connector_check(connector_id: str, workspace_id: str | None) -> None:
+    _check(connector_id, workspace_id)
+
+
+@app.task(name="publish.connector_check")
+def publish_connector_check(connector_id: str, workspace_id: str | None) -> None:
+    _check(connector_id, workspace_id)

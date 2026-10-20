@@ -19,6 +19,7 @@ from testcontainers.redis import RedisContainer
 from app.app_factory import create_app
 from app.core.config import Audience
 from app.core.mailer import MemoryMailer
+from app.core.tasks import MemoryTaskQueue
 from app.db_roles import RolePasswords, provision_roles
 from tests.conftest import make_settings
 
@@ -101,6 +102,7 @@ class Api:
     client: httpx.AsyncClient
     mailer: MemoryMailer
     audience: Audience
+    tasks: MemoryTaskQueue
 
     @property
     def prefix(self) -> str:
@@ -129,7 +131,8 @@ async def make_api(
             portal_origin=ORIGINS["portal"],
         )
         mailer = MemoryMailer()
-        app = create_app(audience, settings, mailer=mailer)
+        tasks = MemoryTaskQueue()
+        app = create_app(audience, settings, mailer=mailer, tasks=tasks)
         context = app.router.lifespan_context(app)
         await context.__aenter__()
         client = httpx.AsyncClient(
@@ -139,7 +142,7 @@ async def make_api(
         )
         stack.append((app, client))
         app.state._lifespan = context
-        return Api(app=app, client=client, mailer=mailer, audience=audience)
+        return Api(app=app, client=client, mailer=mailer, audience=audience, tasks=tasks)
 
     yield factory
     for app, client in stack:

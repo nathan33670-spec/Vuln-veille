@@ -130,7 +130,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 - [x] 2.1 Coffre de secrets : chiffrement d'enveloppe AES-256-GCM, clés par usage, API en écriture seule, CLI de rotation
 - [x] 2.2 `SafeHttpClient` anti-SSRF (résolution DNS et blocage des plages internes, épinglage d'IP, redirections revalidées, limites de taille et de temps) et proxy smokescreen, avec sa suite de tests SSRF
-- [ ] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés, classe de coût (test bloquant : aucun type payant)
+- [x] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés, classe de coût (test bloquant : aucun type payant)
 - [ ] 2.4 **Connecteur NVD (global)** : synchronisation incrémentale (`lastModStartDate`/`lastModEndDate`, pagination, pauses, backoff), curseur avec recouvrement, rattrapage initial par fenêtres de 120 jours **sans** émettre d'événements, intervalle configurable (2 h par défaut)
 - [ ] 2.5 Détection des nouveautés et changements NVD : `cve.published` (nouvelle CVE), `cve.updated` avec types de changement (CVSS ajouté ou modifié, CPE ajoutées, entrée KEV, référence d'exploit, rejet), écrits dans l'outbox et historisés (`cve_changes`)
 - [ ] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées) et **CVE.org** (cvelistV5, détection précoce, Q24)

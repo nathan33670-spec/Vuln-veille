@@ -100,8 +100,17 @@ Un nouveau modèle sur un serveur compatible OpenAI (OpenLLM, vLLM, Ollama…) *
 ## 8. Gestion des dépendances
 
 - Ajouter une dépendance uniquement si elle est maintenue (version récente, mainteneurs actifs), avec une licence compatible et sans vulnérabilité connue.
-- Épingler la version dans `uv.lock` ou `pnpm-lock.yaml` ; prendre une version publiée depuis au moins deux semaines.
+- Épingler la version dans `uv.lock` ou `pnpm-lock.yaml` ; prendre une version publiée depuis au moins deux semaines. C'est automatique : `exclude-newer` dans `backend/pyproject.toml` (date à avancer délibérément) et `minimumReleaseAge` dans `frontend/pnpm-workspace.yaml`.
+- **Exception : correctif de sécurité.** Un correctif d'une vulnérabilité connue s'applique tout de suite, paquet par paquet (`exclude-newer-package` côté Python), avec la référence de l'avis en commentaire.
+- Images Docker et GitHub Actions : épinglées par digest ou SHA de commit, avec la version en commentaire. Caddy et smokescreen sont compilés depuis les sources avec une chaîne Go corrigée : au moindre avis Go ou `x/net`, monter les versions dans leurs Dockerfiles.
+- TypeScript est figé en 6.x (`overrides` pnpm) tant que l'outillage ne prend pas en charge TypeScript 7.
 - Justifier l'ajout dans le message de commit.
+
+## 9 bis. Particularités de l'environnement cloud Claude Code
+
+- Le hook `SessionStart` (`scripts/session-start.sh`) installe les dépendances et lance `dockerd` si possible.
+- Le proxy réseau du conteneur intercepte TLS avec sa propre autorité (`/root/.ccr/ca-bundle.crt`) : les **builds Docker** échouent avec `SELF_SIGNED_CERT_IN_CHAIN`. Ce n'est pas un défaut du dépôt. Pour vérifier localement, générer dans le scratchpad des variantes des Dockerfiles qui copient cette autorité (contexte additionnel `--build-context sandboxca=/root/.ccr`), construire avec `docker build`, puis `docker compose ... up --no-build`. Ne jamais commiter ces variantes.
+- Les tests d'intégration (testcontainers) fonctionnent dès que `dockerd` tourne.
 
 ## 9. Gestion des secrets en développement
 

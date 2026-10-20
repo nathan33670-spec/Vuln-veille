@@ -97,15 +97,15 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 0 — Fondations
 
-- [ ] 0.1 Arborescence du monorepo, `.gitignore`, `.editorconfig`, `Makefile`, `.env.example`
-- [ ] 0.2 Backend : projet `uv`, deux applications ASGI (`main_backoffice`, `main_portal`), configuration via pydantic-settings, endpoint `/healthz`, logs structlog JSON, middleware d'en-têtes de sécurité, gestion d'erreurs RFC 9457
-- [ ] 0.3 Base de données : SQLAlchemy async, Alembic, modèle de base (UUIDv7, horodatages), rôles PostgreSQL (`vv_migrator`, `vv_app`, `vv_portal`, `vv_worker`)
-- [ ] 0.4 Celery (worker et files `default`, `collect`, `ai`, `publish`) et squelette du scheduler
-- [ ] 0.5 Frontend : workspace pnpm, `apps/backoffice`, `apps/portal`, `packages/ui`, `packages/api-client` (client généré depuis OpenAPI), ESLint, Prettier, Vitest
-- [ ] 0.6 Docker : Dockerfiles multi-étapes non-root, `deploy/docker-compose.yml` (Caddy, API back-office, API portail, workers, scheduler, PostgreSQL, Redis, smokescreen, Mailpit en dev)
-- [ ] 0.7 Qualité : ruff, mypy strict, pytest avec testcontainers, pre-commit (gitleaks, ruff, prettier)
-- [ ] 0.8 CI GitHub Actions : lint, typage, tests, pip-audit, pnpm audit, gitleaks, Semgrep, Trivy, build des images (actions épinglées par SHA)
-- [ ] 0.9 Hook SessionStart Claude Code (installation des dépendances) pour reprendre rapidement dans un nouveau conteneur
+- [x] 0.1 Arborescence du monorepo, `.gitignore`, `.editorconfig`, `Makefile`, `.env.example`
+- [x] 0.2 Backend : projet `uv`, deux applications ASGI (`main_backoffice`, `main_portal`), configuration via pydantic-settings, endpoint `/healthz`, logs structlog JSON, middleware d'en-têtes de sécurité, gestion d'erreurs RFC 9457
+- [x] 0.3 Base de données : SQLAlchemy async, Alembic, modèle de base (UUIDv7, horodatages), rôles PostgreSQL (`vv_migrator`, `vv_app`, `vv_portal`, `vv_worker`)
+- [x] 0.4 Celery (worker et files `default`, `collect`, `ai`, `publish`) et squelette du scheduler
+- [x] 0.5 Frontend : workspace pnpm, `apps/backoffice`, `apps/portal`, `packages/ui`, `packages/api-client` (client généré depuis OpenAPI), ESLint, Prettier, Vitest
+- [x] 0.6 Docker : Dockerfiles multi-étapes non-root, `deploy/docker-compose.yml` (Caddy, API back-office, API portail, workers, scheduler, PostgreSQL, Redis, smokescreen, Mailpit en dev)
+- [x] 0.7 Qualité : ruff, mypy strict, pytest avec testcontainers, pre-commit (gitleaks, ruff, prettier)
+- [x] 0.8 CI GitHub Actions : lint, typage, tests, pip-audit, pnpm audit, gitleaks, Semgrep, Trivy, build des images (actions épinglées par SHA)
+- [x] 0.9 Hook SessionStart Claude Code (installation des dépendances) pour reprendre rapidement dans un nouveau conteneur
 
 **Critère de sortie** : `make dev` démarre la pile complète, `make lint test` est vert en local et en CI, `/healthz` répond sur les deux applications avec les en-têtes de sécurité.
 

@@ -2,13 +2,26 @@
 
 ## État courant
 
-- **Phase** : cadrage terminé (révision 3), **en attente du feu vert** du porteur du projet pour démarrer le développement.
-- **Dernière étape terminée** : intégration de la contrainte « zéro abonnement payant hors IA » et de la lecture gratuite de X (session 3).
+- **Phase** : **phase 0 (fondations) terminée** ; prochaine phase : 1 (identité, accès, audit).
+- **Dernière étape terminée** : 0.9 (hook SessionStart). Pile complète vérifiée localement (`make up` équivalent, smoke test, filtrage de sortie) ; CI GitHub Actions ajoutée.
 - **Étape en cours** : aucune.
-- **Prochaine étape** : Phase 0, étape 0.1 (arborescence du monorepo), dès le feu vert.
-- **Points bloquants** : aucun pour la phase 0. À trancher idéalement avant la phase 1 : Q1, Q2 et Q8 ; avant la phase 2 : Q23 (quelles CVE lancent les agents) et Q24 (délai de détection). À défaut, on applique les hypothèses par défaut.
+- **Prochaine étape** : 1.1 modèles `users`, `sessions`, `auth_tokens`, `user_global_roles` (spec 01 §1), puis 1.2 à 1.12.
+- **Points d'attention** :
+  - Décisions de cadrage prises le 2026-10-20 (OPEN_QUESTIONS.md) : VOC = admins, vulnérabilités partagées avec qualification par équipe (ADR-024), Gemini palier gratuit (ADR-025), comptes locaux + TOTP, MFA client facultative, admin client délégué, FR + EN, e-mail + PDF.
+  - Smokescreen accepte les clients sans rôle (ACL `default`) : prévoir des rôles mTLS par type de worker en phase 2.
+  - Environnement cloud : builds Docker uniquement via les variantes avec l'autorité du proxy (PROCEDURES §9 bis).
+  - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-20 — Session 5 : décisions interactives et phase 0
+
+- Toutes les questions de cadrage posées en interactif ; décisions consignées (OPEN_QUESTIONS.md, ADR-024, ADR-025, ADR-007/008/011/017 acceptées).
+- Backend : deux applications ASGI, erreurs RFC 9457, en-têtes de sécurité, identifiant de requête, limite de taille, gestion des erreurs non prévues, marqueurs de politique d'accès et test « aucune route sans politique », Celery (4 files, JSON seul), scheduler élu par verrou consultatif, provisionnement des rôles PostgreSQL sans privilèges, Alembic async + migration de base. 21 tests unitaires/sécurité et 7 tests d'intégration (testcontainers).
+- Frontend : workspace pnpm, back-office et portail (React 19, Vite, i18n FR), `SafeHtml` (DOMPurify + Trusted Types), client API généré depuis OpenAPI avec hook CSRF, règle ESLint contre l'injection HTML.
+- Déploiement : docker-compose à réseaux cloisonnés, conteneurs durcis, Caddy (CSP stricte, back-office limité aux réseaux internes) et smokescreen compilés avec Go 1.27.2 et `x/net` corrigé, `pip` retiré de l'image backend. Trivy : aucune vulnérabilité HIGH/CRITICAL corrigible. `certifi` monté pour GHSA-6q48-6c7w-9gw2 (exception sécurité à la règle des 14 jours).
+- CI : backend, frontend, sécurité (gitleaks, pip-audit, pnpm audit, Semgrep, Trivy) et images (build, scan, smoke test). Actions épinglées par SHA.
+
 
 ### 2026-10-20 — Session 4 : recherche Google pour X
 

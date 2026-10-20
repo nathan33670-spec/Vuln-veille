@@ -2,7 +2,22 @@
 
 Plateforme multi-utilisateur d'orchestration de la veille vulnérabilités. Elle réunit des workflows visuels (type n8n), des agents IA de collecte et de synthèse, la qualification des vulnérabilités par les analystes VOC et CERT, la rédaction assistée de bulletins selon des modèles paramétrables, et la publication vers un portail client et des API distantes.
 
-> **Statut** : cadrage terminé, développement non démarré. Voir [docs/PROGRESS.md](docs/PROGRESS.md).
+> **Statut** : phase 0 (fondations) terminée. Voir [docs/PROGRESS.md](docs/PROGRESS.md).
+
+## Démarrage rapide
+
+Prérequis : Docker (avec Compose), `uv`, Node 22 et `pnpm`.
+
+```sh
+make install          # dépendances backend et frontend
+make check            # lint, typage, tests unitaires et de sécurité
+make test-integration # tests avec PostgreSQL et Redis (Docker)
+make env              # crée .env avec des secrets aléatoires (jamais commité)
+make up               # construit et démarre la pile complète
+./scripts/smoke-test.sh
+```
+
+Back-office : https://backoffice.localhost — portail : https://portal.localhost (certificats de l'autorité locale de Caddy en développement). `make help` liste toutes les commandes.
 
 ## Documentation
 

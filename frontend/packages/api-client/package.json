@@ -1,0 +1,19 @@
+{
+  "name": "@vv/api-client",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "openapi-typescript ../../../openapi/openapi-backoffice.json -o src/backoffice.d.ts && openapi-typescript ../../../openapi/openapi-portal.json -o src/portal.d.ts && prettier --write src/*.d.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}

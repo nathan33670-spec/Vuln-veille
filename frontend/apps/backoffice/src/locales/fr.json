@@ -1,0 +1,12 @@
+{
+  "app": {
+    "title": "Vuln-Veille",
+    "subtitle": "Back-office VOC / CERT",
+    "placeholder": "Socle technique en place. Les écrans arrivent à partir de la phase 1."
+  },
+  "health": {
+    "loading": "Vérification de l'API…",
+    "ok": "API disponible",
+    "error": "API injoignable"
+  }
+}

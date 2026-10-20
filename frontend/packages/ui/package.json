@@ -1,0 +1,21 @@
+{
+  "name": "@vv/ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16"
+  }
+}

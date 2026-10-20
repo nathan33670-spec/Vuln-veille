@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Only install releases published at least 14 days ago (supply-chain hygiene).
+minimumReleaseAge: 20160
+# Dependencies may not run install scripts unless explicitly allowed.
+onlyBuiltDependencies:
+  - esbuild
+
+overrides:
+  # TypeScript 7 (native port) has no JS API yet; tooling (typescript-eslint, openapi-typescript) needs 6.x.
+  typescript: ~6.0.3

@@ -1,0 +1,12 @@
+{
+  "app": {
+    "title": "Vuln-Veille",
+    "subtitle": "Portail client",
+    "placeholder": "Vos bulletins de sécurité seront consultables ici."
+  },
+  "health": {
+    "loading": "Vérification du service…",
+    "ok": "API disponible",
+    "error": "API injoignable"
+  }
+}

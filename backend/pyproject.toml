@@ -15,6 +15,11 @@ dependencies = [
     "redis>=5.2",
     "structlog>=25.1",
     "httpx>=0.28",
+    "argon2-cffi>=23.1",
+    "pyotp>=2.9",
+    "cryptography>=44",
+    "segno>=1.6",
+    "email-validator>=2.2",
 ]
 
 [dependency-groups]
@@ -53,7 +58,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "PLR2004"]
-"alembic/**" = ["N999"]
+# Migrations hold static SQL scripts (no user input).
+"alembic/**" = ["N999", "E501", "S105", "S608"]
 
 [tool.mypy]
 python_version = "3.13"

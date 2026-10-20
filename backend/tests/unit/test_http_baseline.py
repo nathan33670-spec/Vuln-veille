@@ -102,7 +102,9 @@ async def test_unhandled_error_is_generic_500_with_headers() -> None:
 
 @pytest.mark.parametrize(("environment", "exposed"), [("dev", True), ("prod", False)])
 async def test_openapi_hidden_in_production(environment: str, exposed: bool) -> None:
-    app: FastAPI = create_app("backoffice", make_settings(environment=environment))
+    app: FastAPI = create_app(
+        "backoffice", make_settings(environment=environment, password_hash_profile="strong")
+    )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as c:
         response = await c.get("/api/v1/openapi.json")

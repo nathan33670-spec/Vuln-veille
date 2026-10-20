@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from app.core.ids import uuid7
 from app.core.logging import REDACTED, redact_secrets
 from tests.conftest import make_settings
@@ -38,3 +40,8 @@ def test_settings_repr_hides_secrets() -> None:
     settings = make_settings()
     assert "unused:unused" not in repr(settings)
     assert "unused:unused" not in str(settings.model_dump())
+
+
+def test_weak_hashing_refused_in_production() -> None:
+    with pytest.raises(ValueError, match="weak password hashing"):
+        make_settings(environment="prod")

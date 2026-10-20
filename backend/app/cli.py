@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import base64
 import json
 import os
 import sys
@@ -50,6 +51,8 @@ def _export_openapi(output_dir: Path) -> None:
         database_url_worker=unused,
         database_url_migrator=unused,
         redis_url=SecretStr("redis://localhost:6379/0"),
+        secret_key=SecretStr("schema-export-only-not-a-secret-0123456789"),
+        kek_totp=SecretStr(base64.b64encode(bytes(32)).decode()),
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     for audience in ("backoffice", "portal"):

@@ -115,7 +115,7 @@ async def test_baseline_migration_applied(database: Database) -> None:
     finally:
         await conn.close()
     assert {"citext", "pg_trgm"} <= extensions
-    assert version == "0001_baseline"
+    assert version == "0002_iam"
 
 
 async def test_runtime_roles_cannot_change_schema(database: Database) -> None:

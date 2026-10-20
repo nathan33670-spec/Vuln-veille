@@ -1,3 +1,4 @@
+import base64
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -20,6 +21,9 @@ def make_settings(**overrides: Any) -> Settings:
         "database_url_worker": PLACEHOLDER_DSN,
         "database_url_migrator": PLACEHOLDER_DSN,
         "redis_url": SecretStr("redis://127.0.0.1:1/0"),
+        "secret_key": SecretStr("test-secret-key-0123456789abcdef-0123456789"),
+        "kek_totp": SecretStr(base64.b64encode(b"k" * 32).decode()),
+        "password_hash_profile": "fast-insecure-tests-only",
     }
     values.update(overrides)
     return Settings(**values)

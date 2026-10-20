@@ -1,0 +1,76 @@
+[project]
+name = "vuln-veille-backend"
+version = "0.1.0"
+description = "Vuln-Veille backend: back-office API, client portal API, workers and scheduler"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.11",
+    "pydantic-settings>=2.9",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "asyncpg>=0.30",
+    "alembic>=1.15",
+    "celery[redis]>=5.5",
+    "redis>=5.2",
+    "structlog>=25.1",
+    "httpx>=0.28",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.26",
+    "ruff>=0.11",
+    "mypy>=1.15",
+    "testcontainers[postgres,redis]>=4.10",
+    "pip-audit>=2.9",
+    "celery-types>=0.23",
+    "asyncpg-stubs>=0.31.3",
+]
+
+[tool.uv]
+# Only resolve releases at least two weeks old (supply-chain hygiene, see PROCEDURES.md §8).
+# Bump this date deliberately when updating dependencies.
+exclude-newer = "2026-10-06T00:00:00Z"
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "S", "ASYNC", "SIM", "RUF", "PT", "C4", "PIE", "T20", "PL",
+]
+ignore = [
+    "PLR0913",  # FastAPI dependencies routinely take many parameters
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "PLR2004"]
+"alembic/**" = ["N999"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["app", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["testcontainers.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+markers = [
+    "integration: needs Docker (PostgreSQL and Redis via testcontainers)",
+]
+filterwarnings = [
+    "error::DeprecationWarning:app.*",
+    "ignore:The @wait_container_is_ready decorator is deprecated:DeprecationWarning",
+]

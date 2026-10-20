@@ -1,0 +1,77 @@
+"""Administration commands: ``python -m app.cli <command>``."""
+
+import argparse
+import asyncio
+import json
+import os
+import sys
+from pathlib import Path
+
+import asyncpg
+from pydantic import SecretStr
+
+from app.app_factory import create_app
+from app.core.config import Settings
+from app.db_roles import RolePasswords, provision_roles
+
+
+def _require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        sys.exit(f"missing environment variable {name}")
+    return value
+
+
+async def _provision_db_roles() -> None:
+    admin_dsn = _require_env("VV_DB_ADMIN_URL")
+    database = _require_env("VV_DB_NAME")
+    passwords = RolePasswords(
+        migrator=_require_env("VV_DB_PASSWORD_MIGRATOR"),
+        app=_require_env("VV_DB_PASSWORD_APP"),
+        worker=_require_env("VV_DB_PASSWORD_WORKER"),
+        portal=_require_env("VV_DB_PASSWORD_PORTAL"),
+    )
+    conn = await asyncpg.connect(admin_dsn)
+    try:
+        async with conn.transaction():
+            await provision_roles(conn, database, passwords)
+    finally:
+        await conn.close()
+    print("database roles provisioned")  # noqa: T201 - CLI output
+
+
+def _export_openapi(output_dir: Path) -> None:
+    # The schema does not depend on infrastructure: placeholders, never connected to.
+    unused = SecretStr("postgresql://unused@localhost/unused")
+    settings = Settings(
+        environment="dev",
+        database_url_app=unused,
+        database_url_portal=unused,
+        database_url_worker=unused,
+        database_url_migrator=unused,
+        redis_url=SecretStr("redis://localhost:6379/0"),
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for audience in ("backoffice", "portal"):
+        app = create_app(audience, settings)
+        target = output_dir / f"openapi-{audience}.json"
+        target.write_text(json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n")
+        print(f"wrote {target}")  # noqa: T201 - CLI output
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog="app.cli", description="Vuln-Veille administration")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("provision-db-roles", help="create or update the PostgreSQL roles")
+    export = sub.add_parser("export-openapi", help="write the OpenAPI schemas of both APIs")
+    export.add_argument("--output-dir", type=Path, default=Path("openapi"))
+
+    args = parser.parse_args(argv)
+    if args.command == "provision-db-roles":
+        asyncio.run(_provision_db_roles())
+    elif args.command == "export-openapi":
+        _export_openapi(args.output_dir)
+
+
+if __name__ == "__main__":
+    main()

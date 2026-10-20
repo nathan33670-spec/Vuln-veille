@@ -14,11 +14,15 @@ from app.core.config import Audience, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import UnhandledErrorMiddleware, register_error_handlers
 from app.core.logging import configure_logging
+from app.core.mailer import Mailer, mailer_for
 from app.core.middleware import (
     BodySizeLimitMiddleware,
+    OriginCheckMiddleware,
     RequestIdMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.core.rate_limit import RateLimiter
+from app.iam.auth_api import build_auth_router
 
 API_PREFIX: dict[Audience, str] = {
     "backoffice": "/api/v1",
@@ -26,7 +30,9 @@ API_PREFIX: dict[Audience, str] = {
 }
 
 
-def create_app(audience: Audience, settings: Settings | None = None) -> FastAPI:
+def create_app(
+    audience: Audience, settings: Settings | None = None, mailer: Mailer | None = None
+) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
@@ -37,6 +43,7 @@ def create_app(audience: Audience, settings: Settings | None = None) -> FastAPI:
         app.state.engine = engine
         app.state.sessionmaker = create_sessionmaker(engine)
         app.state.redis = redis
+        app.state.rate_limiter = RateLimiter(redis)
         try:
             yield
         finally:
@@ -56,14 +63,18 @@ def create_app(audience: Audience, settings: Settings | None = None) -> FastAPI:
     )
     app.state.audience = audience
     app.state.settings = settings
+    app.state.mailer = mailer or mailer_for(settings)
 
     register_error_handlers(app)
     app.include_router(health.router)
+    app.include_router(build_auth_router(), prefix=prefix)
 
     # Starlette runs the last-added middleware first.
-    # Order (outermost first): request id, security headers, catch-all errors, body limit.
+    # Order (outermost first): request id, security headers, origin check, catch-all errors,
+    # body limit.
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_request_body_bytes)
     app.add_middleware(UnhandledErrorMiddleware)
+    app.add_middleware(OriginCheckMiddleware, allowed_origin=settings.origin_for(audience))
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestIdMiddleware)
     return app

@@ -1,82 +1,18 @@
 """Least-privilege database roles, migrations and readiness against real services."""
 
-import asyncio
-import os
-import sys
-from collections.abc import Iterator
-from dataclasses import dataclass
-from pathlib import Path
-
 import asyncpg
 import httpx
 import pytest
 from pydantic import SecretStr
 from sqlalchemy import text
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
 
 from app.app_factory import create_app
 from app.core.db import create_engine
-from app.db_roles import RolePasswords, provision_roles
 from app.scheduler import run_tick
 from tests.conftest import make_settings
+from tests.integration.conftest import PASSWORDS, Database
 
 pytestmark = pytest.mark.integration
-
-BACKEND_DIR = Path(__file__).resolve().parents[2]
-DB_NAME = "vuln_veille"
-PASSWORDS = RolePasswords(
-    migrator="migrator-test-password-0123456789",
-    app="app-test-password-0123456789abcd",
-    worker="worker-test-password-0123456789ab",
-    portal="portal-test-password-0123456789ab",
-)
-
-
-@dataclass(frozen=True)
-class Database:
-    host: str
-    port: int
-
-    def dsn(self, user: str, password: str) -> str:
-        return f"postgresql://{user}:{password}@{self.host}:{self.port}/{DB_NAME}"
-
-
-@pytest.fixture(scope="module")
-def postgres() -> Iterator[PostgresContainer]:
-    with PostgresContainer(
-        "postgres:17-alpine", username="admin", password="admin-test-pw", dbname=DB_NAME
-    ) as container:
-        yield container
-
-
-@pytest.fixture(scope="module")
-def redis_url() -> Iterator[str]:
-    with RedisContainer("redis:7-alpine") as container:
-        host = container.get_container_host_ip()
-        port = container.get_exposed_port(6379)
-        yield f"redis://{host}:{port}/0"
-
-
-@pytest.fixture(scope="module")
-async def database(postgres: PostgresContainer) -> Database:
-    db = Database(postgres.get_container_host_ip(), int(postgres.get_exposed_port(5432)))
-    admin = await asyncpg.connect(db.dsn("admin", "admin-test-pw"))
-    try:
-        await provision_roles(admin, DB_NAME, PASSWORDS)
-        await provision_roles(admin, DB_NAME, PASSWORDS)  # idempotent
-    finally:
-        await admin.close()
-
-    env = {
-        **os.environ,
-        "VV_DATABASE_URL_MIGRATOR": db.dsn("vv_migrator", PASSWORDS.migrator),
-    }
-    process = await asyncio.create_subprocess_exec(
-        sys.executable, "-m", "alembic", "upgrade", "head", cwd=BACKEND_DIR, env=env
-    )
-    assert await process.wait() == 0
-    return db
 
 
 async def _fails(dsn: str, statement: str) -> bool:

@@ -136,3 +136,48 @@ async def _send_413(send: Send) -> None:
         }
     )
     await send({"type": "http.response.body", "body": body})
+
+
+class OriginCheckMiddleware:
+    """CSRF defence in depth: state-changing API requests must come from our own origin.
+
+    Browsers always send ``Origin`` on cross-site POST/PUT/PATCH/DELETE. Requests without
+    it are accepted only when ``Sec-Fetch-Site`` says same-origin (or is absent, as with
+    non-browser clients, which carry no ambient cookies anyway).
+    """
+
+    def __init__(self, app: ASGIApp, allowed_origin: str, path_prefix: str = "/api/") -> None:
+        self.app = app
+        self.allowed_origin = allowed_origin.rstrip("/").lower()
+        self.path_prefix = path_prefix
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if (
+            scope["type"] != "http"
+            or scope["method"] in ("GET", "HEAD", "OPTIONS")
+            or not scope["path"].startswith(self.path_prefix)
+        ):
+            await self.app(scope, receive, send)
+            return
+        headers = {k.decode("latin-1"): v.decode("latin-1") for k, v in scope["headers"]}
+        origin = headers.get("origin")
+        fetch_site = headers.get("sec-fetch-site")
+        if origin is not None:
+            allowed = origin.rstrip("/").lower() == self.allowed_origin
+        else:
+            allowed = fetch_site in (None, "same-origin", "none")
+        if allowed:
+            await self.app(scope, receive, send)
+            return
+        body = b'{"type":"about:blank","title":"Forbidden","status":403,"detail":"bad_origin"}'
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 403,
+                "headers": [
+                    (b"content-type", b"application/problem+json"),
+                    (b"content-length", str(len(body)).encode()),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})

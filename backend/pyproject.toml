@@ -54,6 +54,8 @@ select = [
 ]
 ignore = [
     "PLR0913",  # FastAPI dependencies routinely take many parameters
+    "PLR0917",  # same, for positional parameters of endpoints and services
+    "PLR0915",  # router factories declare their endpoints in one function
 ]
 
 [tool.ruff.lint.per-file-ignores]

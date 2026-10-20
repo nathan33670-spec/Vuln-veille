@@ -11,7 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.dependencies.models import Dependant
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 
 POLICY_ATTR = "__vv_access_policy__"
 
@@ -33,10 +33,18 @@ def _policies(dependant: Dependant) -> Iterator[str]:
 
 
 def route_policies(app: FastAPI) -> dict[str, list[str]]:
-    """Maps ``"METHODS path"`` to the access policies declared on that route."""
+    """Maps ``"METHODS path"`` to the access policies declared on that route.
+
+    Uses FastAPI's public route iterator, which also walks included routers (FastAPI
+    wraps them; iterating ``app.routes`` directly would silently miss their routes).
+    """
     result: dict[str, list[str]] = {}
-    for route in app.routes:
-        if isinstance(route, APIRoute):
-            key = f"{','.join(sorted(route.methods or ()))} {route.path}"
-            result[key] = list(_policies(route.dependant))
+    for context in iter_route_contexts(app.routes):
+        route = context.original_route
+        if not isinstance(route, APIRoute):
+            continue
+        dependant: Dependant = getattr(context, "dependant", None) or route.dependant
+        path = context.path_format or context.path or route.path
+        key = f"{','.join(sorted(context.methods or route.methods or ()))} {path}"
+        result[key] = list(_policies(dependant))
     return result

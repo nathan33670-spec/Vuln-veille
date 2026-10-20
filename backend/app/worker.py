@@ -9,6 +9,7 @@ from celery import Celery
 from kombu import Queue
 
 from app.core.config import get_settings
+from app.core.mailer import Mail, deliver_smtp
 
 QUEUES = ("default", "collect", "ai", "publish")
 
@@ -47,3 +48,13 @@ app = create_celery()
 @app.task(name="default.ping")
 def ping() -> str:
     return "pong"
+
+
+@app.task(
+    name="default.send_email",
+    autoretry_for=(OSError,),
+    retry_backoff=30,
+    retry_kwargs={"max_retries": 5},
+)
+def send_email(to: str, subject: str, body: str) -> None:
+    deliver_smtp(get_settings(), Mail(to=to, subject=subject, body=body))

@@ -289,7 +289,8 @@ ALTER TABLE client_organizations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY client_organizations_internal ON client_organizations TO vv_app, vv_worker
     USING (true) WITH CHECK (true);
 CREATE POLICY client_organizations_portal ON client_organizations TO vv_portal
-    USING (id = {CTX_ORG});
+    USING (id = {CTX_ORG}
+           OR id IN (SELECT client_org_id FROM client_memberships WHERE user_id = {CTX_USER}));
 
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY sessions_internal ON sessions TO vv_app, vv_worker USING (true) WITH CHECK (true);

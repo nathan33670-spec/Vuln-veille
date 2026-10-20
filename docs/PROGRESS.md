@@ -2,13 +2,22 @@
 
 ## État courant
 
-- **Phase** : cadrage terminé (révision 2), **en attente du feu vert** du porteur du projet pour démarrer le développement.
-- **Dernière étape terminée** : intégration des consignes de la session 2 (NVD vecteur d'entrée n°1, connecteurs, paramétrage des agents de veille, moteur IA interchangeable).
+- **Phase** : cadrage terminé (révision 3), **en attente du feu vert** du porteur du projet pour démarrer le développement.
+- **Dernière étape terminée** : intégration de la contrainte « zéro abonnement payant hors IA » et de la lecture gratuite de X (session 3).
 - **Étape en cours** : aucune.
 - **Prochaine étape** : Phase 0, étape 0.1 (arborescence du monorepo), dès le feu vert.
 - **Points bloquants** : aucun pour la phase 0. À trancher idéalement avant la phase 1 : Q1, Q2 et Q8 ; avant la phase 2 : Q23 (quelles CVE lancent les agents) et Q24 (délai de détection). À défaut, on applique les hypothèses par défaut.
 
 ## Journal
+
+### 2026-10-20 — Session 3 : contrainte de coût et lecture gratuite de X
+
+Consigne reçue : « Le moteur de lecture sur X doit être gratuit. Aucun abonnement payant en plus de ceux utilisés par l'IA. »
+
+Modifications :
+- ADR-023 (acceptée) : zéro abonnement payant hors IA ; classe de coût obligatoire par type de connecteur, avec test bloquant ; X lu par le connecteur `x_reader` (découverte gratuite des URL de posts, recherche web du moteur IA restreinte à x.com, SearXNG en option, lecture par l'oEmbed officiel) ; API X payante, scraping et comptes X exclus.
+- ADR-015 révisée (sources gratuites, Reddit en RSS).
+- Spec 07 §2 et §2.1, specs 01, 02 et 03 (outils `x_discover` et `x_read`), PLAN (exigence de coût, étapes 2.3, 4.6, 4.9 et nouvelle 4.18 sur l'indicateur de couverture de X), SECURITY (S25 révisé, S26), ARCHITECTURE, CLAUDE.md, OPEN_QUESTIONS (Q7 révisée, Q27 révisée, Q28 à Q31).
 
 ### 2026-10-20 — Session 2 : révision du cadrage
 

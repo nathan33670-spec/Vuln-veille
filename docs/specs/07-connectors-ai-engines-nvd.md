@@ -6,7 +6,7 @@ Un **connecteur** est la configuration d'accès à un service externe, gérée d
 
 | Famille | Exemples | Spec |
 |---|---|---|
-| `source` (veille) | NVD, CISA KEV, EPSS, GitHub, X, Stack Exchange, Mastodon, Bluesky, Reddit, RSS, web, OSV | ce document, §2 et §3 |
+| `source` (veille) | NVD, CISA KEV, EPSS, GitHub, X (lecture gratuite), Stack Exchange, Mastodon, Bluesky, Reddit (RSS), Hacker News, RSS, web, OSV | ce document, §2 et §3 |
 | `ai_engine` (moteur IA) | Claude (Anthropic), LLM open source (OpenLLM, vLLM, Ollama), Mistral, Azure OpenAI | ce document, §4 |
 | `publish` (publication) | Connecteur HTTP générique, CSAF | spec 05 |
 
@@ -18,7 +18,8 @@ Propriétés communes :
 | Portée | **Globale** (`workspace_id` nul, gérée par un admin : NVD, KEV, EPSS, moteur IA de plateforme) ou **espace** (gérée par les analystes de l'espace) |
 | `config` | Paramètres non secrets, validés par un schéma Pydantic propre au type (qui génère aussi le formulaire de l'interface) |
 | `secret_refs` | Références vers le coffre (jamais les valeurs) |
-| `quotas` | Débit maximal, budget mensuel (USD ou unités : posts lus, requêtes), plafond par exécution |
+| `quotas` | Débit maximal, plafond de requêtes par jour ou par mois, plafond par exécution |
+| `cost_class` | Déclarée dans le code par le type : `free` (gratuit sans compte), `free_account` (compte ou clé gratuits), `ai_billed` (facturé sur l'abonnement IA existant, budget obligatoire). **Aucun type `paid` n'est accepté** (ADR-023) : un test bloquant vérifie la classe de chaque type enregistré. |
 | `egress_domains` | Domaines contactés, déclarés par le type ; ils alimentent la liste blanche du proxy de sortie |
 | Santé | `last_check_at`, `last_success_at`, `last_error`, `consecutive_failures` ; alerte au-delà d'un seuil |
 | `enabled`, `version` | Activation ; version incrémentée à chaque modification (auditée) |
@@ -37,14 +38,38 @@ Implémentation : `backend/app/connectors/` contient le cadre (`base.py` : `Conn
 | `cve_org` | Globale | Aucune | Détection plus précoce (option, Q24) | Dépôt cvelistV5 ou CVE Services |
 | `osv` | Globale | Aucune | Écosystèmes open source (purl) | — |
 | `github` | Espace | Jeton (lecture seule, sans droit sur des dépôts privés) | GHSA, recherche de dépôts, code, commits et issues ; lecture de fichiers en texte | Quotas de l'API de recherche GitHub |
-| `x` | Espace | Jeton bearer, API v2 | Recherche de posts | **Payante à l'usage** (par post lu) : budget mensuel et plafond par exécution obligatoires |
-| `stackexchange` | Espace | Clé optionnelle | Stack Overflow, Security StackExchange | Quotas journaliers |
-| `mastodon` | Espace | Jeton optionnel, instance (par exemple infosec.exchange) | Posts et hashtags | — |
-| `bluesky` | Espace | Mot de passe d'application optionnel | Recherche de posts | — |
-| `reddit` | Espace | OAuth (client) | r/netsec et assimilés | — |
+| `x_reader` | Espace | Aucune | **Lecture gratuite de X** : découverte de posts puis lecture par l'oEmbed officiel (§2.1) | Pas d'API X payante, pas de scraping |
+| `stackexchange` | Espace | Clé gratuite optionnelle | Stack Overflow, Security StackExchange | Quotas journaliers |
+| `mastodon` | Espace | Jeton optionnel, instance (par exemple infosec.exchange) | Posts et hashtags | Gratuit ; une grande partie de la communauté sécurité y publie |
+| `bluesky` | Espace | Compte gratuit et mot de passe d'application (la recherche de posts exige une session) | Recherche de posts | Gratuit |
+| `reddit` | Espace | Aucune | Flux RSS publics des subreddits choisis (r/netsec…) | L'API Data de Reddit n'est utilisée que si un usage gratuit est confirmé pour notre cas (Q31) |
+| `hackernews` | Globale | Aucune | API Algolia de Hacker News | Gratuit |
+| `searxng` | Globale | Aucune (instance auto-hébergée) | Recherche web gratuite, utilisée notamment pour découvrir des posts X quand le moteur IA n'a pas de recherche web | Option, conditions d'usage à valider (Q30) |
 | `rss` | Espace | Aucune | Flux RSS ou Atom (CERT-FR, éditeurs, blogs) | — |
 | `web` | Espace | Aucune | Pages d'avis éditeurs | Liste de domaines obligatoire, respect du robots.txt |
 | `http_api` | Espace | Clé, bearer, basic, OAuth2 | API JSON générique | Mapping de la réponse en éléments |
+
+Tous ces connecteurs sont gratuits (clé ou compte gratuits au plus). Les seuls coûts acceptés sont ceux de l'abonnement IA (ADR-023).
+
+### 2.1 Lecture de X sans abonnement
+
+Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage depuis février 2026, et les conditions d'utilisation de X interdisent le scraping sans accord écrit, avec des dommages-intérêts forfaitaires annoncés pour les gros volumes. Le connecteur `x_reader` combine donc des moyens gratuits et autorisés, en trois couches :
+
+| Couche | Comment | Coût | Disponibilité |
+|---|---|---|---|
+| **1. Découverte indirecte** | On récupère les liens `x.com` ou `twitter.com` cités dans les sources déjà collectées : références NVD, avis GHSA, README et issues GitHub, posts Mastodon et Bluesky, blogs et flux RSS, Hacker News | Gratuit | Toujours |
+| **2. Recherche web du moteur IA** | L'agent « Réseaux sociaux » utilise l'outil de recherche web fourni par le moteur IA, restreint aux domaines `x.com` et `twitter.com` (par exemple `CVE-2026-XXXX site:x.com`) | Facturé sur l'abonnement IA (de l'ordre de 0,01 $ par recherche chez Claude, à confirmer), plafonné par un budget | Tant que le moteur IA fournit cette recherche (Claude oui ; un LLM auto-hébergé non, d'où la couche 3) |
+| **3. Recherche auto-hébergée (option)** | Instance SearXNG interne interrogée avec `site:x.com` | Gratuit | Option, conditions d'usage des moteurs interrogés à valider (Q30) |
+
+**Lecture d'un post** : une fois l'URL connue, le texte est obtenu par l'**oEmbed officiel** de X (`publish.x.com/oembed`), gratuit, sans authentification et documenté par X pour les traitements en masse. On garde le texte, l'auteur, la date et l'URL ; le HTML renvoyé est réduit à du texte puis assaini. Le résultat est mis en cache selon `cache_age` et marqué non fiable. Un post supprimé ou devenu privé (échec de l'oEmbed) est marqué « retiré ». Le respect de la politique développeur de X (affichage, suppression) est revérifié à l'implémentation.
+
+**Exclus** :
+- l'API X payante ;
+- le scraping de x.com, y compris avec un navigateur headless ;
+- les jetons de session de comptes X (Nitter auto-hébergé, twscrape…) ;
+- les services tiers payants qui revendent des données X.
+
+**Limites assumées** : la couverture de X sera partielle. Il n'y a pas de recherche exhaustive en temps réel ni de suivi de comptes : les timelines par oEmbed ne sont rendues que dans le navigateur. On compense en suivant sur Mastodon et Bluesky les chercheurs qui y publient aussi. En phase 4, un indicateur mesure la couverture : part des CVE pour lesquelles une discussion X pertinente est trouvée, comparée à un échantillon vérifié à la main.
 
 ## 3. NVD, vecteur d'entrée n°1
 
@@ -157,8 +182,8 @@ Avant de changer le moteur préféré (plateforme ou espace), l'interface affich
 |---|---|---|
 | **Triage** | `nvd_lookup`, `epss_lookup`, `kev_lookup`, `technology_lookup`, `internal_vuln_search` | Pertinence, catégorie, technos probables, doublon éventuel, priorité suggérée |
 | **Chasseur de PoC GitHub** | `github_search`, `github_get` | PoC trouvés, crédibilité, **signaux de PoC piégé** (binaires, code obfusqué, dépôt récent sans historique, demande d'exécution de commandes) |
-| **Réseaux sociaux** | `x_search`, `social_search` (Mastodon, Bluesky) | Signalements d'exploitation, chercheurs impliqués, liens utiles |
-| **Forums techniques** | `stackexchange_search`, `social_search` (Reddit) | Contournements, problèmes liés aux correctifs |
+| **Réseaux sociaux** | `x_discover`, `x_read` (lecture gratuite de X, §2.1), `social_search` (Mastodon, Bluesky) | Signalements d'exploitation, chercheurs impliqués, liens utiles |
+| **Forums techniques** | `stackexchange_search`, `social_search` (flux RSS Reddit, Hacker News) | Contournements, problèmes liés aux correctifs |
 | **Avis éditeurs** | `web_fetch` (domaines des éditeurs), `osv_lookup` | Correctifs, versions corrigées, contournements officiels |
 | **Synthèse** | Aucun outil externe (travaille sur les sorties des autres et les preuves) | Synthèse d'investigation (schéma de la spec 03 §7) avec citations |
 | **Rédacteur de bulletin** | Aucun outil externe | Champs du modèle de bulletin (spec 04) |

@@ -52,7 +52,7 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 - **Flux principal** : nouvelle CVE sur NVD → filtrage par le périmètre de veille de chaque espace → vulnérabilité non qualifiée enrichie → agents de veille → synthèse sourcée → qualification par l'analyste. Une saisie manuelle (CVE ou vulnérabilité sans CVE) emprunte le même chemin.
 - Authentification sécurisée : mot de passe, MFA TOTP obligatoire en interne, sessions, invitations.
 - RBAC multi-espace (VOC/CERT) et organisations clientes, journal d'audit.
-- **Connecteurs** paramétrables depuis l'interface : veille (NVD, KEV, EPSS, GitHub, X, Stack Exchange, Mastodon, Bluesky, Reddit, RSS, web), moteurs IA, publication ; test de connexion, quotas, budgets, état de santé.
+- **Connecteurs** paramétrables depuis l'interface, **tous gratuits** : veille (NVD, KEV, EPSS, GitHub, X en lecture gratuite, Stack Exchange, Mastodon, Bluesky, Reddit en RSS, Hacker News, RSS, web), moteurs IA, publication ; test de connexion, quotas, budgets, état de santé.
 - **Moteur IA interchangeable** : Claude par défaut, adaptateur compatible OpenAI pour les LLM open source (OpenLLM, vLLM, Ollama…), moteur préféré par plateforme, par espace et par agent, banc d'évaluation avant tout changement.
 - **Agents de veille paramétrables** par espace : moteur, modèle, niveau de raisonnement, prompt, connecteurs autorisés, domaines, schéma de sortie, limites et budgets ; agents prédéfinis fournis.
 - Gestion des vulnérabilités : file des non qualifiées, qualification, assignation, preuves, synthèse IA, historique, re-veille périodique (nouveaux PoC, ajout au KEV).
@@ -83,6 +83,7 @@ L'humain reste dans la boucle : l'IA propose, l'analyste qualifie, valide et pub
 | Fiabilité | Exécutions de workflows reprises après crash, retries, timeouts, idempotence ; synchronisation NVD reprise sur curseur, sans trou ni doublon. |
 | Réactivité | Délai entre publication sur NVD et vulnérabilité visible, synthèse comprise : de l'ordre de l'intervalle de synchronisation NVD (2 h par défaut, recommandation NVD) plus quelques minutes d'investigation. Voir Q24 pour réduire ce délai. |
 | Portabilité IA | Changer de moteur IA ne demande aucune modification de code ; prompts et schémas sont indépendants du fournisseur. |
+| **Coûts** | **Aucun abonnement ni service payant en dehors de l'abonnement IA** (ADR-023) : connecteurs gratuits (clé ou compte gratuits au plus), composants open source, pas de SaaS payant (monitoring, e-mail, recherche…). Les seuls coûts variables passent par la facture IA et sont plafonnés par des budgets. |
 | Volumétrie cible (hypothèse) | Moins de 100 utilisateurs internes, moins de 1 000 utilisateurs clients, environ 130 nouvelles CVE par jour sur NVD, environ 10 000 éléments collectés par jour. |
 | Disponibilité | Instance unique avec sauvegardes chiffrées et restauration testée (haute disponibilité hors MVP). |
 | Exploitabilité | Déploiement Docker Compose, configuration par variables d'environnement, métriques et logs structurés. |
@@ -129,7 +130,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 - [ ] 2.1 Coffre de secrets : chiffrement d'enveloppe AES-256-GCM, clés par usage, API en écriture seule, CLI de rotation
 - [ ] 2.2 `SafeHttpClient` anti-SSRF (résolution DNS et blocage des plages internes, épinglage d'IP, redirections revalidées, limites de taille et de temps) et proxy smokescreen, avec sa suite de tests SSRF
-- [ ] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés
+- [ ] 2.3 Cadre commun des connecteurs (spec 07) : modèle unifié (familles veille, moteur IA, publication ; portée globale ou espace), références de secrets, « Tester la connexion », état de santé, quotas, curseurs de synchronisation, domaines de sortie déclarés, classe de coût (test bloquant : aucun type payant)
 - [ ] 2.4 **Connecteur NVD (global)** : synchronisation incrémentale (`lastModStartDate`/`lastModEndDate`, pagination, pauses, backoff), curseur avec recouvrement, rattrapage initial par fenêtres de 120 jours **sans** émettre d'événements, intervalle configurable (2 h par défaut)
 - [ ] 2.5 Détection des nouveautés et changements NVD : `cve.published` (nouvelle CVE), `cve.updated` avec types de changement (CVSS ajouté ou modifié, CPE ajoutées, entrée KEV, référence d'exploit, rejet), écrits dans l'outbox et historisés (`cve_changes`)
 - [ ] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées)
@@ -166,10 +167,10 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 4.3 Adaptateur **compatible OpenAI** pour les LLM open source (OpenLLM, vLLM, Ollama, et aussi Mistral, Azure OpenAI) ; mode outils émulé par sortie JSON contrainte quand le modèle n'a pas d'appel d'outils natif
 - [ ] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
 - [ ] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
-- [ ] 4.6 Connecteurs de veille : GitHub, X (budget obligatoire), Stack Exchange, Mastodon, Bluesky, Reddit, OSV, web (avis éditeurs, liste de domaines)
+- [ ] 4.6 Connecteurs de veille gratuits : GitHub, **lecture gratuite de X** (découverte des URL de posts, puis lecture par l'oEmbed officiel ; spec 07 §2.1), Stack Exchange, Mastodon, Bluesky, Reddit (flux RSS), Hacker News, OSV, web (avis éditeurs, liste de domaines) ; SearXNG auto-hébergé en option
 - [ ] 4.7 Agents : configuration versionnée (moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt système, connecteurs autorisés, domaines, schéma de sortie, limites, budget par exécution)
 - [ ] 4.8 Runtime d'agent : boucle d'outils avec hooks (autorisation, budget, journalisation), timeouts, limites de tours
-- [ ] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_search`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
+- [ ] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_discover`, `x_read`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
 - [ ] 4.10 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste ; détection des faux PoC piégés
 - [ ] 4.11 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
 - [ ] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
@@ -178,6 +179,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [ ] 4.15 Interfaces : moteurs IA (moteur préféré, test de capacités), connecteurs de veille, agents (édition, bac à sable de test, historique des versions), traces d'exécution d'agent, tableau de bord des coûts
 - [ ] 4.16 **Banc d'évaluation des moteurs** : jeu de CVE de référence validé par les analystes, critères (validité du schéma, citations, exactitude, coût, latence), rapport comparatif ; prérequis à tout changement de moteur préféré
 - [ ] 4.17 Corpus de tests d'injection de prompt (contenus collectés piégés) intégré à la CI
+- [ ] 4.18 Indicateur de couverture de X : part des CVE pour lesquelles une discussion X pertinente est trouvée par la lecture gratuite, comparée à un échantillon vérifié à la main ; décision sur l'activation de SearXNG (Q30)
 
 **Critère de sortie (Jalon 1)** : une nouvelle CVE NVD dans le périmètre produit, sans intervention, une vulnérabilité non qualifiée accompagnée d'une synthèse structurée et sourcée par les agents de veille ; un contenu piégé ne déclenche aucune action non prévue ; basculer le moteur préféré vers un point d'accès compatible OpenAI (simulé en CI) ne demande aucune modification de code.
 

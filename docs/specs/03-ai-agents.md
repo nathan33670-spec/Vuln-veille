@@ -73,8 +73,9 @@ Boucle d'outils contrôlée par notre code, avec des hooks à chaque tour :
 | `web_fetch` | `web` | Récupérer une page et en extraire le texte | Domaines autorisés de l'agent, SafeHttpClient, 2 Mio au maximum, texte seul |
 | `github_search` | `github` | Dépôts, code, commits et issues liés à une CVE | Quotas |
 | `github_get` | `github` | Lire le README ou un fichier source d'un dépôt, en texte | Taille bornée, **aucun binaire ni archive**, rien n'est exécuté |
-| `x_search` | `x` | Posts récents mentionnant une CVE ou un produit | Budget du connecteur (API payante) |
-| `social_search` | `mastodon`, `bluesky`, `reddit` | Posts et discussions | Quotas |
+| `x_discover` | `x_reader` | Trouver des URL de posts X sur une CVE ou un produit : liens déjà collectés, puis recherche web du moteur IA restreinte à `x.com`, puis SearXNG si configuré (spec 07 §2.1) | Gratuit, ou budget sur la facture IA pour la recherche web |
+| `x_read` | `x_reader` | Lire le texte d'un post X à partir de son URL, par l'oEmbed officiel | Gratuit, sans authentification ; cache ; texte assaini |
+| `social_search` | `mastodon`, `bluesky`, `reddit` (RSS), `hackernews` | Posts et discussions | Quotas |
 | `stackexchange_search` | `stackexchange` | Questions et réponses par mots-clés ou tags | Quotas |
 | `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup` | globaux | Données publiques (catalogue local d'abord) | — |
 | `internal_vuln_search` | — | Vulnérabilités existantes de l'espace (doublons, historique) | Périmètre de l'espace uniquement |
@@ -112,7 +113,7 @@ Aucun outil n'écrit en base, n'envoie de message ou n'appelle un connecteur de 
 
 ## 8. Budgets et coûts
 
-- Budget mensuel par espace (USD estimé) avec seuils d'alerte à 50, 80 et 100 % et arrêt dur optionnel ; budgets propres aux connecteurs payants (X).
+- Budget mensuel par espace (USD estimé, sur l'abonnement IA, seul poste payant autorisé) avec seuils d'alerte à 50, 80 et 100 % et arrêt dur optionnel ; sous-budget pour les recherches web du moteur IA (découverte de posts X notamment).
 - Coût maximal par exécution d'agent, et par CVE pour le workflow d'investigation.
 - Quotas par utilisateur pour les demandes unitaires (drafts, tests d'agent).
 - Tableau de bord : coût par agent, par workflow, par moteur et par jour ; coût moyen par CVE investiguée ; taux de cache ; taux de refus.

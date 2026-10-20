@@ -40,6 +40,7 @@ La sécurité est une exigence de premier rang : voir `docs/SECURITY.md`.
 - Tout appel HTTP sortant passe par `SafeHttpClient` (anti-SSRF) **et** par le proxy de sortie, et tout accès à un service externe passe par un **connecteur** (jamais d'identifiants dans les paramètres d'un nœud).
 - Aucun code propre à un fournisseur IA en dehors de `backend/app/ai/engines/` : les agents n'utilisent que les paramètres abstraits d'`AIEngine`, pour que le passage de Claude à un LLM open source reste une simple configuration.
 - Aucun code récupéré (PoC, dépôts) n'est jamais exécuté.
+- **Aucun service, API ou abonnement payant en dehors de l'abonnement IA** (ADR-023). X se lit gratuitement (découverte d'URL et oEmbed officiel), jamais par l'API X payante ni par scraping. Chaque type de connecteur déclare sa classe de coût, et un test bloquant refuse les types payants.
 - Le contenu collecté et les sorties des LLM ne sont **pas fiables** : validation par schéma, assainissement, jamais interprétés comme gabarit ou instruction, jamais publiés sans validation humaine.
 - Les secrets sont chiffrés au repos, en écriture seule via l'API, et jamais journalisés. Aucun secret ni identifiant par défaut dans le dépôt.
 - Les réponses de l'API passent par des schémas Pydantic dédiés, jamais par une sérialisation directe de l'ORM, surtout côté portail.

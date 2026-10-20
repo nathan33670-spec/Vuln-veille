@@ -9,7 +9,7 @@ Référentiels : OWASP ASVS 5.0 (niveau 2, niveau 3 visé pour l'authentificatio
 | Vulnérabilités non qualifiées et bulletins non publiés | Informations sous embargo ou TLP:AMBER/RED ; une fuite aide un attaquant |
 | **Intégrité des bulletins publiés** | Un bulletin altéré (fausse mitigation, lien piégé) envoyé à tous les clients aurait un impact majeur |
 | Liste des clients, abonnements et demandes de technos | Révèle le parc technologique des clients, donc leur surface d'attaque |
-| Secrets : clés LLM, API X et GitHub, connecteurs, webhooks | Usage frauduleux, rebond vers des systèmes tiers |
+| Secrets : clés des moteurs IA, NVD, GitHub, Stack Exchange, Bluesky, connecteurs de publication, webhooks | Usage frauduleux, rebond vers des systèmes tiers |
 | Comptes, sessions, MFA | Point d'entrée de toutes les autres attaques |
 | Définitions de workflows, d'agents et de connecteurs | Leur modification permet d'exfiltrer ou d'injecter des données |
 | Disponibilité et budget | Déni de service, explosion des coûts LLM ou API |
@@ -51,7 +51,8 @@ Référentiels : OWASP ASVS 5.0 (niveau 2, niveau 3 visé pour l'authentificatio
 | S22 | Moteur IA auto-hébergé exposé ou compromis | TLS et jeton, réseau privé, exception réseau autorisée par un admin et auditée, jamais exposé sur Internet, modèles en `safetensors` d'une source vérifiée (empreinte) |
 | S23 | Inondation d'événements NVD (rattrapage, pic de publications, CVE en masse) | Rattrapage sans événements, périmètre de veille en amont des agents, débit de diffusion borné par espace, budget par CVE et par mois |
 | S24 | Données sensibles envoyées au mauvais moteur IA | Politique de données par moteur (localisation, classes autorisées) vérifiée par le constructeur de contexte avant chaque appel ; abonnements clients jamais envoyés à un LLM |
-| S25 | Abus d'un connecteur payant (X) ou épuisement de quotas | Budget mensuel et plafond par exécution obligatoires, arrêt dur, alertes, quotas par agent |
+| S25 | Dérive de coût sur la facture IA (boucle d'agent, recherches web en masse) ou introduction involontaire d'un service payant | Budgets mensuels et plafonds par exécution et par CVE, sous-budget pour la recherche web, arrêt dur, alertes ; classe de coût obligatoire par type de connecteur et test bloquant contre les types payants (ADR-023) |
+| S26 | Contenu X falsifié ou trompeur (faux compte, post supprimé, HTML oEmbed piégé) | HTML oEmbed réduit à du texte puis assaini, aucun script exécuté, post marqué non fiable, auteur et URL affichés, post supprimé marqué « retiré », recoupement par l'agent de synthèse |
 
 ## 4. Mesures détaillées
 

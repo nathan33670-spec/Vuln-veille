@@ -121,8 +121,8 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 4, 6 et 7 ; les autres vienn
 | `source.github_advisories` (MVP) | GitHub Security Advisories (GHSA) |
 | `source.github_search` (MVP, ph. 4) | Dépôts, code et commits mentionnant une CVE (détection de PoC) |
 | `source.stackexchange` (MVP, ph. 4) | Questions et réponses Stack Overflow ou Security StackExchange par tags et mots-clés |
-| `source.x` (MVP, ph. 4) | Recherche de posts X via l'API v2 (payante, budget plafonné) |
-| `source.social` (MVP, ph. 4) | Mastodon, Bluesky, Reddit via leurs API |
+| `source.x` (MVP, ph. 4) | Lecture gratuite de X : découverte des URL de posts puis lecture par l'oEmbed officiel (spec 07 §2.1) ; aucune API payante |
+| `source.social` (MVP, ph. 4) | Mastodon et Bluesky via leurs API gratuites, Reddit via ses flux RSS publics |
 | `source.hackernews` | Hacker News (API Algolia) |
 | `source.osv` | Base OSV (écosystèmes open source) |
 | `source.http` (MVP) | Requête HTTP générique et extraction (sélecteurs CSS, chemins JSON) |

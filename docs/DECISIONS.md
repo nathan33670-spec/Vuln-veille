@@ -119,8 +119,8 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 ## ADR-015 — Sources : API officielles d'abord, collecte respectueuse
 
 - **Statut** : Proposée
-- **Décision** : on utilise les API officielles quand elles existent (NVD, GitHub REST/GraphQL, Stack Exchange, X API v2, Reddit, Mastodon, Bluesky, OSV, CISA KEV, EPSS) plutôt que du scraping HTML. Le scraping HTML est réservé aux sites sans API, en respectant le robots.txt, avec limitation de débit et un User-Agent identifiable. Pour X, l'API est payante à l'usage depuis février 2026 (environ 0,005 $ par post lu, à vérifier) : la source est désactivée sans identifiants et soumise à un budget.
-- **Conséquences** : des quotas par source ; Bluesky et Mastodon sont des alternatives gratuites à X pour la communauté sécurité.
+- **Décision** : on utilise les API officielles **gratuites** quand elles existent (NVD, GitHub REST/GraphQL, Stack Exchange, Mastodon, Bluesky, Hacker News, OSV, CISA KEV, EPSS, oEmbed de X) plutôt que du scraping HTML. Le scraping HTML est réservé aux sites sans API qui l'autorisent, en respectant le robots.txt et les conditions d'utilisation, avec limitation de débit et un User-Agent identifiable. X est lu sans API payante ni scraping (ADR-023, spec 07 §2.1) ; Reddit est lu par ses flux RSS publics.
+- **Conséquences** : des quotas par source ; Bluesky et Mastodon compensent la couverture partielle de X pour la communauté sécurité.
 
 ## ADR-016 — Langues
 
@@ -168,3 +168,14 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 - **Décision** : plutôt qu'un agent unique doté de tous les outils, des agents spécialisés (triage, PoC GitHub, réseaux sociaux, forums, avis éditeurs) tournent en parallèle dans le workflow, puis un agent de synthèse sans outil externe produit le dossier sourcé. Ils sont livrés en seed et entièrement paramétrables par espace.
 - **Raisons** : moindre privilège (chaque agent n'a que ses connecteurs), parallélisme, coût maîtrisé (l'agent de triage peut arrêter la chaîne), qualité et évaluation agent par agent, choix du moteur et du modèle par agent, analyste capable de comprendre et de modifier chaque étape dans l'éditeur.
 - **Conséquences** : plusieurs appels LLM par CVE, d'où le budget par CVE et le filtrage par le périmètre de veille en amont.
+
+## ADR-023 — Zéro abonnement payant hors IA ; lecture gratuite de X
+
+- **Statut** : Acceptée (2026-10-20), sur consigne du porteur : « le moteur de lecture sur X doit être gratuit ; aucun abonnement payant en plus de ceux utilisés par l'IA ».
+- **Contexte** : l'API X est payante à l'usage depuis février 2026 et l'ancien palier gratuit est fermé aux nouvelles inscriptions. Les conditions d'utilisation de X interdisent le crawling et le scraping sans accord écrit, avec des dommages-intérêts forfaitaires annoncés pour les gros volumes.
+- **Décision** :
+  - Aucun service, API, abonnement ou SaaS payant n'est utilisé en dehors de l'abonnement IA. Chaque type de connecteur déclare une classe de coût (`free`, `free_account`, `ai_billed`), et un test bloquant refuse tout type payant.
+  - X est lu par le connecteur `x_reader`, en trois couches : (1) découverte gratuite des URL de posts citées dans les sources déjà collectées ; (2) recherche web du moteur IA restreinte à `x.com`, facturée sur l'abonnement IA et plafonnée ; (3) en option, SearXNG auto-hébergé. Le texte d'un post s'obtient par l'oEmbed officiel de X (gratuit, sans authentification).
+  - Exclus : l'API X payante, le scraping de x.com (y compris par navigateur headless), l'usage de comptes ou de jetons de session X (Nitter, twscrape), les revendeurs de données.
+- **Alternatives écartées** : l'API X à l'usage (contraire à la consigne) ; le scraping avec des comptes (contraire aux conditions de X, risque juridique et financier pour l'entreprise, comptes bannis, maintenance permanente).
+- **Conséquences** : la couverture de X est partielle (pas de recherche exhaustive en temps réel, pas de suivi de comptes), d'où un indicateur de couverture (phase 4) et un poids accru de Mastodon et Bluesky. La couche 2 dépend du moteur IA : avec un LLM auto-hébergé, seules les couches 1 et 3 restent. Le reste de la pile suit la même règle : composants open source, e-mail via le SMTP existant, certificats Let's Encrypt ou PKI interne, CI dans le quota gratuit ou sur un runner auto-hébergé.

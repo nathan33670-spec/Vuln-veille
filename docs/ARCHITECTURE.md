@@ -106,7 +106,10 @@ Les versions exactes sont épinglées en phase 0, en prenant la dernière versio
 | Base de données | PostgreSQL 17 |
 | Cache et file | Redis 7 (ou Valkey) |
 | Proxy de sortie | smokescreen (Stripe), anti-SSRF au niveau réseau |
-| E-mail en dev | Mailpit |
+| E-mail | Mailpit en dev ; SMTP existant de l'entreprise en production |
+| Recherche web (option) | SearXNG auto-hébergé, pour la découverte de posts X sans moteur IA doté de recherche web (Q30) |
+
+**Règle de coût (ADR-023)** : tous les composants sont open source et tous les connecteurs sont gratuits. Le seul poste payant est l'abonnement au moteur IA.
 | CI | GitHub Actions |
 
 ## 3. Arborescence cible
@@ -129,7 +132,7 @@ Vuln-veille/
 │   │   ├── iam/                 # users, auth, mfa, sessions, csrf, rbac, workspaces, clients
 │   │   ├── audit/
 │   │   ├── secrets/
-│   │   ├── connectors/          # cadre commun + types : nvd, cisa_kev, epss, github, x,
+│   │   ├── connectors/          # cadre commun + types : nvd, cisa_kev, epss, github, x_reader,
 │   │   │                        # stackexchange, mastodon, bluesky, reddit, rss, web, osv…
 │   │   ├── catalog/             # CVE publiques, synchro NVD, détection des changements, événements
 │   │   ├── watch_scope/         # périmètre de veille par espace
@@ -196,7 +199,7 @@ sequenceDiagram
     E->>A: agent de triage
     par agents de veille en parallèle
         A->>A: PoC GitHub (connecteur github)
-        A->>A: réseaux sociaux (x, mastodon, bluesky)
+        A->>A: réseaux sociaux (x_reader gratuit, mastodon, bluesky)
         A->>A: forums (stackexchange, reddit)
         A->>A: avis éditeurs (web, osv)
     end

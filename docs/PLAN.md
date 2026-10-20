@@ -121,7 +121,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 1.8 Organisations clientes et comptes clients (invitation uniquement)
 - [x] 1.9 Journal d'audit append-only avec chaîne de hachage, export JSON
 - [x] 1.10 CLI de bootstrap du premier admin (aucun compte par défaut)
-- [ ] 1.11 Interfaces : connexion et MFA (back-office et portail), « Mon compte » (mot de passe, MFA, sessions actives), administration des utilisateurs, espaces et clients, consultation de l'audit
+- [x] 1.11 Interfaces : connexion et MFA (back-office et portail), « Mon compte » (mot de passe, MFA, sessions actives), administration des utilisateurs, espaces et clients, consultation de l'audit
 - [x] 1.12 Ré-authentification (step-up MFA) pour les actions sensibles
 
 **Critère de sortie** : un admin invite un analyste VOC, un analyste CERT et un client ; chacun ne voit que son périmètre ; la matrice d'autorisation est entièrement testée.

@@ -2,18 +2,28 @@
 
 ## État courant
 
-- **Phase** : 1 (identité, accès, audit) **en cours** — backend terminé, frontend à faire.
-- **Dernière étape terminée** : backend de la phase 1 (étapes 1.1 à 1.10 et 1.12 côté API), poussé et testé (60 tests dont 25 d'intégration).
-- **Étape en cours** : 1.11 interfaces (back-office : connexion, MFA, invitation, mot de passe oublié, « Mon compte », administration utilisateurs, espaces, clients, audit ; portail : connexion, MFA facultative, « Mon compte », « Mon organisation »).
-- **Prochaine étape** : après 1.11, cocher la phase 1 dans PLAN.md, vérifier la CI, puis phase 2.
+- **Phase** : 1 (identité, accès, audit) **terminée**. Phase 2 non commencée.
+- **Dernière étape terminée** : 1.11 interfaces (back-office et portail), poussée et testée.
+- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 2.
+- **Prochaine étape** : phase 2, étape 2.1 (coffre de secrets), puis 2.2 (`SafeHttpClient`) et 2.3 (cadre des connecteurs).
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
   - Smokescreen accepte les clients sans rôle (ACL `default`) : prévoir des rôles mTLS par type de worker en phase 2.
   - Environnement cloud : builds Docker uniquement via les variantes avec l'autorité du proxy (PROCEDURES §9 bis).
+  - Frontend : aucun attribut `style` (CSP) ; les styles vont dans `packages/ui/src/styles.css`. jsdom n'implémente pas `<dialog>.showModal` : polyfill dans `packages/auth/src/test-setup.ts`.
+  - Les requêtes typées d'openapi-fetch attendent `null` (et non `undefined`) pour les paramètres facultatifs (`exactOptionalPropertyTypes`).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 7 : phase 1, interfaces
+
+- Paquet partagé `@vv/auth` : connexion, vérification et enrôlement MFA (QR code), invitation, mot de passe oublié et réinitialisation (jeton dans le fragment d'URL, effacé de la barre d'adresse), « Mon compte » (mot de passe, MFA, codes de secours, sessions), dialogue de step-up qui rejoue l'action une fois, garde de route, page d'erreur générique (aucun détail technique affiché).
+- Back-office : utilisateurs (recherche, pagination, invitation), fiche utilisateur (statut, déverrouillage, réinitialisation MFA, fermeture des sessions, accès VOC/CERT, rôle d'administrateur), espaces, organisations clientes et leurs utilisateurs, journal d'audit (filtres, vérification de la chaîne, export JSON Lines). Navigation masquée selon les permissions ; l'API reste la seule autorité.
+- Portail : page des bulletins (en attente de la phase 6), « Mon organisation » pour les référents (rôles, invitations, désactivation), « Mon compte ».
+- API portail : la liste des membres de l'organisation expose désormais leur rôle (`OrgUserOut`).
+- Tests : 16 tests frontend (redirection des anonymes, navigation selon les permissions, refus d'accès, échec de connexion, step-up) ; 60 tests backend.
 
 ### 2026-10-21 — Session 6 : phase 1, backend
 

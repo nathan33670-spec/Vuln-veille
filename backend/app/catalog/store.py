@@ -105,40 +105,62 @@ async def upsert_cve(
     record.references = data.references
     record.cpe_configurations = data.cpe_configurations
     record.cpe_criteria = data.cpe_criteria
-    if data.kev is not None:  # NVD never erases what the CISA KEV feed provided
-        record.kev = data.kev
+    if data.kev is not None:  # merged: NVD never erases what the CISA KEV feed provided
+        record.kev = {**(record.kev or {}), **data.kev}
     if source not in record.sources:
         record.sources = [*record.sources, source]
     record.synced_at = now
     await db.flush()  # the record exists before its history and events reference it
 
     if detected.change_types:
+        record_change(
+            db,
+            record,
+            detected,
+            source=source,
+            now=now,
+            announce=_announced(
+                detected, data, now, backfill=backfill, announce_within=announce_within
+            ),
+        )
+    return detected
+
+
+def record_change(
+    db: AsyncSession,
+    record: CveRecord,
+    detected: Detected,
+    *,
+    source: str,
+    now: datetime,
+    announce: bool,
+) -> None:
+    """History entry, plus the outbox event when the change is announced."""
+    db.add(
+        CveChange(
+            cve_id=record.cve_id,
+            detected_at=now,
+            change_types=detected.change_types,
+            source=source,
+            diff=detected.diff,
+        )
+    )
+    if announce:
+        published = detected.change_types == ["published"]
         db.add(
-            CveChange(
-                cve_id=data.cve_id,
-                detected_at=now,
-                change_types=detected.change_types,
-                source=source,
-                diff=detected.diff,
+            OutboxEvent(
+                type="cve.published" if published else "cve.updated",
+                payload={
+                    "cve_id": record.cve_id,
+                    "change_types": detected.change_types,
+                    "source": source,
+                    "severity": record.severity,
+                    "base_score": _num(record.base_score),
+                },
+                created_at=now,
+                attempts=0,
             )
         )
-        if _announced(detected, data, now, backfill=backfill, announce_within=announce_within):
-            published = detected.change_types == ["published"]
-            db.add(
-                OutboxEvent(
-                    type="cve.published" if published else "cve.updated",
-                    payload={
-                        "cve_id": data.cve_id,
-                        "change_types": detected.change_types,
-                        "source": source,
-                        "severity": data.severity,
-                        "base_score": _num(data.base_score),
-                    },
-                    created_at=now,
-                    attempts=0,
-                )
-            )
-    return detected
 
 
 def _announced(

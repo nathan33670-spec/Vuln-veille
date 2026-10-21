@@ -42,9 +42,9 @@ Les outils d'agents et les nœuds de workflows n'accèdent aux services externes
 | Type | Portée | Authentification | Usage | Notes |
 |---|---|---|---|---|
 | `nvd` | Globale | Clé API (recommandée, une seule pour l'organisation) | **Vecteur d'entrée n°1**, enrichissement | Voir §3 ; NVD recommande une synchro incrémentale au plus toutes les 2 h |
-| `cisa_kev` | Globale | Aucune | Statut « exploitée activement » | Flux JSON officiel |
-| `epss` | Globale | Aucune | Probabilité d'exploitation | Mise à jour quotidienne |
-| `cve_org` | Globale | Aucune | **Détection précoce (retenue, Q24)** : nouvelles CVE publiées par les CNA, souvent avant leur arrivée sur NVD | Dépôt public cvelistV5 (fichiers delta) ; émet `cve.published` avec la source `cve_org`, NVD complète ensuite l'enrichissement |
+| `cisa_kev` | Globale | Aucune | Statut « exploitée activement » | Flux JSON officiel, toutes les 6 h ; le premier import n'annonce rien ; une entrée récente (14 jours) produit `cve.updated` (`kev_added`) ; une CVE absente du catalogue y est créée a minima |
+| `epss` | Globale | Aucune | Probabilité d'exploitation | Quotidien, uniquement pour les CVE du catalogue, par lots de 100 identifiants sur l'API publique ; aucun événement |
+| `cve_org` | Globale | Aucune | **Détection précoce (retenue, Q24)** : nouvelles CVE publiées par les CNA, souvent avant leur arrivée sur NVD | Dépôt public cvelistV5 : `delta.json` toutes les 5 minutes, `deltaLog.json` (30 jours, ~30 Mo) pour rattraper un trou ; chemin des fichiers construit depuis l'identifiant, jamais depuis une URL des données ; émet `cve.published` avec la source `cve_org` ; un enregistrement déjà analysé par NVD n'est jamais écrasé |
 | `osv` | Globale | Aucune | Écosystèmes open source (purl) | — |
 | `github` | Espace | Jeton (lecture seule, sans droit sur des dépôts privés) | GHSA, recherche de dépôts, code, commits et issues ; lecture de fichiers en texte | Quotas de l'API de recherche GitHub |
 | `x_reader` | Espace | Aucune | **Lecture gratuite de X** : découverte de posts puis lecture par l'oEmbed officiel (§2.1) | Pas d'API X payante, pas de scraping |
@@ -102,7 +102,7 @@ Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage dep
 - Pagination (`resultsPerPage` au maximum, `startIndex`), pause entre les requêtes, backoff exponentiel sur 403, 429 et 503, reprise sur le curseur en cas d'échec : aucune fenêtre n'est perdue.
 - **Rattrapage initial** : profondeur configurable (par exemple 90 jours), découpé en fenêtres de 120 jours au maximum, **sans** émettre d'événements, pour ne pas lancer des centaines d'investigations d'un coup.
 - Limites retenues (documentation NVD, toutes paramétrables dans la configuration du connecteur) : 5 requêtes par fenêtre glissante de 30 secondes sans clé (pause de 6 s), 50 avec une clé (pause de 0,6 s) ; 2 000 résultats par page ; fenêtres de 120 jours au plus, deux bornes toujours envoyées ; recouvrement de 5 minutes ; backoff exponentiel à partir de 6 s, 6 tentatives.
-- Implémentation : type `nvd` (`backend/app/connectors/types/nvd.py`), synchronisation `backend/app/catalog/nvd_sync.py` (tâche `collect.nvd_sync`, une seule à la fois par connecteur grâce à un verrou consultatif), planification par le scheduler (`backend/app/catalog/schedule.py`). Le curseur (`connector_cursors`, flux `cves`) avance après chaque fenêtre terminée ; chaque page est validée avec son historique et ses événements.
+- Implémentation : type `nvd` (`backend/app/connectors/types/nvd.py`), synchronisation `backend/app/catalog/nvd_sync.py`. Toutes les sources globales synchronisées (NVD, KEV, EPSS, CVE.org) passent par la tâche générique `collect.connector_sync` (`backend/app/connectors/jobs.py` : une exécution à la fois par connecteur grâce à un verrou consultatif, santé du connecteur mise à jour), planifiée par le scheduler selon `sync_interval_minutes` (`backend/app/catalog/schedule.py`). Le curseur (`connector_cursors`, flux `cves`) avance après chaque fenêtre terminée ; chaque page est validée avec son historique et ses événements.
 
 ### 3.2 Détection des nouveautés et changements
 

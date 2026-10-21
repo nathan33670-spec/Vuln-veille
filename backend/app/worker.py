@@ -91,8 +91,9 @@ def publish_connector_check(connector_id: str, workspace_id: str | None) -> None
     _check(connector_id, workspace_id)
 
 
-@app.task(name="collect.nvd_sync")
-def nvd_sync(connector_id: str) -> None:
-    from app.catalog.nvd_sync import run_nvd_sync  # noqa: PLC0415 - worker-only import
+@app.task(name="collect.connector_sync")
+def connector_sync(connector_id: str) -> None:
+    """Periodic synchronisation of a global catalogue connector (NVD, KEV, EPSS…)."""
+    from app.connectors.jobs import run_sync  # noqa: PLC0415 - worker-only import
 
-    asyncio.run(run_nvd_sync(get_settings(), uuid.UUID(connector_id)))
+    asyncio.run(run_sync(get_settings(), uuid.UUID(connector_id)))

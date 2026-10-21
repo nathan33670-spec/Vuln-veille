@@ -1,7 +1,7 @@
 """Scheduler process: fires due triggers at a fixed tick.
 
 Several replicas may run; a PostgreSQL advisory lock elects a single active
-leader per tick. Each tick queues the NVD synchronisations that are due (phase 2);
+leader per tick. Each tick queues the catalogue synchronisations that are due (phase 2);
 workflow triggers come in phase 3.
 """
 
@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.catalog.schedule import schedule_nvd
+from app.catalog.schedule import schedule_syncs
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.logging import configure_logging, get_logger
@@ -50,7 +50,7 @@ def periodic_jobs(engine: AsyncEngine, tasks: TaskQueue) -> TickHandler:
     async def tick() -> None:
         async with sessions() as db:
             init_context(db)
-            await schedule_nvd(db, tasks, datetime.now(UTC))
+            await schedule_syncs(db, tasks, datetime.now(UTC))
 
     return tick
 

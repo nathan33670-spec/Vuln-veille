@@ -10,13 +10,17 @@ from the interface. Registration enforces the non-negotiable rules at import tim
 import re
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.net.safe_http import SafeHttpClient
 from app.vault.keys import SecretPurpose
@@ -125,17 +129,38 @@ class ConnectorType(ABC):
     secret_slots: ClassVar[tuple[SecretSlot, ...]] = ()
     egress_domains: ClassVar[tuple[str, ...]] = ()
     default_quotas: ClassVar[Quotas] = Quotas()
-    # Content types expected from the service (empty: any).
+    # Content types expected from the service (empty: any), and the response cap.
     content_types: ClassVar[tuple[str, ...]] = ()
+    max_response_bytes: ClassVar[int] = 10 * 1024 * 1024
 
     @classmethod
     def egress_for(cls, config: ConnectorConfig) -> tuple[str, ...]:
         """Domains this connector contacts; types reading user URLs override it."""
         return cls.egress_domains
 
+    # Periodic synchronisation (global catalogue sources). Types that sync declare
+    # ``syncs = True``, a ``sync_interval_minutes`` configuration field, and ``sync``.
+    syncs: ClassVar[bool] = False
+
     @abstractmethod
     async def health_check(self, ctx: ConnectorContext) -> HealthResult:
         """A side-effect-free call proving the configuration works (one result)."""
+
+    async def sync(self, job: "SyncJob") -> dict[str, int]:
+        """One synchronisation run; returns counters for the logs."""
+        raise NotImplementedError(self.kind)
+
+
+Sleep = Callable[[float], Awaitable[None]]
+
+
+@dataclass
+class SyncJob:
+    db: "AsyncSession"
+    ctx: ConnectorContext
+    connector_id: uuid.UUID
+    now: datetime
+    sleep: Sleep
 
 
 class RegistrationError(TypeError):
@@ -165,6 +190,8 @@ def _validate(cls: type[ConnectorType]) -> None:
     for domain in cls.egress_domains:
         if not _DOMAIN.fullmatch(domain):
             raise RegistrationError(f"{cls.kind}: invalid egress domain {domain!r}")
+    if cls.syncs and "sync_interval_minutes" not in cls.config_model.model_fields:
+        raise RegistrationError(f"{cls.kind}: synced types need sync_interval_minutes")
     if cls.cost_class == CostClass.AI_BILLED and cls.default_quotas.monthly_budget_eur is None:
         raise RegistrationError(f"{cls.kind}: AI-billed types need a default monthly budget")
 

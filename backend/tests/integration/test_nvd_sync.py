@@ -8,8 +8,8 @@ import asyncpg
 import pytest
 from pydantic import SecretStr
 
-from app.catalog.nvd_sync import _lock_id, run_nvd_sync
-from app.catalog.schedule import NVD_SYNC_TASK, schedule_nvd
+from app.catalog.schedule import schedule_syncs
+from app.connectors.jobs import SYNC_TASK, lock_id, run_sync
 from app.core.db import create_engine, create_sessionmaker
 from app.core.rls import init_context
 from app.core.tasks import MemoryTaskQueue
@@ -77,12 +77,12 @@ async def test_backfill_then_incremental_sync(database: Database, clean_state: N
     connector_id = await _connector(database, backfill_days=200)
     settings = _settings(database)
 
-    report = await run_nvd_sync(
+    report = await run_sync(
         settings, connector_id, http=fake.client(), sleep=_no_sleep, clock=lambda: T0
     )
     assert report is not None
-    assert report.backfill_records == 3
-    assert report.windows == 3  # two backfill windows (120 + 80 days) and one incremental
+    assert report["backfill_records"] == 3
+    assert report["windows"] == 3  # two backfill windows (120 + 80 days) and one incremental
     windows = [(q["lastModStartDate"], q["lastModEndDate"]) for q in fake.queries]
     assert all(
         (datetime.fromisoformat(e) - datetime.fromisoformat(s)).days <= 120 for s, e in windows
@@ -119,7 +119,7 @@ async def test_backfill_then_incremental_sync(database: Database, clean_state: N
         )
     )
     fake.queries.clear()
-    second = await run_nvd_sync(
+    second = await run_sync(
         settings, connector_id, http=fake.client(), sleep=_no_sleep, clock=lambda: t1
     )
     assert second is not None
@@ -141,7 +141,7 @@ async def test_backfill_then_incremental_sync(database: Database, clean_state: N
     )
     assert [r["change_types"] for r in old] == [["published"]]  # catalogued, not announced
 
-    third = await run_nvd_sync(
+    third = await run_sync(
         settings,
         connector_id,
         http=fake.client(),
@@ -162,11 +162,11 @@ async def test_failures_keep_the_cursor_and_mark_the_connector(
     fake = FakeNvd()
     connector_id = await _connector(database, backfill_days=0, backoff_seconds=0.1)
     settings = _settings(database)
-    assert await run_nvd_sync(
+    assert await run_sync(
         settings, connector_id, http=fake.client(), sleep=_no_sleep, clock=lambda: T0
     )
     fake.fail_with = 503
-    failed = await run_nvd_sync(
+    failed = await run_sync(
         settings,
         connector_id,
         http=fake.client(),
@@ -184,8 +184,8 @@ async def test_one_sync_at_a_time(database: Database, clean_state: None) -> None
     connector_id = await _connector(database, backfill_days=0)
     holder = await asyncpg.connect(database.admin_dsn)
     try:
-        await holder.execute("SELECT pg_advisory_lock($1)", _lock_id(connector_id))
-        result = await run_nvd_sync(
+        await holder.execute("SELECT pg_advisory_lock($1)", lock_id(connector_id))
+        result = await run_sync(
             _settings(database),
             connector_id,
             http=FakeNvd().client(),
@@ -206,9 +206,9 @@ async def test_scheduler_queues_each_sync_once_per_interval(
     try:
         async with create_sessionmaker(engine)() as db:
             init_context(db)
-            assert await schedule_nvd(db, tasks, T0) == 1
-            assert await schedule_nvd(db, tasks, T0 + timedelta(minutes=119)) == 0
-            assert await schedule_nvd(db, tasks, T0 + timedelta(minutes=120)) == 1
+            assert await schedule_syncs(db, tasks, T0) == 1
+            assert await schedule_syncs(db, tasks, T0 + timedelta(minutes=119)) == 0
+            assert await schedule_syncs(db, tasks, T0 + timedelta(minutes=120)) == 1
     finally:
         await engine.dispose()
-    assert tasks.sent == [(NVD_SYNC_TASK, {"connector_id": str(connector_id)})] * 2
+    assert tasks.sent == [(SYNC_TASK, {"connector_id": str(connector_id)})] * 2

@@ -53,6 +53,7 @@ async def build_context(
         allowed_domains=domains,
         private_networks=parse_networks(connector.private_network_cidrs) if approved else (),
         allowed_content_types=type_.content_types,
+        max_bytes=type_.max_response_bytes,
     )
     purpose = FAMILY_PURPOSE[Family(connector.family)]
     secrets = {

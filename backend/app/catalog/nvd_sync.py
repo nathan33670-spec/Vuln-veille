@@ -6,36 +6,22 @@
   overlap, to now. The cursor moves after each completed window: a failure resumes
   where it stopped and no window is lost; replays detect nothing new.
 - Each page is committed with its change history and outbox events.
-- One sync at a time per connector (PostgreSQL advisory lock).
+Run through ``app.connectors.jobs.run_sync`` (lock, health, Celery task).
 """
 
-import asyncio
-import hashlib
 import uuid
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.nvd_parse import NvdParseError, parse_cve
 from app.catalog.store import upsert_cve
-from app.connectors.base import HealthResult
-from app.connectors.models import Connector, ConnectorCursor
-from app.connectors.runtime import build_context, record_health
-from app.connectors.types.nvd import NvdClient, NvdConfig, NvdConnector, NvdError, Sleep
-from app.core.config import Settings
-from app.core.db import create_engine, create_sessionmaker
-from app.core.logging import get_logger
-from app.core.rls import init_context
-from app.net.safe_http import EgressError, SafeHttpClient
-from app.vault.service import Vault
+from app.connectors.cursors import get_cursor, save_cursor
+from app.connectors.types.nvd import NvdClient, NvdConfig
 
 STREAM = "cves"
-log = get_logger(__name__)
-Clock = Callable[[], datetime]
 
 
 @dataclass
@@ -54,21 +40,6 @@ def _iso(value: datetime) -> str:
 
 def _parse(value: Any) -> datetime | None:
     return datetime.fromisoformat(value) if isinstance(value, str) else None
-
-
-async def _cursor(db: AsyncSession, connector_id: uuid.UUID, now: datetime) -> ConnectorCursor:
-    cursor = await db.get(ConnectorCursor, (connector_id, STREAM))
-    if cursor is None:
-        cursor = ConnectorCursor(
-            connector_id=connector_id, stream=STREAM, position={}, updated_at=now
-        )
-        db.add(cursor)
-    return cursor
-
-
-def _save(cursor: ConnectorCursor, now: datetime, **changes: Any) -> None:
-    cursor.position = {**cursor.position, **changes}  # new dict: JSONB change is tracked
-    cursor.updated_at = now
 
 
 async def _window(
@@ -110,11 +81,15 @@ async def _window(
 
 
 async def sync_nvd(
-    db: AsyncSession, client: NvdClient, connector: Connector, config: NvdConfig, now: datetime
+    db: AsyncSession,
+    client: NvdClient,
+    connector_id: uuid.UUID,
+    config: NvdConfig,
+    now: datetime,
 ) -> SyncReport:
     report = SyncReport()
     window = timedelta(days=config.window_days)
-    cursor = await _cursor(db, connector.id, now)
+    cursor = await get_cursor(db, connector_id, STREAM, now)
     position = cursor.position
 
     if not position.get("backfill_done"):
@@ -122,15 +97,15 @@ async def sync_nvd(
         start = _parse(position.get("backfill_next")) or until - timedelta(
             days=config.backfill_days
         )
-        _save(cursor, now, backfill_until=_iso(until))
+        save_cursor(cursor, now, backfill_until=_iso(until))
         await db.commit()
         while start < until:
             end = min(start + window, until)
             await _window(db, client, config, start, end, backfill=True, report=report, now=now)
-            _save(cursor, now, backfill_next=_iso(end))
+            save_cursor(cursor, now, backfill_next=_iso(end))
             await db.commit()
             start = end
-        _save(cursor, now, backfill_done=True, last_end=_iso(until))
+        save_cursor(cursor, now, backfill_done=True, last_end=_iso(until))
         await db.commit()
 
     last_end = _parse(cursor.position.get("last_end")) or now
@@ -138,80 +113,7 @@ async def sync_nvd(
     while start < now:
         end = min(start + window, now)
         await _window(db, client, config, start, end, backfill=False, report=report, now=now)
-        _save(cursor, now, last_end=_iso(end), last_success_at=_iso(now))
+        save_cursor(cursor, now, last_end=_iso(end), last_success_at=_iso(now))
         await db.commit()
         start = end
     return report
-
-
-def _lock_id(connector_id: uuid.UUID) -> int:
-    digest = hashlib.sha256(f"nvd_sync:{connector_id}".encode()).digest()
-    return int.from_bytes(digest[:8], "big", signed=True)
-
-
-async def run_nvd_sync(
-    settings: Settings,
-    connector_id: uuid.UUID,
-    *,
-    http: SafeHttpClient | None = None,
-    sleep: Sleep = asyncio.sleep,
-    clock: Clock = lambda: datetime.now(UTC),
-) -> SyncReport | None:
-    """Celery entry point. ``http`` replaces the egress client (tests only)."""
-    engine = create_engine(settings.database_url_worker.get_secret_value())
-    try:
-        async with engine.connect() as lock:
-            got = await lock.execute(
-                text("SELECT pg_try_advisory_lock(:id)"), {"id": _lock_id(connector_id)}
-            )
-            if not got.scalar_one():
-                log.info("nvd_sync_already_running", connector_id=str(connector_id))
-                return None
-            try:
-                return await _run(settings, engine, connector_id, http, sleep, clock)
-            finally:
-                await lock.execute(
-                    text("SELECT pg_advisory_unlock(:id)"), {"id": _lock_id(connector_id)}
-                )
-    finally:
-        await engine.dispose()
-
-
-async def _run(
-    settings: Settings,
-    engine: Any,
-    connector_id: uuid.UUID,
-    http: SafeHttpClient | None,
-    sleep: Sleep,
-    clock: Clock,
-) -> SyncReport | None:
-    async with create_sessionmaker(engine)() as db:
-        init_context(db)  # global connector: no workspace context
-        connector = await db.get(Connector, connector_id)
-        if connector is None or connector.workspace_id is not None or not connector.enabled:
-            return None
-        if connector.kind != NvdConnector.kind:
-            return None
-        now = clock()
-        try:
-            _, ctx = await build_context(db, settings, Vault.from_settings(settings), connector)
-            if http is not None:
-                ctx.http = http
-            config = ctx.config
-            if not isinstance(config, NvdConfig):
-                return None
-            report = await sync_nvd(db, NvdConnector.client(ctx, sleep), connector, config, now)
-        except (NvdError, EgressError) as exc:
-            await db.rollback()
-            connector = await db.get(Connector, connector_id)
-            if connector is not None:
-                record_health(connector, HealthResult(ok=False, message=f"sync: {exc.code}"), now)
-                await db.commit()
-            log.warning("nvd_sync_failed", code=exc.code)
-            return None
-        connector = await db.get(Connector, connector_id)
-        if connector is not None:
-            record_health(connector, HealthResult(ok=True), now)
-            await db.commit()
-        log.info("nvd_sync_done", **report.__dict__)
-        return report

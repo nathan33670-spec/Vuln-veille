@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
-- **Dernière étape terminée** : 2.4 connecteur NVD et 2.5 détection des nouveautés (2.1 à 2.3 avant).
-- **Étape en cours** : 2.6 connecteurs CISA KEV, FIRST EPSS et CVE.org.
-- **Prochaine étape** : 2.7 catalogue des technos, 2.8 périmètre de veille.
+- **Dernière étape terminée** : 2.6 connecteurs CISA KEV, FIRST EPSS et CVE.org (2.1 à 2.5 avant).
+- **Étape en cours** : 2.7 catalogue des technos.
+- **Prochaine étape** : 2.8 périmètre de veille, 2.9 éléments collectés, 2.10 vulnérabilités.
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -18,7 +18,7 @@
   - Sortie réseau : les workers n'ont **ni DNS externe ni route** ; en mode proxy, `SafeHttpClient` ne résout pas les noms et laisse smokescreen résoudre et filtrer. Obtenir un client par `egress_client(settings, policy)`, jamais directement.
   - L'environnement cloud ne donne pas Internet à smokescreen : un appel réel (NVD…) échoue en `network_error` dans le bac à sable, pas en CI ni en production.
   - NVD : une CVE inconnue n'est annoncée (`cve.published`) que si elle a été publiée depuis moins de 14 jours (paramétrable) ; sinon elle est cataloguée sans événement. Le rattrapage initial n'émet aucun événement.
-  - Connecteurs : premier type réel enregistré, `nvd` (global). Après l'ajout d'un type, régénérer `deploy/smokescreen/acl.yaml` par `python -m app.cli egress-acl --static-only --output ../deploy/smokescreen/acl.yaml` (un test vérifie la couverture).
+  - Connecteurs enregistrés : `nvd`, `cisa_kev`, `epss`, `cve_org` (globaux). Une source globale synchronisée déclare `syncs = True`, un champ `sync_interval_minutes` et une méthode `sync` ; la tâche `collect.connector_sync` et le scheduler s'occupent du reste. Après l'ajout d'un type, régénérer `deploy/smokescreen/acl.yaml` par `python -m app.cli egress-acl --static-only --output ../deploy/smokescreen/acl.yaml` (un test vérifie la couverture).
   - Reste à faire (hors 2.3) : approbation du réseau privé par un admin (route et interface). Les colonnes existent ; décider comment un admin VOC approuve un connecteur du CERT qu'il ne voit pas (RLS) avant de l'implémenter.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
@@ -29,6 +29,7 @@
 - `SafeHttpClient` (`app/net/`) : politique d'URL, validation des adresses (unicast public seulement, jamais loopback ni métadonnées même sur exception), épinglage d'IP en mode direct, résolution laissée à smokescreen en mode proxy, redirections revalidées sans fuite d'identifiants, décompression bornée (gzip et deflate seulement), échéance totale ; proxy obligatoire en production.
 - Cadre des connecteurs : types et registre (refus à l'import des types payants, des identifiants en configuration, des domaines invalides), migration `0004_connectors` (connecteurs, curseurs, RLS), API par famille et par portée, test de connexion exécuté par le worker de la famille, quotas Redis, génération de la liste blanche du proxy.
 - NVD : migration `0005_catalog` (`cve_records`, `cve_changes`, `outbox_events`), analyse défensive des enregistrements, détection des changements (CVSS ajouté, sévérité relevée, CPE ajoutées, KEV, référence d'exploit, rejet), synchronisation par fenêtres (rattrapage silencieux, incrémental avec recouvrement, curseur par fenêtre, pause, backoff, verrou), planification par le scheduler.
+- Sources globales : CISA KEV (premier import silencieux, entrées récentes annoncées), FIRST EPSS (CVE du catalogue seulement), CVE.org (détection précoce par `delta.json`, rattrapage par `deltaLog.json`, NVD jamais écrasé) ; tâche générique de synchronisation et planification commune.
 - Tests : suite SSRF hors ligne (adresses piégées, écritures numériques, rebinding, redirections, bombes de décompression), test TLS réel de l'épinglage (SNI et nom du certificat), garde « aucune bibliothèque réseau hors `app/net/` » ; vérification sur la pile réelle (refus par smokescreen d'un domaine non autorisé, pas de route directe).
 
 - ADR-013 révisée : chaque secret a sa clé de données AES-256-GCM, enveloppée pour la clé publique X25519 de son usage. L'API du back-office ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire.

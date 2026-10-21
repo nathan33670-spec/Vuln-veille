@@ -6,7 +6,7 @@ date ranges of at most 120 consecutive days, both bounds required.
 """
 
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
@@ -23,16 +23,17 @@ from app.connectors.base import (
     QuotaGuardProtocol,
     Scope,
     SecretSlot,
+    Sleep,
+    SyncJob,
     register,
 )
+from app.connectors.jobs import SyncError
 from app.net.safe_http import EgressDeniedError, EgressError, SafeHttpClient
 
 NVD_CVES = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 RETRYABLE = frozenset({403, 429, 500, 502, 503, 504})
 MAX_ATTEMPTS = 6
 HEALTH_PROBE = "CVE-2021-44228"
-
-Sleep = Callable[[float], Awaitable[None]]
 
 
 class NvdConfig(ConnectorConfig):
@@ -56,10 +57,8 @@ class NvdConfig(ConnectorConfig):
     backoff_seconds: float = Field(default=6.0, ge=0.1, le=300)
 
 
-class NvdError(Exception):
-    def __init__(self, code: str) -> None:
-        super().__init__(code)
-        self.code = code
+class NvdError(SyncError):
+    pass
 
 
 def nvd_time(value: datetime) -> str:
@@ -145,6 +144,7 @@ class NvdConnector(ConnectorType):
     secret_slots = (SecretSlot("api_key", "Clé API NVD (recommandée)", required=False),)
     egress_domains = ("services.nvd.nist.gov",)
     content_types = ("application/json",)
+    syncs = True
 
     @staticmethod
     def client(ctx: ConnectorContext, sleep: Sleep = asyncio.sleep) -> NvdClient:
@@ -159,3 +159,14 @@ class NvdConnector(ConnectorType):
         except NvdError as exc:
             return HealthResult(ok=False, message=f"nvd: {exc.code}")
         return HealthResult(ok=found is not None, message="" if found else "nvd: empty answer")
+
+    async def sync(self, job: SyncJob) -> dict[str, int]:
+        from app.catalog.nvd_sync import sync_nvd  # noqa: PLC0415 - catalogue depends on this
+
+        config = job.ctx.config
+        if not isinstance(config, NvdConfig):
+            raise TypeError("not an NVD configuration")
+        report = await sync_nvd(
+            job.db, self.client(job.ctx, job.sleep), job.connector_id, config, job.now
+        )
+        return report.__dict__

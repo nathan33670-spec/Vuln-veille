@@ -167,13 +167,13 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 4.3 Adaptateur **compatible OpenAI** pour le futur LLMaaS (et OpenLLM, vLLM, Ollama, Mistral) ; mode outils émulé par sortie JSON contrainte
 - [x] 4.3 bis Adaptateur **Claude** (SDK officiel `anthropic`, `claude-opus-5-5`), prêt pour le jour où un budget API existe ; testé contre un serveur simulé
 - [x] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
-- [ ] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
+- [x] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
 - [x] 4.6 Connecteurs de veille gratuits : GitHub, **lecture gratuite de X** (découverte des URL de posts, puis lecture par l'oEmbed officiel ; spec 07 §2.1), Stack Exchange, Mastodon, Bluesky, Reddit (flux RSS), Hacker News, OSV, web (avis éditeurs, liste de domaines) ; SearXNG auto-hébergé en option
-- [ ] 4.7 Agents : configuration versionnée (moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt système, connecteurs autorisés, domaines, schéma de sortie, limites, budget par exécution)
-- [ ] 4.8 Runtime d'agent : boucle d'outils avec hooks (autorisation, budget, journalisation), timeouts, limites de tours
-- [ ] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_discover`, `x_read`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
-- [ ] 4.10 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste ; détection des faux PoC piégés
-- [ ] 4.11 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
+- [x] 4.7 Agents : configuration versionnée (moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt système, connecteurs autorisés, domaines, schéma de sortie, limites, budget par exécution)
+- [x] 4.8 Runtime d'agent : boucle d'outils avec hooks (autorisation, budget, journalisation), timeouts, limites de tours
+- [x] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_discover`, `x_read`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
+- [x] 4.10 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste ; détection des faux PoC piégés
+- [x] 4.11 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
 - [ ] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
 - [ ] 4.13 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; sources `source.github_search`, `source.x`, `source.stackexchange`, `source.social`
 - [ ] 4.14 Workflow seed complet **« Nouvelle CVE NVD → investigation »** (agents de veille en parallèle, puis synthèse) et workflow de **re-veille** des vulnérabilités ouvertes (nouveaux PoC, exploitation, ajout au KEV)

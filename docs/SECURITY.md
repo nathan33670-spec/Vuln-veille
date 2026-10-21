@@ -116,7 +116,7 @@ Implémentation : `backend/app/net/safe_http.py` ; suite de tests : `backend/tes
 ### 4.7 Secrets et cryptographie
 
 - Chiffrement d'enveloppe : une clé de données AES-256-GCM par secret, enveloppée pour la **clé publique X25519 de son usage** (`llm`, `source`, `connector`, `webhook` ; ECDH éphémère, HKDF-SHA256, AES-256-GCM). Données associées (AAD) : usage, `secret_id`, `workspace_id` et identifiant de clé.
-- L'API ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire. Les trousseaux privés sont des secrets Docker montés uniquement dans le worker de leur usage. Les secrets TOTP ont leur propre clé symétrique (`VV_KEK_TOTP`).
+- L'API ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire. Les trousseaux privés sont des secrets Docker montés uniquement dans le worker de leur usage (exception : `worker-ai` reçoit aussi `source` pour les outils en lecture seule des agents, ADR-027 ; jamais `connector` ni `webhook`). Les secrets TOTP ont leur propre clé symétrique (`VV_KEK_TOTP`).
 - RLS : un administrateur VOC ne voit jamais les secrets du CERT ; les workers ne créent ni ne suppriment de secret.
 - Rotation : `scripts/vault-keygen.sh` puis `vault-rotate` (ré-enveloppement des clés de données) ; `kek_id` stocké avec chaque secret (PROCEDURES §9).
 - API en écriture seule : seuls l'indice (4 derniers caractères) et la date de mise à jour sont renvoyés.

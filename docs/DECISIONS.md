@@ -116,7 +116,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 - **Statut** : Acceptée (révisée en phase 2 : enveloppe asymétrique)
 - **Décision** : chaque secret est chiffré en AES-256-GCM par sa propre clé de données (DEK). La DEK est enveloppée pour la **clé publique X25519 de son usage** (`llm`, `source`, `connector`, `webhook`) : échange ECDH avec une clé éphémère, dérivation HKDF-SHA256, AES-256-GCM. Données associées : usage, identifiant du secret, espace et identifiant de clé.
   - L'API du back-office ne détient que les **clés publiques** : elle chiffre les nouveaux secrets mais ne peut en déchiffrer aucun. L'écriture seule est garantie par la cryptographie, pas seulement par le code.
-  - Chaque worker ne reçoit que le **trousseau privé** de son usage, sous forme de secret Docker (`worker-collect` : `source` ; `worker-ai` : `llm` ; `worker-publish` : `connector`).
+  - Chaque worker ne reçoit que le **trousseau privé** de son usage, sous forme de secret Docker (`worker-collect` : `source` ; `worker-ai` : `llm`, et `source` pour les outils des agents depuis l'ADR-027 ; `worker-publish` : `connector`).
   - Les secrets TOTP restent chiffrés par une clé symétrique propre (`VV_KEK_TOTP`), car l'API doit les vérifier.
   - Vault ou KMS en option plus tard.
 - **Conséquences** : rotation par la CLI (`vault-keygen`, puis `vault-rotate` qui ré-enveloppe les DEK) ; la perte d'un trousseau rend ses secrets irrécupérables, d'où une sauvegarde hors ligne des trousseaux (PROCEDURES §9).
@@ -224,4 +224,14 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - Deux tests bloquants : seuls les adaptateurs importent un SDK de fournisseur (`tests/security/test_ai_isolation.py`), et seul le transport importe une bibliothèque HTTP (`tests/security/test_egress_guard.py`).
   - Le streaming n'est pas utilisé pour l'instant (réponses tamponnées, délai de 180 s par défaut) ; il viendra avec la génération des drafts (phase 6) si les sorties longues l'exigent.
 - **Conséquences** : une mise à jour majeure d'un SDK (changement de bibliothèque HTTP) doit être suivie d'un test de l'adaptateur de transport ; les tests unitaires font tourner les SDK réels contre des serveurs simulés.
+
+## ADR-027 — Le worker IA détient aussi le trousseau des sources (outils des agents)
+
+- **Statut** : Acceptée (2026-10-21, phase 4)
+- **Contexte** : la boucle d'un agent alterne appels au moteur (trousseau `llm`) et outils en lecture seule sur les connecteurs de veille (`github`, `bluesky`… : trousseau `source`). Répartir chaque appel d'outil sur `worker-collect` imposerait un aller-retour par la file à chaque tour, et l'agent devrait attendre un autre worker au milieu d'un appel de modèle.
+- **Décision** :
+  - `worker-ai` monte les trousseaux `llm` **et** `source`. Il ne reçoit jamais `connector` (publication) ni `webhook` : un agent ne peut ni publier ni recevoir.
+  - Un outil n'ouvre que les connecteurs **autorisés par la version de l'agent** (`allowed_connectors`), actifs, de la famille `source`, de l'espace ou globaux ; les règles du connecteur (domaines déclarés, taille, quotas, proxy de sortie) s'appliquent comme pour un nœud de collecte.
+  - Les jetons de source sont des jetons gratuits en lecture seule (ADR-023) ; leur exposition au processus qui manipule du contenu non fiable est acceptée, puisqu'aucun outil n'exécute de code ni n'écrit.
+- **Conséquences** : la compromission de `worker-ai` expose les secrets `llm` et `source`, pas ceux de publication. Le tableau de SECURITY.md et le fichier `deploy/docker-compose.yml` sont alignés.
 

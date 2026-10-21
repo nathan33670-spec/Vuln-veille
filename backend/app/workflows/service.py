@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.agents.models import AIAgent
 from app.connectors.models import Connector
 from app.core.ids import uuid7
 from app.iam.permissions import Permission
@@ -30,6 +31,9 @@ def reference_checker(db: AsyncSession, workspace_id: uuid.UUID) -> ReferenceChe
     """References must exist in this workspace (or be global connectors)."""
 
     async def check(reference: Reference) -> bool:
+        if reference.kind == "agent":
+            agent = await db.get(AIAgent, reference.id)
+            return agent is not None and agent.workspace_id == workspace_id
         if reference.kind != "connector":
             return False
         connector = await db.get(Connector, reference.id)

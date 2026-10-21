@@ -337,7 +337,8 @@ def _run_out(run: AgentRun, numbers: dict[uuid.UUID, int]) -> AgentRunOut:
     return AgentRunOut(
         id=run.id,
         agent_id=run.agent_id,
-        agent_version_no=numbers.get(run.agent_version_id),
+        task=run.task,
+        agent_version_no=numbers.get(run.agent_version_id) if run.agent_version_id else None,
         context_type=run.context_type,
         context_id=run.context_id,
         status=run.status,
@@ -424,7 +425,7 @@ def _routes_runs(router: APIRouter) -> None:
         runs = list(
             (await db.execute(query.order_by(AgentRun.queued_at.desc()).limit(limit))).scalars()
         )
-        numbers = await _numbers(db, {r.agent_version_id for r in runs})
+        numbers = await _numbers(db, {r.agent_version_id for r in runs if r.agent_version_id})
         return [_run_out(r, numbers) for r in runs]
 
     @router.get("/agent-runs/{run_id}", response_model=AgentRunDetailOut)
@@ -437,7 +438,7 @@ def _routes_runs(router: APIRouter) -> None:
                 select(AgentStep).where(AgentStep.agent_run_id == run.id).order_by(AgentStep.seq)
             )
         ).scalars()
-        numbers = await _numbers(db, {run.agent_version_id})
+        numbers = await _numbers(db, {run.agent_version_id} if run.agent_version_id else set())
         return AgentRunDetailOut(
             **_run_out(run, numbers).model_dump(),
             input=run.input,

@@ -598,9 +598,16 @@
       "AgentRunDetailOut": {
         "properties": {
           "agent_id": {
-            "format": "uuid",
-            "title": "Agent Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
           },
           "agent_version_no": {
             "anyOf": [
@@ -780,6 +787,17 @@
             "title": "Steps",
             "type": "array"
           },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          },
           "tool_calls": {
             "title": "Tool Calls",
             "type": "integer"
@@ -792,6 +810,7 @@
         "required": [
           "id",
           "agent_id",
+          "task",
           "agent_version_no",
           "context_type",
           "context_id",
@@ -824,9 +843,16 @@
       "AgentRunOut": {
         "properties": {
           "agent_id": {
-            "format": "uuid",
-            "title": "Agent Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
           },
           "agent_version_no": {
             "anyOf": [
@@ -964,6 +990,17 @@
             "title": "Status",
             "type": "string"
           },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          },
           "tool_calls": {
             "title": "Tool Calls",
             "type": "integer"
@@ -976,6 +1013,7 @@
         "required": [
           "id",
           "agent_id",
+          "task",
           "agent_version_no",
           "context_type",
           "context_id",

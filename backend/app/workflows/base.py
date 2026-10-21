@@ -54,7 +54,7 @@ class EmptyParams(NodeParams):
 class Reference:
     """Something a parameter points to, checked to belong to the same workspace."""
 
-    kind: str  # "connector" for now (secrets go through connectors)
+    kind: str  # "connector" (secrets go through connectors) or "agent"
     id: uuid.UUID
     family: str | None = None
     kind_of_connector: str | None = None
@@ -75,6 +75,22 @@ class NodeError(Exception):
 class ConnectorAccess(Protocol):
     async def open(self, connector_id: uuid.UUID, kinds: tuple[str, ...]) -> ConnectorContext:
         """The connector's runtime context; raises NodeError when unusable."""
+
+
+class AgentAccess(Protocol):
+    """Agents and AI tasks of the run's workspace (``app.ai.agents.invoke``)."""
+
+    async def run_agent(
+        self,
+        agent_id: uuid.UUID | None,
+        preset: str | None,
+        payload: dict[str, Any],
+        context_id: str,
+    ) -> Any: ...
+
+    async def run_task(
+        self, task: str, spec: Any, payload: dict[str, Any], context_id: str
+    ) -> Any: ...
 
 
 @dataclass
@@ -99,6 +115,8 @@ class NodeContext:
     # E-mails are sent after the node's transaction commits (at-least-once, idempotent).
     mails: list[tuple[str, str, str]] = field(default_factory=list)
     dry_run: bool = False
+    agents: AgentAccess | None = None
+    node_run_id: uuid.UUID | None = None
 
     def log(self, message: str, **data: Any) -> None:
         if len(self.logs) < 200:  # noqa: PLR2004 - bounded log per node run

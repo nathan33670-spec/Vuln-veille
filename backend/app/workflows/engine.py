@@ -27,6 +27,8 @@ from sqlalchemy import func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.ai.agents.invoke import WorkerAgents
+from app.ai.agents.runtime import AgentDeps, EngineFactory
 from app.connectors.base import ConnectorContext
 from app.connectors.models import Connector
 from app.connectors.quotas import QuotaExceededError
@@ -90,6 +92,19 @@ class EngineDeps:
     limits: Limits = LIMITS
     redis: Redis | None = None
     http: SafeHttpClient | None = None  # tests: replaces every connector's client
+    agent_engine: EngineFactory | None = None  # tests: a simulated AI engine
+
+    def agents(self, workspace_id: uuid.UUID) -> WorkerAgents:
+        deps = AgentDeps(
+            self.settings,
+            Vault.from_settings(self.settings),
+            clock=self.clock,
+            redis=self.redis,
+            tasks=self.tasks,
+            http=self.http,
+            engine_for=self.agent_engine,
+        )
+        return WorkerAgents(self.sessions, deps, workspace_id)
 
 
 # Bounded outputs ---------------------------------------------------------------
@@ -669,6 +684,8 @@ async def _run_node(
         connectors=WorkerConnectors(db, deps, run.workspace_id),
         upstream=upstream,
         dry_run=dry_run,
+        agents=deps.agents(run.workspace_id),
+        node_run_id=node_run_id,
     )
     started = asyncio.get_running_loop().time()
     error: str | None = None

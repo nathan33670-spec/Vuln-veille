@@ -7,6 +7,7 @@
 - **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 4.
 - **Prochaine étape** : phase 4, étape 4.1 (interface `AIEngine` et adaptateurs).
 - **Points d'attention** :
+  - **Branches** : `Main` est la seule branche principale ; chaque sujet se développe sur une branche `claude/<sujet>` partie de `Main` et revient par une merge request, fusionnée avec la CI verte (PROCEDURES §0). L'ancienne branche `claude/veille-management-tool-845y6h` est fusionnée et supprimée.
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
   - Smokescreen accepte les clients sans rôle (ACL `default`) : prévoir des rôles mTLS par type de worker en phase 2.
@@ -36,6 +37,12 @@
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 10 (suite) : `Main` devient la branche principale
+
+- `Main` (branche par défaut créée par le porteur) devient la seule branche durable ; développement sur des branches courtes et merge requests vers `Main` (CLAUDE.md, PROCEDURES §0, gabarit de merge request).
+- CI : déclenchée par les fusions sur `Main` et par les merge requests qui la ciblent (plus de déclenchement sur les poussées des branches `claude/**`).
+- Correctifs de déploiement découverts par le test de démarrage de la pile : Go 1.27.3 pour Caddy et smokescreen (CVE-2026-111943), environnement complet du service `migrate` pour `seed-workflows`.
 
 ### 2026-10-21 — Session 10 : phase 3, moteur de workflows
 

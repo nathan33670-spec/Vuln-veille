@@ -96,7 +96,7 @@ Conséquences :
 
 - L'analyste CERT a exactement les mêmes capacités que l'analyste VOC, limitées à l'espace CERT. Il gère ses agents IA, ses connecteurs de veille, son périmètre de veille, son moteur IA préféré et sa configuration, mais n'a aucune permission globale.
 - Le connecteur NVD est global (une seule clé et une seule synchronisation pour l'organisation, comme le recommande NVD) : seul un admin le configure. Chaque espace décide ensuite, par son périmètre de veille et ses workflows, ce qu'il fait des nouvelles CVE.
-- Les agents, workflows, modèles, connecteurs, secrets, périmètres de veille, évaluations et bulletins non publiés du CERT sont invisibles depuis l'espace VOC, et inversement. Les **fiches vulnérabilités, preuves et synthèses IA sont partagées** ; les bulletins publiés sont lisibles par l'autre équipe (ADR-024).
+- Les agents, workflows, modèles, connecteurs, secrets, périmètres de veille, sources, commentaires et bulletins non publiés du CERT sont invisibles depuis l'espace VOC, et inversement. Les évaluations sont lisibles par l'autre équipe mais modifiables seulement par la sienne. Les **fiches vulnérabilités, preuves et synthèses IA sont partagées** ; les bulletins publiés sont lisibles par l'autre équipe (ADR-024).
 
 ## 5. Implémentation
 

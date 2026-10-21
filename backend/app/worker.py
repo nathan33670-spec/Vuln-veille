@@ -97,3 +97,11 @@ def connector_sync(connector_id: str) -> None:
     from app.connectors.jobs import run_sync  # noqa: PLC0415 - worker-only import
 
     asyncio.run(run_sync(get_settings(), uuid.UUID(connector_id)))
+
+
+@app.task(name="collect.cve_fetch")
+def cve_fetch(cve_id: str) -> None:
+    """Fetches a CVE an analyst entered by hand, when the catalogue lacks it."""
+    from app.catalog.fetch import fetch_cve  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(fetch_cve(get_settings(), cve_id))

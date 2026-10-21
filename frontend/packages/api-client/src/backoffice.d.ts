@@ -827,6 +827,168 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/cves": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Cves */
+    get: operations["list_cves_api_v1_cves_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/cves/sync-status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Sync Status
+     * @description Health of the global catalogue sources (last success, delay, errors).
+     */
+    get: operations["sync_status_api_v1_cves_sync_status_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/cves/{cve_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Cve */
+    get: operations["get_cve_api_v1_cves__cve_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/technologies": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search Technologies */
+    get: operations["search_technologies_api_v1_technologies_get"];
+    put?: never;
+    /** Create Technology */
+    post: operations["create_technology_api_v1_technologies_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/technologies/cpe-suggestions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Cpe Suggestions
+     * @description Vendor/product pairs seen in the catalogue's CPE configurations (from NVD).
+     */
+    get: operations["cpe_suggestions_api_v1_technologies_cpe_suggestions_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/technologies/{technology_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Technology */
+    get: operations["get_technology_api_v1_technologies__technology_id__get"];
+    put?: never;
+    post?: never;
+    /** Delete Technology */
+    delete: operations["delete_technology_api_v1_technologies__technology_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Technology */
+    patch: operations["update_technology_api_v1_technologies__technology_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/technologies/{technology_id}/merge": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Merge Technology */
+    post: operations["merge_technology_api_v1_technologies__technology_id__merge_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/vulnerabilities": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Vulnerabilities */
+    get: operations["list_vulnerabilities_api_v1_vulnerabilities_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/vulnerabilities/{ref}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Vulnerability */
+    get: operations["get_vulnerability_api_v1_vulnerabilities__ref__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/audit": {
     parameters: {
       query?: never;
@@ -1110,6 +1272,221 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/sources": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Sources */
+    get: operations["list_sources_api_v1_workspaces__workspace__sources_get"];
+    put?: never;
+    /** Create Source */
+    post: operations["create_source_api_v1_workspaces__workspace__sources_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/sources/{source_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Source */
+    delete: operations["delete_source_api_v1_workspaces__workspace__sources__source_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Source */
+    patch: operations["update_source_api_v1_workspaces__workspace__sources__source_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create */
+    post: operations["create_api_v1_workspaces__workspace__vulnerabilities_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update */
+    patch: operations["update_api_v1_workspaces__workspace__vulnerabilities__ref__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/assessment": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Assess */
+    put: operations["assess_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/assessment/adopt": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Adopt */
+    post: operations["adopt_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_adopt_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/comments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Comments */
+    get: operations["list_comments_api_v1_workspaces__workspace__vulnerabilities__ref__comments_get"];
+    put?: never;
+    /** Add Comment */
+    post: operations["add_comment_api_v1_workspaces__workspace__vulnerabilities__ref__comments_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/evidence": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add Evidence
+     * @description An analyst cites a link; it is stored as untrusted content, never fetched here.
+     */
+    post: operations["add_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/evidence/{evidence_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove Evidence */
+    delete: operations["remove_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence__evidence_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/technologies/{technology_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Link Technology */
+    put: operations["link_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__put"];
+    post?: never;
+    /** Unlink Technology */
+    delete: operations["unlink_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/watch-scope": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Scope */
+    get: operations["get_scope_api_v1_workspaces__workspace__watch_scope_get"];
+    /** Put Scope */
+    put: operations["put_scope_api_v1_workspaces__workspace__watch_scope_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/watch-scope/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Preview Scope
+     * @description What the current scope would have let through among recent CVEs.
+     */
+    get: operations["preview_scope_api_v1_workspaces__workspace__watch_scope_preview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/healthz": {
     parameters: {
       query?: never;
@@ -1151,6 +1528,83 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AdoptIn */
+    AdoptIn: {
+      /** From Workspace */
+      from_workspace: string;
+    };
+    /** AnalysisOut */
+    AnalysisOut: {
+      /** Content */
+      content: {
+        [key: string]: unknown;
+      };
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Injection Flags */
+      injection_flags: unknown[];
+      /** Workspace */
+      workspace: string;
+    };
+    /** AssessmentIn */
+    AssessmentIn: {
+      /** Assignee Id */
+      assignee_id?: string | null;
+      /** Priority */
+      priority?: ("P1" | "P2" | "P3" | "P4") | null;
+      /** Rationale */
+      rationale?: string | null;
+      /** Severity */
+      severity?: ("NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL") | null;
+      /** Status */
+      status?: ("new" | "triage" | "qualified" | "rejected" | "duplicate" | "monitoring") | null;
+      /**
+       * Version
+       * @description 0 when the team has no assessment yet.
+       */
+      version: number;
+    };
+    /** AssessmentOut */
+    AssessmentOut: {
+      /** Adopted From */
+      adopted_from: string | null;
+      /** Assignee Id */
+      assignee_id: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Priority */
+      priority: string | null;
+      /** Qualified At */
+      qualified_at: string | null;
+      /** Qualified By */
+      qualified_by: string | null;
+      /** Rationale */
+      rationale: string;
+      /** Severity */
+      severity: string | null;
+      /** Status */
+      status: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Workspace */
+      workspace: string;
+    };
     /** AuditEventOut */
     AuditEventOut: {
       /** Action */
@@ -1199,6 +1653,16 @@ export interface components {
       /** Intact */
       intact: boolean;
     };
+    /** BlueskyAccountConfig */
+    BlueskyAccountConfig: {
+      /** Handle */
+      handle: string;
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "bluesky_account";
+    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -1241,6 +1705,28 @@ export interface components {
        * @enum {string}
        */
       role: "client_user" | "client_admin";
+    };
+    /** CommentIn */
+    CommentIn: {
+      /** Body */
+      body: string;
+    };
+    /** CommentOut */
+    CommentOut: {
+      /** Author Id */
+      author_id: string | null;
+      /** Body */
+      body: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
     };
     /** ConnectorCreate */
     ConnectorCreate: {
@@ -1363,10 +1849,148 @@ export interface components {
        */
       version: number;
     };
+    /** CpeSuggestionOut */
+    CpeSuggestionOut: {
+      /** Cpe Prefix */
+      cpe_prefix: string;
+      /** Cve Count */
+      cve_count: number;
+      /** Existing Technology Id */
+      existing_technology_id: string | null;
+      /** Product */
+      product: string;
+      /** Vendor */
+      vendor: string;
+    };
     /** CsrfOut */
     CsrfOut: {
       /** Csrf Token */
       csrf_token: string;
+    };
+    /** CveChangeOut */
+    CveChangeOut: {
+      /** Change Types */
+      change_types: string[];
+      /**
+       * Detected At
+       * Format: date-time
+       */
+      detected_at: string;
+      /** Diff */
+      diff: {
+        [key: string]: unknown;
+      };
+      /** Source */
+      source: string;
+    };
+    /** CveDetailOut */
+    CveDetailOut: {
+      /** Base Score */
+      base_score: string | null;
+      /** Changes */
+      changes: components["schemas"]["CveChangeOut"][];
+      /** Cpe Criteria */
+      cpe_criteria: string[];
+      /** Cve Id */
+      cve_id: string;
+      /** Cvss */
+      cvss: {
+        [key: string]: unknown;
+      };
+      /** Cwes */
+      cwes: string[];
+      /** Description */
+      description: string;
+      /** Epss Percentile */
+      epss_percentile: string | null;
+      /** Epss Score */
+      epss_score: string | null;
+      /**
+       * First Seen At
+       * Format: date-time
+       */
+      first_seen_at: string;
+      /** Kev */
+      kev: {
+        [key: string]: unknown;
+      } | null;
+      /** Last Modified At */
+      last_modified_at: string | null;
+      /** Published At */
+      published_at: string | null;
+      /** References */
+      references: {
+        [key: string]: unknown;
+      }[];
+      /** Scope Decision */
+      scope_decision?: string | null;
+      /** Scope Reasons */
+      scope_reasons?: string[];
+      /** Severity */
+      severity: string | null;
+      /** Sources */
+      sources: string[];
+      /** Vuln Status */
+      vuln_status: string | null;
+      /** Vulnerability Ref */
+      vulnerability_ref?: string | null;
+    };
+    /** CveOut */
+    CveOut: {
+      /** Base Score */
+      base_score: string | null;
+      /** Cpe Criteria */
+      cpe_criteria: string[];
+      /** Cve Id */
+      cve_id: string;
+      /** Cvss */
+      cvss: {
+        [key: string]: unknown;
+      };
+      /** Cwes */
+      cwes: string[];
+      /** Description */
+      description: string;
+      /** Epss Percentile */
+      epss_percentile: string | null;
+      /** Epss Score */
+      epss_score: string | null;
+      /**
+       * First Seen At
+       * Format: date-time
+       */
+      first_seen_at: string;
+      /** Kev */
+      kev: {
+        [key: string]: unknown;
+      } | null;
+      /** Last Modified At */
+      last_modified_at: string | null;
+      /** Published At */
+      published_at: string | null;
+      /** References */
+      references: {
+        [key: string]: unknown;
+      }[];
+      /** Scope Decision */
+      scope_decision?: string | null;
+      /** Scope Reasons */
+      scope_reasons?: string[];
+      /** Severity */
+      severity: string | null;
+      /** Sources */
+      sources: string[];
+      /** Vuln Status */
+      vuln_status: string | null;
+      /** Vulnerability Ref */
+      vulnerability_ref?: string | null;
+    };
+    /** CvePage */
+    CvePage: {
+      /** Items */
+      items: components["schemas"]["CveOut"][];
+      /** Total */
+      total: number;
     };
     /** EnrollmentOut */
     EnrollmentOut: {
@@ -1377,6 +2001,58 @@ export interface components {
       /** Secret */
       secret: string;
     };
+    /** EvidenceIn */
+    EvidenceIn: {
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: "advisory" | "poc" | "exploit" | "patch" | "discussion" | "mention" | "news";
+      /**
+       * Note
+       * @default
+       */
+      note: string;
+      /**
+       * Title
+       * @default
+       */
+      title: string;
+      /**
+       * Url
+       * Format: uri
+       */
+      url: string;
+    };
+    /** EvidenceOut */
+    EvidenceOut: {
+      /** Added By Type */
+      added_by_type: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Kind */
+      kind: string;
+      /** Note */
+      note: string;
+      /** Source Type */
+      source_type: string;
+      /** Title */
+      title: string;
+      /** Trust */
+      trust: string;
+      /** Url */
+      url: string | null;
+      /** Workspace */
+      workspace: string;
+    };
     /** ForgotPasswordIn */
     ForgotPasswordIn: {
       /**
@@ -1384,6 +2060,16 @@ export interface components {
        * Format: email
        */
       email: string;
+    };
+    /** GithubRepoConfig */
+    GithubRepoConfig: {
+      /** Repo */
+      repo: string;
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "github_repo";
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -1429,6 +2115,16 @@ export interface components {
        * @enum {string}
        */
       status: "authenticated" | "mfa_required" | "mfa_enrollment_required";
+    };
+    /** MastodonAccountConfig */
+    MastodonAccountConfig: {
+      /** Account */
+      account: string;
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "mastodon_account";
     };
     /** MeOut */
     MeOut: {
@@ -1496,6 +2192,49 @@ export interface components {
       csrf_token: string;
       /** Recovery Codes */
       recovery_codes: string[];
+    };
+    /** RssConfig */
+    RssConfig: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "rss";
+      /**
+       * Url
+       * Format: uri
+       */
+      url: string;
+    };
+    /** ScopePreviewItem */
+    ScopePreviewItem: {
+      /** Base Score */
+      base_score: string | null;
+      /** Cve Id */
+      cve_id: string;
+      /** Decision */
+      decision: string;
+      /** Published At */
+      published_at: string | null;
+      /** Reasons */
+      reasons: string[];
+      /** Severity */
+      severity: string | null;
+    };
+    /** ScopePreviewOut */
+    ScopePreviewOut: {
+      /** Days */
+      days: number;
+      /** In Scope */
+      in_scope: number;
+      /** Items */
+      items: components["schemas"]["ScopePreviewItem"][];
+      /** Out Of Scope */
+      out_of_scope: number;
+      /** Pending */
+      pending: number;
+      /** Total */
+      total: number;
     };
     /** SecretCreate */
     SecretCreate: {
@@ -1601,6 +2340,151 @@ export interface components {
       code?: string | null;
       /** Password */
       password?: string | null;
+    };
+    /** SubredditConfig */
+    SubredditConfig: {
+      /** Name */
+      name: string;
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "subreddit";
+    };
+    /** SyncStatusOut */
+    SyncStatusOut: {
+      /** Consecutive Failures */
+      consecutive_failures: number;
+      /** Enabled */
+      enabled: boolean;
+      /** Kind */
+      kind: string;
+      /** Last Check At */
+      last_check_at: string | null;
+      /** Last Error */
+      last_error: string | null;
+      /** Last Success At */
+      last_success_at: string | null;
+      /** Name */
+      name: string;
+      /** Position */
+      position: {
+        [key: string]: unknown;
+      };
+    };
+    /** TechnologyCreate */
+    TechnologyCreate: {
+      /** Aliases */
+      aliases?: string[];
+      /**
+       * Category
+       * @default
+       */
+      category: string;
+      /** Cpe Prefixes */
+      cpe_prefixes?: string[];
+      /** Display Name */
+      display_name: string;
+      /** Product */
+      product: string;
+      /** Purls */
+      purls?: string[];
+      /** Vendor */
+      vendor: string;
+    };
+    /** TechnologyLinkOut */
+    TechnologyLinkOut: {
+      /** Display Name */
+      display_name: string;
+      /** Matched By */
+      matched_by: string;
+      /** Product */
+      product: string;
+      /**
+       * Technology Id
+       * Format: uuid
+       */
+      technology_id: string;
+      /** Vendor */
+      vendor: string;
+    };
+    /** TechnologyMerge */
+    TechnologyMerge: {
+      /**
+       * Into
+       * Format: uuid
+       */
+      into: string;
+    };
+    /** TechnologyOut */
+    TechnologyOut: {
+      /** Aliases */
+      aliases: string[];
+      /** Category */
+      category: string;
+      /** Cpe Prefixes */
+      cpe_prefixes: string[];
+      /** Display Name */
+      display_name: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Merged Into */
+      merged_into: string | null;
+      /** Product */
+      product: string;
+      /** Purls */
+      purls: string[];
+      /** Status */
+      status: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Vendor */
+      vendor: string;
+      /** Version */
+      version: number;
+    };
+    /** TechnologyUpdate */
+    TechnologyUpdate: {
+      /** Aliases */
+      aliases?: string[] | null;
+      /** Category */
+      category?: string | null;
+      /** Cpe Prefixes */
+      cpe_prefixes?: string[] | null;
+      /** Display Name */
+      display_name?: string | null;
+      /** Purls */
+      purls?: string[] | null;
+      /** Status */
+      status?: string | null;
+      /** Version */
+      version: number;
+    };
+    /** TimelineEventOut */
+    TimelineEventOut: {
+      /** Actor Type */
+      actor_type: string;
+      /** Actor User Id */
+      actor_user_id: string | null;
+      /** Data */
+      data: {
+        [key: string]: unknown;
+      };
+      /**
+       * Occurred At
+       * Format: date-time
+       */
+      occurred_at: string;
+      /** Type */
+      type: string;
+      /** Workspace */
+      workspace: string | null;
     };
     /** TokenPasswordIn */
     TokenPasswordIn: {
@@ -1729,6 +2613,285 @@ export interface components {
       /** Error Type */
       type: string;
     };
+    /** VulnerabilityCreate */
+    VulnerabilityCreate: {
+      /** Aliases */
+      aliases?: string[];
+      /** Cve Id */
+      cve_id?: string | null;
+      /**
+       * Summary
+       * @default
+       */
+      summary: string;
+      /** Title */
+      title?: string | null;
+    };
+    /** VulnerabilityDetailOut */
+    VulnerabilityDetailOut: {
+      /** Aliases */
+      aliases: string[];
+      /** Analyses */
+      analyses: components["schemas"]["AnalysisOut"][];
+      /** Assessments */
+      assessments: components["schemas"]["AssessmentOut"][];
+      /** Base Score */
+      base_score: string | null;
+      cve: components["schemas"]["CveOut"] | null;
+      /** Cve Id */
+      cve_id: string | null;
+      /** Duplicate Of Ref */
+      duplicate_of_ref: string | null;
+      /** Epss Score */
+      epss_score: string | null;
+      /** Evidence */
+      evidence: components["schemas"]["EvidenceOut"][];
+      /** Exploitation Status */
+      exploitation_status: string;
+      /**
+       * First Seen At
+       * Format: date-time
+       */
+      first_seen_at: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Kev */
+      kev: boolean;
+      /** Origin */
+      origin: string;
+      /** Patch Status */
+      patch_status: string;
+      /** Ref */
+      ref: string;
+      /** Severity */
+      severity: string | null;
+      /** Summary */
+      summary: string;
+      /** Technologies */
+      technologies: components["schemas"]["TechnologyLinkOut"][];
+      /** Timeline */
+      timeline: components["schemas"]["TimelineEventOut"][];
+      /** Title */
+      title: string;
+      /** Version */
+      version: number;
+    };
+    /** VulnerabilityPage */
+    VulnerabilityPage: {
+      /** Items */
+      items: components["schemas"]["VulnerabilitySummaryOut"][];
+      /** Total */
+      total: number;
+    };
+    /** VulnerabilitySummaryOut */
+    VulnerabilitySummaryOut: {
+      /** Assessments */
+      assessments: components["schemas"]["AssessmentOut"][];
+      /** Base Score */
+      base_score: string | null;
+      /** Cve Id */
+      cve_id: string | null;
+      /** Epss Score */
+      epss_score: string | null;
+      /** Exploitation Status */
+      exploitation_status: string;
+      /**
+       * First Seen At
+       * Format: date-time
+       */
+      first_seen_at: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Kev */
+      kev: boolean;
+      /** Patch Status */
+      patch_status: string;
+      /** Ref */
+      ref: string;
+      /** Severity */
+      severity: string | null;
+      /** Title */
+      title: string;
+    };
+    /** VulnerabilityUpdate */
+    VulnerabilityUpdate: {
+      /** Aliases */
+      aliases?: string[] | null;
+      /** Duplicate Of Ref */
+      duplicate_of_ref?: string | null;
+      /** Exploitation Status */
+      exploitation_status?: ("unknown" | "poc_public" | "exploited_itw" | "not_exploitable") | null;
+      /** Patch Status */
+      patch_status?: ("unknown" | "available" | "partial" | "none" | "workaround") | null;
+      /** Summary */
+      summary?: string | null;
+      /** Title */
+      title?: string | null;
+      /** Version */
+      version: number;
+    };
+    /** WatchScopeIn */
+    WatchScopeIn: {
+      /**
+       * Always Include Kev
+       * @default true
+       */
+      always_include_kev: boolean;
+      /** Cvss Min */
+      cvss_min?: number | string | null;
+      /** Cwe Exclude */
+      cwe_exclude?: string[];
+      /** Cwe Include */
+      cwe_include?: string[];
+      /**
+       * Include Unscored
+       * @default wait
+       * @enum {string}
+       */
+      include_unscored: "include" | "wait" | "exclude";
+      /** Keywords */
+      keywords?: string[];
+      /**
+       * Mode
+       * @default scoped
+       * @enum {string}
+       */
+      mode: "all" | "scoped";
+      /** Technology Ids */
+      technology_ids?: string[];
+      /** Vendors */
+      vendors?: string[];
+      /**
+       * Version
+       * @description 0 when the scope was never saved.
+       */
+      version: number;
+    };
+    /** WatchScopeOut */
+    WatchScopeOut: {
+      /** Always Include Kev */
+      always_include_kev: boolean;
+      /** Cvss Min */
+      cvss_min: string | null;
+      /** Cwe Exclude */
+      cwe_exclude: string[];
+      /** Cwe Include */
+      cwe_include: string[];
+      /** Include Unscored */
+      include_unscored: string;
+      /** Keywords */
+      keywords: string[];
+      /** Mode */
+      mode: string;
+      /** Technology Ids */
+      technology_ids: string[];
+      /** Updated At */
+      updated_at: string | null;
+      /** Vendors */
+      vendors: string[];
+      /** Version */
+      version: number;
+    };
+    /** WatchSourceCreate */
+    WatchSourceCreate: {
+      /** Config */
+      config:
+        | components["schemas"]["RssConfig"]
+        | components["schemas"]["WebsiteConfig"]
+        | components["schemas"]["XAccountConfig"]
+        | components["schemas"]["GithubRepoConfig"]
+        | components["schemas"]["MastodonAccountConfig"]
+        | components["schemas"]["BlueskyAccountConfig"]
+        | components["schemas"]["SubredditConfig"];
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean;
+      /** Name */
+      name: string;
+      /** Tags */
+      tags?: string[];
+      /**
+       * Trust Level
+       * @default medium
+       * @enum {string}
+       */
+      trust_level: "low" | "medium" | "high";
+    };
+    /** WatchSourceOut */
+    WatchSourceOut: {
+      /** Config */
+      config: {
+        [key: string]: unknown;
+      };
+      /** Enabled */
+      enabled: boolean;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /** Tags */
+      tags: string[];
+      /** Trust Level */
+      trust_level: string;
+      /** Type */
+      type: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+    };
+    /** WatchSourceUpdate */
+    WatchSourceUpdate: {
+      /** Config */
+      config?:
+        | (
+            | components["schemas"]["RssConfig"]
+            | components["schemas"]["WebsiteConfig"]
+            | components["schemas"]["XAccountConfig"]
+            | components["schemas"]["GithubRepoConfig"]
+            | components["schemas"]["MastodonAccountConfig"]
+            | components["schemas"]["BlueskyAccountConfig"]
+            | components["schemas"]["SubredditConfig"]
+          )
+        | null;
+      /** Enabled */
+      enabled?: boolean | null;
+      /** Name */
+      name?: string | null;
+      /** Tags */
+      tags?: string[] | null;
+      /** Trust Level */
+      trust_level?: ("low" | "medium" | "high") | null;
+      /** Version */
+      version: number;
+    };
+    /** WebsiteConfig */
+    WebsiteConfig: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "website";
+      /**
+       * Url
+       * Format: uri
+       */
+      url: string;
+    };
     /** WorkspaceAdminOut */
     WorkspaceAdminOut: {
       /** Grants Platform Admin */
@@ -1763,6 +2926,16 @@ export interface components {
     WorkspaceUpdate: {
       /** Name */
       name: string;
+    };
+    /** XAccountConfig */
+    XAccountConfig: {
+      /** Handle */
+      handle: string;
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "x_account";
     };
     /** ClientOrgOut */
     app__iam__admin_schemas__ClientOrgOut: {
@@ -3718,6 +4891,400 @@ export interface operations {
       };
     };
   };
+  list_cves_api_v1_cves_get: {
+    parameters: {
+      query?: {
+        q?: string | null;
+        since_days?: number;
+        severity?: ("NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL") | null;
+        kev?: boolean | null;
+        scope_of?: string | null;
+        decision?: ("in_scope" | "out_of_scope" | "pending") | null;
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CvePage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  sync_status_api_v1_cves_sync_status_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SyncStatusOut"][];
+        };
+      };
+    };
+  };
+  get_cve_api_v1_cves__cve_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        cve_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CveDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  search_technologies_api_v1_technologies_get: {
+    parameters: {
+      query?: {
+        q?: string | null;
+        include_merged?: boolean;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TechnologyOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_technology_api_v1_technologies_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TechnologyCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TechnologyOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  cpe_suggestions_api_v1_technologies_cpe_suggestions_get: {
+    parameters: {
+      query: {
+        q: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CpeSuggestionOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_technology_api_v1_technologies__technology_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        technology_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TechnologyOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_technology_api_v1_technologies__technology_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        technology_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_technology_api_v1_technologies__technology_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        technology_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TechnologyUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TechnologyOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  merge_technology_api_v1_technologies__technology_id__merge_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        technology_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TechnologyMerge"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TechnologyOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_vulnerabilities_api_v1_vulnerabilities_get: {
+    parameters: {
+      query?: {
+        q?: string | null;
+        team?: string | null;
+        state?:
+          | "unqualified"
+          | "all"
+          | "new"
+          | "triage"
+          | "qualified"
+          | "rejected"
+          | "duplicate"
+          | "monitoring";
+        severity?: ("NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL") | null;
+        kev?: boolean | null;
+        priority?: ("P1" | "P2" | "P3" | "P4") | null;
+        assigned_to_me?: boolean;
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityPage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_vulnerability_api_v1_vulnerabilities__ref__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   workspace_audit_api_v1_workspaces__workspace__audit_get: {
     parameters: {
       query?: {
@@ -4593,6 +6160,580 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_sources_api_v1_workspaces__workspace__sources_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WatchSourceOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_source_api_v1_workspaces__workspace__sources_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["WatchSourceCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WatchSourceOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_source_api_v1_workspaces__workspace__sources__source_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        source_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_source_api_v1_workspaces__workspace__sources__source_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        source_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["WatchSourceUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WatchSourceOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_api_v1_workspaces__workspace__vulnerabilities_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VulnerabilityCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_api_v1_workspaces__workspace__vulnerabilities__ref__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VulnerabilityUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  assess_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AssessmentIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  adopt_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_adopt_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdoptIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_comments_api_v1_workspaces__workspace__vulnerabilities__ref__comments_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CommentOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  add_comment_api_v1_workspaces__workspace__vulnerabilities__ref__comments_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CommentIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CommentOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  add_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EvidenceIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  remove_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence__evidence_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        evidence_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  link_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        technology_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VulnerabilityDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  unlink_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        ref: string;
+        technology_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_scope_api_v1_workspaces__workspace__watch_scope_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WatchScopeOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_scope_api_v1_workspaces__workspace__watch_scope_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["WatchScopeIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WatchScopeOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  preview_scope_api_v1_workspaces__workspace__watch_scope_preview_get: {
+    parameters: {
+      query?: {
+        days?: number;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScopePreviewOut"];
         };
       };
       /** @description Validation Error */

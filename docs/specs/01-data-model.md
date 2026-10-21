@@ -54,7 +54,7 @@ Conventions : clé primaire `id` UUIDv7 (sauf mention contraire), `created_at` e
 | Table | Colonnes principales |
 |---|---|
 | `vulnerabilities` [I] | `ref` (`VV-2026-0001`, séquence globale), `cve_id` (nullable, unique s'il est renseigné), `aliases` (text[] : GHSA, identifiants éditeur), `title`, `summary`, `duplicate_of`, `exploitation_status` (`unknown`, `poc_public`, `exploited_itw`, `not_exploitable`), `patch_status` (`unknown`, `available`, `partial`, `none`, `workaround`), `first_seen_at`, `origin` (`workflow`, `user`), `origin_workspace_id`, `version` |
-| `vulnerability_assessments` [E] | **Qualification propre à chaque équipe** : `vulnerability_id`, `workspace_id` (unique ensemble), `status`, `priority` (`P1`…`P4`), `severity`, `cvss_override` (JSONB), `assignee_id`, `rationale` (Markdown assaini), `qualified_at`, `qualified_by`, `copied_from_assessment_id` (renseigné quand l'équipe a cliqué « Reprendre cette qualification »), `version` |
+| `vulnerability_assessments` [E, lecture interne] | **Qualification propre à chaque équipe**, lisible par toutes les équipes (pour « qualifiée par l'autre équipe » et « Reprendre cette qualification ») mais modifiable seulement par la sienne (RLS) : `vulnerability_id`, `workspace_id` (unique ensemble), `status`, `priority` (`P1`…`P4`), `severity`, `cvss_override` (JSONB), `assignee_id`, `rationale` (Markdown assaini), `qualified_at`, `qualified_by`, `copied_from_assessment_id` (renseigné quand l'équipe a cliqué « Reprendre cette qualification »), `version` |
 | `vulnerability_technologies` [I] | `vulnerability_id`, `technology_id`, `matched_by` (`cpe`, `purl`, `ai`, `manual`), `confidence` |
 | `vulnerability_evidence` [I] | `vulnerability_id`, `collected_item_id`, `kind` (`advisory`, `poc`, `exploit`, `patch`, `discussion`, `mention`, `news`), `note`, `confidence`, `added_by_type`, `added_by`, `workspace_id` (équipe d'origine) |
 | `vulnerability_analyses` [I] | `vulnerability_id`, `workspace_id` (équipe d'origine), `agent_run_id`, `content` (JSONB conforme au schéma de synthèse), `injection_flags` (JSONB), `created_at` |
@@ -72,6 +72,8 @@ new ──► triage ──► qualified
 ```
 
 - « Non qualifiée » pour une équipe = son évaluation est `new` ou `triage` (ou absente).
+- Transitions autorisées : `new` vers toutes ; `triage` vers `qualified`, `rejected`, `duplicate`, `monitoring` ; `monitoring` vers `triage`, `qualified`, `rejected`, `duplicate` ; `qualified`, `rejected` et `duplicate` seulement vers `triage` (réouverture). `duplicate` exige `duplicate_of` sur la fiche ; l'assigné doit être analyste de l'espace.
+- Les éléments collectés restent privés à leur espace, sauf ceux cités en preuve, lisibles par les deux équipes. Les fiches ne sont jamais supprimées et la chronologie est en ajout seul.
 - Le passage à `qualified` exige au minimum une priorité et un titre.
 - **Qualification de l'autre équipe** : la fiche affiche « qualifiée par l'équipe CERT (P2, le …) » ; le bouton « Reprendre cette qualification » crée ou remplace l'évaluation de l'équipe courante avec les mêmes statut, priorité, sévérité et justification, puis l'audite.
 - Échelle : CVSS 4.0 et 3.1 (catalogue CVE) + priorité interne P1 à P4.

@@ -134,12 +134,12 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 2.4 **Connecteur NVD (global)** : synchronisation incrémentale (`lastModStartDate`/`lastModEndDate`, pagination, pauses, backoff), curseur avec recouvrement, rattrapage initial par fenêtres de 120 jours **sans** émettre d'événements, intervalle configurable (2 h par défaut)
 - [x] 2.5 Détection des nouveautés et changements NVD : `cve.published` (nouvelle CVE), `cve.updated` avec types de changement (CVSS ajouté ou modifié, CPE ajoutées, entrée KEV, référence d'exploit, rejet), écrits dans l'outbox et historisés (`cve_changes`)
 - [x] 2.6 Connecteurs globaux CISA KEV et FIRST EPSS (tâches planifiées) et **CVE.org** (cvelistV5, détection précoce, Q24)
-- [ ] 2.7 Catalogue des technos : CRUD, alias, préfixes CPE, purl, recherche approchée, import depuis le dictionnaire CPE
-- [ ] 2.8 Périmètre de veille par espace : technos suivies, éditeurs et mots-clés, seuil CVSS, KEV toujours inclus, filtres CWE, mode « toutes les CVE » ou « filtré »
-- [ ] 2.9 Éléments collectés (`collected_items`) avec déduplication et marquage « non fiable »
-- [ ] 2.10 Vulnérabilités : modèle, statuts, file des non qualifiées, qualification, assignation, commentaires, historique, rattachement aux technos ; création manuelle à partir d'un identifiant CVE
-- [ ] 2.11 Preuves et synthèses IA rattachées aux vulnérabilités (modèle et API ; la génération vient en phase 4)
-- [ ] 2.12 Sources de veille de l'espace (catalogue de flux et de comptes à suivre, avec tags)
+- [x] 2.7 Catalogue des technos : CRUD, alias, préfixes CPE, purl, recherche approchée, import depuis le dictionnaire CPE
+- [x] 2.8 Périmètre de veille par espace : technos suivies, éditeurs et mots-clés, seuil CVSS, KEV toujours inclus, filtres CWE, mode « toutes les CVE » ou « filtré »
+- [x] 2.9 Éléments collectés (`collected_items`) avec déduplication et marquage « non fiable »
+- [x] 2.10 Vulnérabilités : modèle, statuts, file des non qualifiées, qualification, assignation, commentaires, historique, rattachement aux technos ; création manuelle à partir d'un identifiant CVE
+- [x] 2.11 Preuves et synthèses IA rattachées aux vulnérabilités (modèle et API ; la génération vient en phase 4)
+- [x] 2.12 Sources de veille de l'espace (catalogue de flux et de comptes à suivre, avec tags)
 - [ ] 2.13 Interfaces : connecteurs (liste, configuration, test, santé), catalogue CVE (nouveautés NVD, recherche, bouton « Promouvoir en vulnérabilité »), périmètre de veille, liste des vulnérabilités (filtres, tri, assignation), fiche vulnérabilité (enrichissement, preuves, chronologie, actions), catalogue des technos, sources
 
 **Critère de sortie** : une CVE réellement publiée sur NVD apparaît dans le catalogue après la synchronisation, avec son événement `cve.published` ; un analyste VOC la promeut et la qualifie ; l'analyste CERT ne voit pas la vulnérabilité VOC.

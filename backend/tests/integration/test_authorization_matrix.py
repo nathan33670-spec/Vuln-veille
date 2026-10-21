@@ -71,6 +71,25 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
         "no_workspace": 403,
     },
     "/connector-types": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 200},
+    # Shared vulnerability data: every member reads it, viewers included (ADR-024).
+    "/vulnerabilities": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
+    "/cves": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
+    "/cves/sync-status": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
+    "/technologies": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
+    "/workspaces/voc/watch-scope": {
+        ANON: 401,
+        "voc": 200,
+        "cert": 404,
+        "viewer": 403,
+        "no_workspace": 404,
+    },
+    "/workspaces/cert/sources": {
+        ANON: 401,
+        "voc": 404,
+        "cert": 200,
+        "viewer": 404,
+        "no_workspace": 404,
+    },
     "/account/sessions": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 200},
 }
 

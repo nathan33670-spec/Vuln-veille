@@ -1,6 +1,266 @@
 {
   "components": {
     "schemas": {
+      "AdoptIn": {
+        "additionalProperties": false,
+        "properties": {
+          "from_workspace": {
+            "pattern": "^[a-z][a-z0-9-]{1,31}$",
+            "title": "From Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_workspace"
+        ],
+        "title": "AdoptIn",
+        "type": "object"
+      },
+      "AnalysisOut": {
+        "properties": {
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "injection_flags": {
+            "items": {},
+            "title": "Injection Flags",
+            "type": "array"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace",
+          "content",
+          "injection_flags",
+          "created_at"
+        ],
+        "title": "AnalysisOut",
+        "type": "object"
+      },
+      "AssessmentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "assignee_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "P1",
+                  "P2",
+                  "P3",
+                  "P4"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "NONE",
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "new",
+                  "triage",
+                  "qualified",
+                  "rejected",
+                  "duplicate",
+                  "monitoring"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "version": {
+            "description": "0 when the team has no assessment yet.",
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AssessmentIn",
+        "type": "object"
+      },
+      "AssessmentOut": {
+        "properties": {
+          "adopted_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adopted From"
+          },
+          "assignee_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "qualified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qualified At"
+          },
+          "qualified_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qualified By"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace",
+          "status",
+          "priority",
+          "severity",
+          "assignee_id",
+          "rationale",
+          "qualified_at",
+          "qualified_by",
+          "adopted_from",
+          "version",
+          "updated_at"
+        ],
+        "title": "AssessmentOut",
+        "type": "object"
+      },
       "AuditEventOut": {
         "properties": {
           "action": {
@@ -181,6 +441,26 @@
         "title": "AuditVerifyOut",
         "type": "object"
       },
+      "BlueskyAccountConfig": {
+        "properties": {
+          "handle": {
+            "pattern": "^[a-z0-9.-]{3,253}\\.[a-z]{2,63}$",
+            "title": "Handle",
+            "type": "string"
+          },
+          "type": {
+            "const": "bluesky_account",
+            "default": "bluesky_account",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "title": "BlueskyAccountConfig",
+        "type": "object"
+      },
       "CheckQueuedOut": {
         "properties": {
           "queued": {
@@ -289,6 +569,60 @@
           "display_name"
         ],
         "title": "ClientUserCreate",
+        "type": "object"
+      },
+      "CommentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CommentIn",
+        "type": "object"
+      },
+      "CommentOut": {
+        "properties": {
+          "author_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Id"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author_id",
+          "body",
+          "created_at"
+        ],
+        "title": "CommentOut",
         "type": "object"
       },
       "ConnectorCreate": {
@@ -616,6 +950,47 @@
         "title": "ConnectorUpdate",
         "type": "object"
       },
+      "CpeSuggestionOut": {
+        "properties": {
+          "cpe_prefix": {
+            "title": "Cpe Prefix",
+            "type": "string"
+          },
+          "cve_count": {
+            "title": "Cve Count",
+            "type": "integer"
+          },
+          "existing_technology_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Technology Id"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendor",
+          "product",
+          "cpe_prefix",
+          "cve_count",
+          "existing_technology_id"
+        ],
+        "title": "CpeSuggestionOut",
+        "type": "object"
+      },
       "CsrfOut": {
         "properties": {
           "csrf_token": {
@@ -627,6 +1002,456 @@
           "csrf_token"
         ],
         "title": "CsrfOut",
+        "type": "object"
+      },
+      "CveChangeOut": {
+        "properties": {
+          "change_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Change Types",
+            "type": "array"
+          },
+          "detected_at": {
+            "format": "date-time",
+            "title": "Detected At",
+            "type": "string"
+          },
+          "diff": {
+            "additionalProperties": true,
+            "title": "Diff",
+            "type": "object"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detected_at",
+          "change_types",
+          "source",
+          "diff"
+        ],
+        "title": "CveChangeOut",
+        "type": "object"
+      },
+      "CveDetailOut": {
+        "properties": {
+          "base_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Score"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/CveChangeOut"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "cpe_criteria": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cpe Criteria",
+            "type": "array"
+          },
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "cvss": {
+            "additionalProperties": true,
+            "title": "Cvss",
+            "type": "object"
+          },
+          "cwes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cwes",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "epss_percentile": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Percentile"
+          },
+          "epss_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Score"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "kev": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kev"
+          },
+          "last_modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified At"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "references": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "scope_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Decision"
+          },
+          "scope_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope Reasons",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "vuln_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vuln Status"
+          },
+          "vulnerability_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vulnerability Ref"
+          }
+        },
+        "required": [
+          "cve_id",
+          "published_at",
+          "last_modified_at",
+          "vuln_status",
+          "description",
+          "severity",
+          "base_score",
+          "cvss",
+          "cwes",
+          "references",
+          "cpe_criteria",
+          "kev",
+          "epss_score",
+          "epss_percentile",
+          "sources",
+          "first_seen_at",
+          "changes"
+        ],
+        "title": "CveDetailOut",
+        "type": "object"
+      },
+      "CveOut": {
+        "properties": {
+          "base_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Score"
+          },
+          "cpe_criteria": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cpe Criteria",
+            "type": "array"
+          },
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "cvss": {
+            "additionalProperties": true,
+            "title": "Cvss",
+            "type": "object"
+          },
+          "cwes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cwes",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "epss_percentile": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Percentile"
+          },
+          "epss_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Score"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "kev": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kev"
+          },
+          "last_modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified At"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "references": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "scope_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Decision"
+          },
+          "scope_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope Reasons",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "vuln_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vuln Status"
+          },
+          "vulnerability_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vulnerability Ref"
+          }
+        },
+        "required": [
+          "cve_id",
+          "published_at",
+          "last_modified_at",
+          "vuln_status",
+          "description",
+          "severity",
+          "base_score",
+          "cvss",
+          "cwes",
+          "references",
+          "cpe_criteria",
+          "kev",
+          "epss_score",
+          "epss_percentile",
+          "sources",
+          "first_seen_at"
+        ],
+        "title": "CveOut",
+        "type": "object"
+      },
+      "CvePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CveOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "CvePage",
         "type": "object"
       },
       "EnrollmentOut": {
@@ -652,6 +1477,116 @@
         "title": "EnrollmentOut",
         "type": "object"
       },
+      "EvidenceIn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "advisory",
+              "poc",
+              "exploit",
+              "patch",
+              "discussion",
+              "mention",
+              "news"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Note",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "kind"
+        ],
+        "title": "EvidenceIn",
+        "type": "object"
+      },
+      "EvidenceOut": {
+        "properties": {
+          "added_by_type": {
+            "title": "Added By Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "trust": {
+            "title": "Trust",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "note",
+          "workspace",
+          "added_by_type",
+          "created_at",
+          "url",
+          "title",
+          "source_type",
+          "trust"
+        ],
+        "title": "EvidenceOut",
+        "type": "object"
+      },
       "ForgotPasswordIn": {
         "additionalProperties": false,
         "properties": {
@@ -666,6 +1601,26 @@
           "email"
         ],
         "title": "ForgotPasswordIn",
+        "type": "object"
+      },
+      "GithubRepoConfig": {
+        "properties": {
+          "repo": {
+            "pattern": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$",
+            "title": "Repo",
+            "type": "string"
+          },
+          "type": {
+            "const": "github_repo",
+            "default": "github_repo",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo"
+        ],
+        "title": "GithubRepoConfig",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -767,6 +1722,26 @@
           "csrf_token"
         ],
         "title": "LoginOut",
+        "type": "object"
+      },
+      "MastodonAccountConfig": {
+        "properties": {
+          "account": {
+            "pattern": "^[A-Za-z0-9_]{1,30}@[a-z0-9.-]{3,253}\\.[a-z]{2,63}$",
+            "title": "Account",
+            "type": "string"
+          },
+          "type": {
+            "const": "mastodon_account",
+            "default": "mastodon_account",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account"
+        ],
+        "title": "MastodonAccountConfig",
         "type": "object"
       },
       "MeOut": {
@@ -991,6 +1966,133 @@
           "csrf_token"
         ],
         "title": "RecoveryCodesOut",
+        "type": "object"
+      },
+      "RssConfig": {
+        "properties": {
+          "type": {
+            "const": "rss",
+            "default": "rss",
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "RssConfig",
+        "type": "object"
+      },
+      "ScopePreviewItem": {
+        "properties": {
+          "base_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Score"
+          },
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          }
+        },
+        "required": [
+          "cve_id",
+          "published_at",
+          "severity",
+          "base_score",
+          "decision",
+          "reasons"
+        ],
+        "title": "ScopePreviewItem",
+        "type": "object"
+      },
+      "ScopePreviewOut": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "in_scope": {
+            "title": "In Scope",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScopePreviewItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "out_of_scope": {
+            "title": "Out Of Scope",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "total",
+          "in_scope",
+          "pending",
+          "out_of_scope",
+          "items"
+        ],
+        "title": "ScopePreviewOut",
         "type": "object"
       },
       "SecretCreate": {
@@ -1231,6 +2333,441 @@
           }
         },
         "title": "StepUpIn",
+        "type": "object"
+      },
+      "SubredditConfig": {
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_]{2,21}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "subreddit",
+            "default": "subreddit",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "SubredditConfig",
+        "type": "object"
+      },
+      "SyncStatusOut": {
+        "properties": {
+          "consecutive_failures": {
+            "title": "Consecutive Failures",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_check_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Check At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "additionalProperties": true,
+            "title": "Position",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "enabled",
+          "last_success_at",
+          "last_check_at",
+          "last_error",
+          "consecutive_failures",
+          "position"
+        ],
+        "title": "SyncStatusOut",
+        "type": "object"
+      },
+      "TechnologyCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Aliases",
+            "type": "array"
+          },
+          "category": {
+            "default": "",
+            "maxLength": 100,
+            "title": "Category",
+            "type": "string"
+          },
+          "cpe_prefixes": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Cpe Prefixes",
+            "type": "array"
+          },
+          "display_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "purls": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Purls",
+            "type": "array"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendor",
+          "product",
+          "display_name"
+        ],
+        "title": "TechnologyCreate",
+        "type": "object"
+      },
+      "TechnologyLinkOut": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "matched_by": {
+            "title": "Matched By",
+            "type": "string"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "technology_id": {
+            "format": "uuid",
+            "title": "Technology Id",
+            "type": "string"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technology_id",
+          "display_name",
+          "vendor",
+          "product",
+          "matched_by"
+        ],
+        "title": "TechnologyLinkOut",
+        "type": "object"
+      },
+      "TechnologyMerge": {
+        "additionalProperties": false,
+        "properties": {
+          "into": {
+            "format": "uuid",
+            "title": "Into",
+            "type": "string"
+          }
+        },
+        "required": [
+          "into"
+        ],
+        "title": "TechnologyMerge",
+        "type": "object"
+      },
+      "TechnologyOut": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "cpe_prefixes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cpe Prefixes",
+            "type": "array"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "merged_into": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merged Into"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "purls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Purls",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "vendor",
+          "product",
+          "display_name",
+          "aliases",
+          "cpe_prefixes",
+          "purls",
+          "category",
+          "status",
+          "merged_into",
+          "version",
+          "updated_at"
+        ],
+        "title": "TechnologyOut",
+        "type": "object"
+      },
+      "TechnologyUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliases"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "cpe_prefixes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpe Prefixes"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "purls": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purls"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "pattern": "^(active|deprecated)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "TechnologyUpdate",
+        "type": "object"
+      },
+      "TimelineEventOut": {
+        "properties": {
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "workspace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace"
+          }
+        },
+        "required": [
+          "type",
+          "workspace",
+          "actor_type",
+          "actor_user_id",
+          "data",
+          "occurred_at"
+        ],
+        "title": "TimelineEventOut",
         "type": "object"
       },
       "TokenPasswordIn": {
@@ -1587,6 +3124,927 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VulnerabilityCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Aliases",
+            "type": "array"
+          },
+          "cve_id": {
+            "anyOf": [
+              {
+                "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cve Id"
+          },
+          "summary": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "VulnerabilityCreate",
+        "type": "object"
+      },
+      "VulnerabilityDetailOut": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "analyses": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisOut"
+            },
+            "title": "Analyses",
+            "type": "array"
+          },
+          "assessments": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentOut"
+            },
+            "title": "Assessments",
+            "type": "array"
+          },
+          "base_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Score"
+          },
+          "cve": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CveOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cve_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cve Id"
+          },
+          "duplicate_of_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Of Ref"
+          },
+          "epss_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Score"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceOut"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "exploitation_status": {
+            "title": "Exploitation Status",
+            "type": "string"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kev": {
+            "title": "Kev",
+            "type": "boolean"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "patch_status": {
+            "title": "Patch Status",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "technologies": {
+            "items": {
+              "$ref": "#/components/schemas/TechnologyLinkOut"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEventOut"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "cve_id",
+          "title",
+          "severity",
+          "base_score",
+          "kev",
+          "epss_score",
+          "exploitation_status",
+          "patch_status",
+          "first_seen_at",
+          "assessments",
+          "summary",
+          "aliases",
+          "duplicate_of_ref",
+          "origin",
+          "version",
+          "cve",
+          "technologies",
+          "evidence",
+          "analyses",
+          "timeline"
+        ],
+        "title": "VulnerabilityDetailOut",
+        "type": "object"
+      },
+      "VulnerabilityPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VulnerabilitySummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "VulnerabilityPage",
+        "type": "object"
+      },
+      "VulnerabilitySummaryOut": {
+        "properties": {
+          "assessments": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentOut"
+            },
+            "title": "Assessments",
+            "type": "array"
+          },
+          "base_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Score"
+          },
+          "cve_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cve Id"
+          },
+          "epss_score": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss Score"
+          },
+          "exploitation_status": {
+            "title": "Exploitation Status",
+            "type": "string"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kev": {
+            "title": "Kev",
+            "type": "boolean"
+          },
+          "patch_status": {
+            "title": "Patch Status",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "cve_id",
+          "title",
+          "severity",
+          "base_score",
+          "kev",
+          "epss_score",
+          "exploitation_status",
+          "patch_status",
+          "first_seen_at",
+          "assessments"
+        ],
+        "title": "VulnerabilitySummaryOut",
+        "type": "object"
+      },
+      "VulnerabilityUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliases"
+          },
+          "duplicate_of_ref": {
+            "anyOf": [
+              {
+                "pattern": "^VV-\\d{4}-\\d{4,}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Of Ref"
+          },
+          "exploitation_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "poc_public",
+                  "exploited_itw",
+                  "not_exploitable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exploitation Status"
+          },
+          "patch_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "available",
+                  "partial",
+                  "none",
+                  "workaround"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patch Status"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VulnerabilityUpdate",
+        "type": "object"
+      },
+      "WatchScopeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "always_include_kev": {
+            "default": true,
+            "title": "Always Include Kev",
+            "type": "boolean"
+          },
+          "cvss_min": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,1}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss Min"
+          },
+          "cwe_exclude": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Cwe Exclude",
+            "type": "array"
+          },
+          "cwe_include": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Cwe Include",
+            "type": "array"
+          },
+          "include_unscored": {
+            "default": "wait",
+            "enum": [
+              "include",
+              "wait",
+              "exclude"
+            ],
+            "title": "Include Unscored",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Keywords",
+            "type": "array"
+          },
+          "mode": {
+            "default": "scoped",
+            "enum": [
+              "all",
+              "scoped"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "technology_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 2000,
+            "title": "Technology Ids",
+            "type": "array"
+          },
+          "vendors": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Vendors",
+            "type": "array"
+          },
+          "version": {
+            "description": "0 when the scope was never saved.",
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "WatchScopeIn",
+        "type": "object"
+      },
+      "WatchScopeOut": {
+        "properties": {
+          "always_include_kev": {
+            "title": "Always Include Kev",
+            "type": "boolean"
+          },
+          "cvss_min": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss Min"
+          },
+          "cwe_exclude": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cwe Exclude",
+            "type": "array"
+          },
+          "cwe_include": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cwe Include",
+            "type": "array"
+          },
+          "include_unscored": {
+            "title": "Include Unscored",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "technology_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Technology Ids",
+            "type": "array"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "vendors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Vendors",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mode",
+          "technology_ids",
+          "vendors",
+          "keywords",
+          "cvss_min",
+          "include_unscored",
+          "always_include_kev",
+          "cwe_include",
+          "cwe_exclude",
+          "version",
+          "updated_at"
+        ],
+        "title": "WatchScopeOut",
+        "type": "object"
+      },
+      "WatchSourceCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "discriminator": {
+              "mapping": {
+                "bluesky_account": "#/components/schemas/BlueskyAccountConfig",
+                "github_repo": "#/components/schemas/GithubRepoConfig",
+                "mastodon_account": "#/components/schemas/MastodonAccountConfig",
+                "rss": "#/components/schemas/RssConfig",
+                "subreddit": "#/components/schemas/SubredditConfig",
+                "website": "#/components/schemas/WebsiteConfig",
+                "x_account": "#/components/schemas/XAccountConfig"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RssConfig"
+              },
+              {
+                "$ref": "#/components/schemas/WebsiteConfig"
+              },
+              {
+                "$ref": "#/components/schemas/XAccountConfig"
+              },
+              {
+                "$ref": "#/components/schemas/GithubRepoConfig"
+              },
+              {
+                "$ref": "#/components/schemas/MastodonAccountConfig"
+              },
+              {
+                "$ref": "#/components/schemas/BlueskyAccountConfig"
+              },
+              {
+                "$ref": "#/components/schemas/SubredditConfig"
+              }
+            ],
+            "title": "Config"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Tags",
+            "type": "array"
+          },
+          "trust_level": {
+            "default": "medium",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Trust Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "config"
+        ],
+        "title": "WatchSourceCreate",
+        "type": "object"
+      },
+      "WatchSourceOut": {
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "trust_level": {
+            "title": "Trust Level",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "config",
+          "tags",
+          "trust_level",
+          "enabled",
+          "version",
+          "updated_at"
+        ],
+        "title": "WatchSourceOut",
+        "type": "object"
+      },
+      "WatchSourceUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "bluesky_account": "#/components/schemas/BlueskyAccountConfig",
+                    "github_repo": "#/components/schemas/GithubRepoConfig",
+                    "mastodon_account": "#/components/schemas/MastodonAccountConfig",
+                    "rss": "#/components/schemas/RssConfig",
+                    "subreddit": "#/components/schemas/SubredditConfig",
+                    "website": "#/components/schemas/WebsiteConfig",
+                    "x_account": "#/components/schemas/XAccountConfig"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/RssConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/WebsiteConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/XAccountConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GithubRepoConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MastodonAccountConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BlueskyAccountConfig"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubredditConfig"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 30,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "trust_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust Level"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "WatchSourceUpdate",
+        "type": "object"
+      },
+      "WebsiteConfig": {
+        "properties": {
+          "type": {
+            "const": "website",
+            "default": "website",
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "WebsiteConfig",
+        "type": "object"
+      },
       "WorkspaceAdminOut": {
         "properties": {
           "grants_platform_admin": {
@@ -1678,6 +4136,26 @@
           "name"
         ],
         "title": "WorkspaceUpdate",
+        "type": "object"
+      },
+      "XAccountConfig": {
+        "properties": {
+          "handle": {
+            "pattern": "^[A-Za-z0-9_]{1,15}$",
+            "title": "Handle",
+            "type": "string"
+          },
+          "type": {
+            "const": "x_account",
+            "default": "x_account",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "title": "XAccountConfig",
         "type": "object"
       },
       "app__iam__admin_schemas__ClientOrgOut": {
@@ -4459,6 +6937,807 @@
         ]
       }
     },
+    "/api/v1/cves": {
+      "get": {
+        "operationId": "list_cves_api_v1_cves_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since_days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 3650,
+              "minimum": 1,
+              "title": "Since Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "NONE",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kev",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kev"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z][a-z0-9-]{1,31}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope Of"
+            }
+          },
+          {
+            "in": "query",
+            "name": "decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "in_scope",
+                    "out_of_scope",
+                    "pending"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decision"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 10000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cves",
+        "tags": [
+          "catalogue"
+        ]
+      }
+    },
+    "/api/v1/cves/sync-status": {
+      "get": {
+        "description": "Health of the global catalogue sources (last success, delay, errors).",
+        "operationId": "sync_status_api_v1_cves_sync_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SyncStatusOut"
+                  },
+                  "title": "Response Sync Status Api V1 Cves Sync Status Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sync Status",
+        "tags": [
+          "catalogue"
+        ]
+      }
+    },
+    "/api/v1/cves/{cve_id}": {
+      "get": {
+        "operationId": "get_cve_api_v1_cves__cve_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cve_id",
+            "required": true,
+            "schema": {
+              "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+              "title": "Cve Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CveDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Cve",
+        "tags": [
+          "catalogue"
+        ]
+      }
+    },
+    "/api/v1/technologies": {
+      "get": {
+        "operationId": "search_technologies_api_v1_technologies_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_merged",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Merged",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TechnologyOut"
+                  },
+                  "title": "Response Search Technologies Api V1 Technologies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Technologies",
+        "tags": [
+          "technologies"
+        ]
+      },
+      "post": {
+        "operationId": "create_technology_api_v1_technologies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TechnologyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnologyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Technology",
+        "tags": [
+          "technologies"
+        ]
+      }
+    },
+    "/api/v1/technologies/cpe-suggestions": {
+      "get": {
+        "description": "Vendor/product pairs seen in the catalogue's CPE configurations (from NVD).",
+        "operationId": "cpe_suggestions_api_v1_technologies_cpe_suggestions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 2,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CpeSuggestionOut"
+                  },
+                  "title": "Response Cpe Suggestions Api V1 Technologies Cpe Suggestions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cpe Suggestions",
+        "tags": [
+          "technologies"
+        ]
+      }
+    },
+    "/api/v1/technologies/{technology_id}": {
+      "delete": {
+        "operationId": "delete_technology_api_v1_technologies__technology_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Technology",
+        "tags": [
+          "technologies"
+        ]
+      },
+      "get": {
+        "operationId": "get_technology_api_v1_technologies__technology_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnologyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Technology",
+        "tags": [
+          "technologies"
+        ]
+      },
+      "patch": {
+        "operationId": "update_technology_api_v1_technologies__technology_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TechnologyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnologyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Technology",
+        "tags": [
+          "technologies"
+        ]
+      }
+    },
+    "/api/v1/technologies/{technology_id}/merge": {
+      "post": {
+        "operationId": "merge_technology_api_v1_technologies__technology_id__merge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TechnologyMerge"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnologyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge Technology",
+        "tags": [
+          "technologies"
+        ]
+      }
+    },
+    "/api/v1/vulnerabilities": {
+      "get": {
+        "operationId": "list_vulnerabilities_api_v1_vulnerabilities_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "team",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z][a-z0-9-]{1,31}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Team"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "unqualified",
+                "all",
+                "new",
+                "triage",
+                "qualified",
+                "rejected",
+                "duplicate",
+                "monitoring"
+              ],
+              "title": "State",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "NONE",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH",
+                    "CRITICAL"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kev",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kev"
+            }
+          },
+          {
+            "in": "query",
+            "name": "priority",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "P1",
+                    "P2",
+                    "P3",
+                    "P4"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priority"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigned_to_me",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Assigned To Me",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 10000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Vulnerabilities",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/vulnerabilities/{ref}": {
+      "get": {
+        "operationId": "get_vulnerability_api_v1_vulnerabilities__ref__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Vulnerability",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/audit": {
       "get": {
         "operationId": "workspace_audit_api_v1_workspaces__workspace__audit_get",
@@ -5890,6 +9169,944 @@
         "summary": "Replace Workspace Secret",
         "tags": [
           "secrets"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/sources": {
+      "get": {
+        "operationId": "list_sources_api_v1_workspaces__workspace__sources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WatchSourceOut"
+                  },
+                  "title": "Response List Sources Api V1 Workspaces  Workspace  Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sources",
+        "tags": [
+          "watch"
+        ]
+      },
+      "post": {
+        "operationId": "create_source_api_v1_workspaces__workspace__sources_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchSourceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchSourceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Source",
+        "tags": [
+          "watch"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/sources/{source_id}": {
+      "delete": {
+        "operationId": "delete_source_api_v1_workspaces__workspace__sources__source_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Source",
+        "tags": [
+          "watch"
+        ]
+      },
+      "patch": {
+        "operationId": "update_source_api_v1_workspaces__workspace__sources__source_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchSourceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchSourceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Source",
+        "tags": [
+          "watch"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities": {
+      "post": {
+        "operationId": "create_api_v1_workspaces__workspace__vulnerabilities_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VulnerabilityCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}": {
+      "patch": {
+        "operationId": "update_api_v1_workspaces__workspace__vulnerabilities__ref__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VulnerabilityUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/assessment": {
+      "put": {
+        "operationId": "assess_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assess",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/assessment/adopt": {
+      "post": {
+        "operationId": "adopt_api_v1_workspaces__workspace__vulnerabilities__ref__assessment_adopt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdoptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Adopt",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/comments": {
+      "get": {
+        "operationId": "list_comments_api_v1_workspaces__workspace__vulnerabilities__ref__comments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentOut"
+                  },
+                  "title": "Response List Comments Api V1 Workspaces  Workspace  Vulnerabilities  Ref  Comments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Comments",
+        "tags": [
+          "vulnerabilities"
+        ]
+      },
+      "post": {
+        "operationId": "add_comment_api_v1_workspaces__workspace__vulnerabilities__ref__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Comment",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/evidence": {
+      "post": {
+        "description": "An analyst cites a link; it is stored as untrusted content, never fetched here.",
+        "operationId": "add_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Evidence",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/evidence/{evidence_id}": {
+      "delete": {
+        "operationId": "remove_evidence_api_v1_workspaces__workspace__vulnerabilities__ref__evidence__evidence_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evidence_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Evidence Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Evidence",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/vulnerabilities/{ref}/technologies/{technology_id}": {
+      "delete": {
+        "operationId": "unlink_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unlink Technology",
+        "tags": [
+          "vulnerabilities"
+        ]
+      },
+      "put": {
+        "operationId": "link_technology_api_v1_workspaces__workspace__vulnerabilities__ref__technologies__technology_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "technology_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Technology Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link Technology",
+        "tags": [
+          "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/watch-scope": {
+      "get": {
+        "operationId": "get_scope_api_v1_workspaces__workspace__watch_scope_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchScopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Scope",
+        "tags": [
+          "watch"
+        ]
+      },
+      "put": {
+        "operationId": "put_scope_api_v1_workspaces__workspace__watch_scope_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchScopeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchScopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Scope",
+        "tags": [
+          "watch"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/watch-scope/preview": {
+      "get": {
+        "description": "What the current scope would have let through among recent CVEs.",
+        "operationId": "preview_scope_api_v1_workspaces__workspace__watch_scope_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopePreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Scope",
+        "tags": [
+          "watch"
         ]
       }
     },

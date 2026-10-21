@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from redis.asyncio import Redis
 
 from app.audit.api import build_audit_router
+from app.catalog.api import build_catalog_router
 from app.connectors.api import build_connector_router
 from app.core import health
 from app.core.config import Audience, Settings, get_settings
@@ -28,8 +29,11 @@ from app.core.tasks import CeleryTaskQueue, TaskQueue
 from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
 from app.iam.portal_org_api import build_portal_org_router
+from app.technologies.api import build_technology_router
 from app.vault.api import build_vault_router
 from app.vault.service import Vault
+from app.vulns.api import build_vulnerability_router
+from app.watch.api import build_watch_router
 
 API_PREFIX: dict[Audience, str] = {
     "backoffice": "/api/v1",
@@ -85,6 +89,10 @@ def create_app(
         app.include_router(build_audit_router(), prefix=prefix)
         app.include_router(build_vault_router(), prefix=prefix)
         app.include_router(build_connector_router(), prefix=prefix)
+        app.include_router(build_catalog_router(), prefix=prefix)
+        app.include_router(build_technology_router(), prefix=prefix)
+        app.include_router(build_watch_router(), prefix=prefix)
+        app.include_router(build_vulnerability_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
 

@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
-- **Dernière étape terminée** : 2.6 connecteurs CISA KEV, FIRST EPSS et CVE.org (2.1 à 2.5 avant).
-- **Étape en cours** : 2.7 catalogue des technos.
-- **Prochaine étape** : 2.8 périmètre de veille, 2.9 éléments collectés, 2.10 vulnérabilités.
+- **Dernière étape terminée** : 2.7 à 2.12 (technos, périmètre de veille, éléments collectés, vulnérabilités, preuves et synthèses, sources), backend et tests.
+- **Étape en cours** : 2.13 interfaces de la phase 2.
+- **Prochaine étape** : clôture de la phase 2 (critère de sortie, CI), puis phase 3 (moteur de workflows).
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -20,6 +20,9 @@
   - NVD : une CVE inconnue n'est annoncée (`cve.published`) que si elle a été publiée depuis moins de 14 jours (paramétrable) ; sinon elle est cataloguée sans événement. Le rattrapage initial n'émet aucun événement.
   - Connecteurs enregistrés : `nvd`, `cisa_kev`, `epss`, `cve_org` (globaux). Une source globale synchronisée déclare `syncs = True`, un champ `sync_interval_minutes` et une méthode `sync` ; la tâche `collect.connector_sync` et le scheduler s'occupent du reste. Après l'ajout d'un type, régénérer `deploy/smokescreen/acl.yaml` par `python -m app.cli egress-acl --static-only --output ../deploy/smokescreen/acl.yaml` (un test vérifie la couverture).
   - Reste à faire (hors 2.3) : approbation du réseau privé par un admin (route et interface). Les colonnes existent ; décider comment un admin VOC approuve un connecteur du CERT qu'il ne voit pas (RLS) avant de l'implémenter.
+  - Écart assumé (2.7) : « import depuis le dictionnaire CPE » est réalisé par des suggestions tirées des configurations CPE déjà synchronisées depuis NVD (`/technologies/cpe-suggestions`), sans appel à l'API CPE de NVD : l'API n'a pas d'accès Internet et la donnée est déjà là.
+  - Lecture partagée (ADR-024) : `/vulnerabilities`, `/cves` et `/technologies` demandent `vuln.read` (tous les internes, lecteurs compris) ; les écritures passent par `/workspaces/{espace}/…` avec `vuln.qualify`. Les évaluations sont lisibles par l'autre équipe, modifiables par la sienne seulement (RLS).
+  - Les éditeurs de texte de l'outil de développement transforment parfois les échappements `\u…` en caractères invisibles : un test bloquant (`tests/security/test_source_hygiene.py`) refuse tout caractère invisible ou de contrôle bidirectionnel dans le code.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
@@ -30,6 +33,7 @@
 - Cadre des connecteurs : types et registre (refus à l'import des types payants, des identifiants en configuration, des domaines invalides), migration `0004_connectors` (connecteurs, curseurs, RLS), API par famille et par portée, test de connexion exécuté par le worker de la famille, quotas Redis, génération de la liste blanche du proxy.
 - NVD : migration `0005_catalog` (`cve_records`, `cve_changes`, `outbox_events`), analyse défensive des enregistrements, détection des changements (CVSS ajouté, sévérité relevée, CPE ajoutées, KEV, référence d'exploit, rejet), synchronisation par fenêtres (rattrapage silencieux, incrémental avec recouvrement, curseur par fenêtre, pause, backoff, verrou), planification par le scheduler.
 - Sources globales : CISA KEV (premier import silencieux, entrées récentes annoncées), FIRST EPSS (CVE du catalogue seulement), CVE.org (détection précoce par `delta.json`, rattrapage par `deltaLog.json`, NVD jamais écrasé) ; tâche générique de synchronisation et planification commune.
+- Domaine vulnérabilités : migrations `0006_watch` (technos, périmètre, sources, éléments collectés) et `0007_vulnerabilities` (fiches partagées, évaluations par équipe, technos, preuves, synthèses IA, commentaires privés, chronologie) ; moteur de périmètre (KEV, CWE exclues, technos par CPE puis nom, éditeurs, mots-clés, seuil CVSS, CVE sans score) ; API du catalogue CVE (filtre par décision de périmètre, état des synchronisations), des technos (recherche approchée, fusion, suggestions CPE), du périmètre (aperçu), des sources et des vulnérabilités (promotion d'une CVE, création sans CVE, qualification avec transitions contrôlées, reprise de la qualification de l'autre équipe, commentaires, preuves, rattachement aux technos) ; récupération à la demande d'une CVE absente du catalogue par le worker.
 - Tests : suite SSRF hors ligne (adresses piégées, écritures numériques, rebinding, redirections, bombes de décompression), test TLS réel de l'épinglage (SNI et nom du certificat), garde « aucune bibliothèque réseau hors `app/net/` » ; vérification sur la pile réelle (refus par smokescreen d'un domaine non autorisé, pas de route directe).
 
 - ADR-013 révisée : chaque secret a sa clé de données AES-256-GCM, enveloppée pour la clé publique X25519 de son usage. L'API du back-office ne détient que les clés publiques : elle écrit les secrets sans pouvoir les lire.

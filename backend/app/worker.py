@@ -143,6 +143,15 @@ def ai_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)
 
 
+@app.task(name="ai.agent_run")
+def agent_run(run_id: str, workspace_id: str) -> None:
+    """One agent run (test, workflow node): engine on the llm keyring, tools on the
+    agent's source connectors (ADR-027)."""
+    from app.ai.agents.runtime import run_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(run_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
+
+
 @app.task(name="publish.workflow_node")
 def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)

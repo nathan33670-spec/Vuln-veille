@@ -26,6 +26,7 @@ dependencies = [
     "defusedxml>=0.7.1",
     "anthropic>=1.11.0",
     "google-genai>=2.28.0",
+    "jsonschema>=4.26.0",
 ]
 
 [dependency-groups]
@@ -38,6 +39,7 @@ dev = [
     "pip-audit>=2.9",
     "celery-types>=0.23",
     "asyncpg-stubs>=0.31.3",
+    "types-jsonschema>=4.26.0.20260518",
 ]
 
 [tool.uv]

@@ -7,10 +7,10 @@ from typing import Any
 import pytest
 
 from app.iam.permissions import WORKSPACE_ROLES, Permission
+from app.watch.feeds import FeedError, parse_feed
 from app.workflows.base import NodeContext, RunInfo, item
 from app.workflows.engine import Limits, bound_outputs
 from app.workflows.expressions import Expr, ExpressionError, Tpl, compile_template
-from app.workflows.feeds import FeedError, parse_feed
 from app.workflows.graph import GraphValidationError, compile_graph, graph_hash, validate_graph
 from app.workflows.nodes.control import If, IfParams
 from app.workflows.nodes.transforms import (

@@ -17,15 +17,9 @@ from app.connectors.base import (
     register,
 )
 from app.core.narrow import expect
+from app.watch.feeds import FEED_TYPES
 
 _DOMAIN = re.compile(r"^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
-FEED_TYPES = (
-    "application/rss+xml",
-    "application/atom+xml",
-    "application/xml",
-    "text/xml",
-    "application/rdf+xml",
-)
 
 
 class RssConfig(ConnectorConfig):

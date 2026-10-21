@@ -38,6 +38,12 @@
 
 ## Journal
 
+### 2026-10-21 — Session 11 (suite) : connecteurs de veille gratuits (merge request 4B)
+
+- Huit connecteurs gratuits : X (oEmbed officiel et découverte des liens déjà collectés), Stack Exchange, Mastodon, Bluesky, Reddit (RSS publics), Hacker News (Algolia), OSV, pages web d'éditeurs (domaines déclarés, robots.txt, texte seul). Résultats normalisés `Found`, en texte brut et non fiables.
+- Le parseur de flux passe de `app/workflows/` à `app/watch/feeds.py` (les connecteurs n'importent pas le moteur de workflows).
+- Tests : 11 tests de connecteurs contre un faux web (formats réels des services, refus des URL hors domaine, profils X jamais lus).
+
 ### 2026-10-21 — Session 10 (suite) : `Main` devient la branche principale
 
 - `Main` (branche par défaut créée par le porteur) devient la seule branche durable ; développement sur des branches courtes et merge requests vers `Main` (CLAUDE.md, PROCEDURES §0, gabarit de merge request).

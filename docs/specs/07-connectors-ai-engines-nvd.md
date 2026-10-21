@@ -60,6 +60,8 @@ Les outils d'agents et les nœuds de workflows n'accèdent aux services externes
 
 Tous ces connecteurs sont gratuits (clé ou compte gratuits au plus). Les seuls coûts acceptés sont ceux de l'abonnement IA (ADR-023).
 
+Mise en œuvre (phase 4, `app/connectors/types/`) : `x_reader`, `stackexchange`, `mastodon`, `bluesky`, `reddit`, `hackernews`, `osv` et `web` exposent des fonctions de lecture (`search`, `read_post`, `lookup`, `read_page`) qui renvoient des éléments `Found` en texte brut, utilisées par les outils d'agents et les nœuds sources. Chaque requête consomme le quota du connecteur et passe par sa politique de sortie. Précisions : Mastodon lit la recherche de posts avec un jeton, sinon le fil public du mot-clé (identifiant CVE sans tirets) ; Bluesky ouvre une session avec un mot de passe d'application ; `web` respecte le robots.txt (accès refusé au robots.txt = page refusée) et ne garde que le texte ; SearXNG n'est pas implémenté (Q32).
+
 ### 2.1 Lecture de X sans abonnement
 
 Contrainte : aucun abonnement payant hors IA. L'API X est payante à l'usage depuis février 2026, et les conditions d'utilisation de X interdisent le scraping sans accord écrit, avec des dommages-intérêts forfaitaires annoncés pour les gros volumes. Le connecteur `x_reader` combine donc des moyens gratuits et autorisés, en trois couches :

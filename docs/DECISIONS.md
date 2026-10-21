@@ -45,10 +45,16 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-005 — Exécution par Celery et Redis, état dans PostgreSQL
 
-- **Statut** : Proposée
+- **Statut** : Acceptée (mise en œuvre en phase 3, 2026-10-21)
 - **Décision** : chaque nœud est une tâche Celery (`acks_late`, idempotente par `(run_id, node_id, attempt)`). L'état de référence (exécutions, nœuds, sorties) est dans PostgreSQL. Il y a une file par type de worker (`default`, `collect`, `ai`, `publish`). Le scheduler est maison, sur PostgreSQL (`FOR UPDATE SKIP LOCKED`) avec croniter.
 - **Alternatives écartées** : Temporal (exécution durable excellente, mais un serveur et une base en plus) ; arq ou Dramatiq (moins d'outillage) ; file Postgres pure (procrastinate, possible mais moins éprouvée en multi-files).
 - **Conséquences** : la reprise après crash repose sur l'état en base et la ré-émission des nœuds en cours, ce qui impose de tester l'idempotence. Une migration vers Temporal reste possible derrière l'interface de l'exécuteur.
+- **Mise en œuvre (phase 3)** :
+  - L'orchestrateur (`default.workflow_advance`) s'exécute sous le **verrou de ligne de l'exécution** : des appels concurrents ou rejoués convergent. Il crée les `node_runs` des nœuds prêts et publie une tâche `<file>.workflow_node` dont l'identifiant Celery est celui du `node_run` (révocation ciblée, ré-émission sans doublon).
+  - Une tâche de nœud **réclame** son `node_run` par un `UPDATE … WHERE status = 'queued'` : une tâche rejouée ne fait rien. Les effets en base du nœud et l'écriture de sa sortie partagent une transaction ; en cas d'échec, ces effets sont annulés et seul l'échec est enregistré. Les e-mails partent après la validation de la transaction.
+  - Un nœud dont toutes les entrées sont vides est marqué `skipped` (sauf les sources, qui lisent sans élément d'entrée) : c'est ainsi qu'une branche `out_of_scope` ou `false` s'arrête.
+  - Le scheduler (verrou consultatif, un seul leader) déclenche les crons, diffuse l'outbox (lots de 200, `SKIP LOCKED`) et lance le **balayage de reprise** : nœuds `running` au-delà de leur délai plus 2 minutes (échec `worker_lost`, puis politique de retry), messages perdus (`queued` depuis plus de 10 minutes, ré-émis), exécutions en attente d'un créneau ou au-delà de leur échéance.
+  - Limites (constantes `engine.Limits`, réglage par espace à venir) : celles de la spec 02 §5. Une exécution en attente de validation humaine n'occupe pas de créneau, et son échéance repart à la décision.
 
 ## ADR-006 — PostgreSQL avec RLS pour le cloisonnement
 
@@ -72,7 +78,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-009 — Gabarits Liquid (python-liquid), pas Jinja2
 
-- **Statut** : Proposée
+- **Statut** : Acceptée (mise en œuvre en phase 3 : `app/workflows/expressions.py`)
 - **Contexte** : les modèles de bulletins et les mappings de connecteurs sont édités par des utilisateurs, donc potentiellement par un compte compromis.
 - **Décision** : Liquid, conçu pour des gabarits édités par des utilisateurs non fiables : pas d'accès aux attributs Python, boucles et conditions, filtres en liste blanche, limites de ressources. Le rendu se fait côté serveur, aussi pour l'aperçu.
 - **Alternatives écartées** : Jinja2 SandboxedEnvironment (historique d'évasions du bac à sable) ; Mustache (trop limité, bibliothèques Python peu maintenues).
@@ -80,7 +86,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 
 ## ADR-010 — Expressions JMESPath, pas de code utilisateur
 
-- **Statut** : Proposée
+- **Statut** : Acceptée (mise en œuvre en phase 3 : `app/workflows/expressions.py`)
 - **Décision** : la sélection et les conditions dans les workflows et les mappings utilisent JMESPath (déterministe, sans effet de bord, sans accès au système). Pas de nœud « Code ». Les besoins non couverts deviennent de nouveaux types de nœuds, revus et testés.
 - **Alternatives écartées** : JavaScript sandboxé façon n8n (évasions régulières) ; simpleeval ou ast Python (surface d'évasion) ; CEL (bonne option, mais l'écosystème Python est moins mûr).
 - **Conséquences** : un éditeur JMESPath avec aperçu dans l'interface ; les fonctions personnalisées sont ajoutées au cas par cas.

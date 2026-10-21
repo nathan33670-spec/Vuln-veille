@@ -146,17 +146,17 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 3 — Moteur de workflows
 
-- [ ] 3.1 Modèles `workflows`, `workflow_versions` (immuables), `workflow_triggers`, `workflow_runs`, `node_runs`, `workflow_approvals`
-- [ ] 3.2 Schéma JSON du graphe (v1) et validation : acyclicité, ports, paramètres, permissions, références de secrets et de connecteurs du même espace
-- [ ] 3.3 Registre des types de nœuds, avec export du JSON Schema des paramètres via l'API
-- [ ] 3.4 Exécuteur : orchestration du DAG, tâches Celery par nœud, retries, timeouts, idempotence, annulation, reprise après crash
-- [ ] 3.5 Expressions JMESPath dans les paramètres, gabarits Liquid pour les chaînes
-- [ ] 3.6 Scheduler (cron, intervalle minimal configurable), déclencheurs manuel, événement (outbox) et webhook signé HMAC
-- [ ] 3.7 **Déclencheurs `trigger.cve_published` et `trigger.cve_updated`** : diffusion des événements NVD globaux vers chaque espace qui a un workflow actif abonné, avec filtre et débit borné
-- [ ] 3.8 Nœuds de base : `source.rss`, `source.nvd`, `source.cisa_kev`, `source.github_advisories`, `source.http`, `transform.filter`, `transform.map`, `transform.dedupe`, `transform.extract_cve`, `transform.merge`, `transform.limit`, `vuln.scope_match`, `vuln.upsert`, `vuln.enrich`, `vuln.match_technologies`, `vuln.list`, `control.if`, `control.approval`, `notify.email`
-- [ ] 3.9 Limites : nœuds par workflow, éléments par sortie, taille par élément, durée d'exécution, concurrence par espace
-- [ ] 3.10 API : CRUD, versions, publication d'une version, lancement, annulation, exécutions et journaux, import/export JSON
-- [ ] 3.11 Workflows livrés en seed par espace (désactivés par défaut) : « Nouvelle CVE NVD » (version sans IA : périmètre, création, enrichissement, technos, notification) et « Veille quotidienne » (flux RSS et avis)
+- [x] 3.1 Modèles `workflows`, `workflow_versions` (immuables), `workflow_triggers`, `workflow_runs`, `node_runs`, `workflow_approvals`
+- [x] 3.2 Schéma JSON du graphe (v1) et validation : acyclicité, ports, paramètres, permissions, références de secrets et de connecteurs du même espace
+- [x] 3.3 Registre des types de nœuds, avec export du JSON Schema des paramètres via l'API
+- [x] 3.4 Exécuteur : orchestration du DAG, tâches Celery par nœud, retries, timeouts, idempotence, annulation, reprise après crash
+- [x] 3.5 Expressions JMESPath dans les paramètres, gabarits Liquid pour les chaînes
+- [x] 3.6 Scheduler (cron, intervalle minimal configurable), déclencheurs manuel, événement (outbox) et webhook signé HMAC
+- [x] 3.7 **Déclencheurs `trigger.cve_published` et `trigger.cve_updated`** : diffusion des événements NVD globaux vers chaque espace qui a un workflow actif abonné, avec filtre et débit borné
+- [x] 3.8 Nœuds de base : `source.rss`, `source.nvd`, `source.cisa_kev`, `source.github_advisories`, `source.http`, `transform.filter`, `transform.map`, `transform.dedupe`, `transform.extract_cve`, `transform.merge`, `transform.limit`, `vuln.scope_match`, `vuln.upsert`, `vuln.enrich`, `vuln.match_technologies`, `vuln.list`, `control.if`, `control.approval`, `notify.email`
+- [x] 3.9 Limites : nœuds par workflow, éléments par sortie, taille par élément, durée d'exécution, concurrence par espace
+- [x] 3.10 API : CRUD, versions, publication d'une version, lancement, annulation, exécutions et journaux, import/export JSON
+- [x] 3.11 Workflows livrés en seed par espace (désactivés par défaut) : « Nouvelle CVE NVD » (version sans IA : périmètre, création, enrichissement, technos, notification) et « Veille quotidienne » (flux RSS et avis)
 
 **Critère de sortie** : une nouvelle CVE NVD crée automatiquement, dans chaque espace dont le périmètre correspond, une vulnérabilité non qualifiée enrichie, via le workflow seed, avec un journal par nœud ; une CVE hors périmètre devient éligible quand NVD lui ajoute des CPE correspondants.
 

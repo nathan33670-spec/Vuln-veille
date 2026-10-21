@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **terminée**. Phase 3 (moteur de workflows) non commencée.
-- **Dernière étape terminée** : 2.13 interfaces (vulnérabilités, catalogue CVE, périmètre, sources, technos, connecteurs, secrets).
-- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 3.
-- **Prochaine étape** : phase 3, étape 3.1 (modèles des workflows, versions immuables, exécutions).
+- **Phase** : 3 (moteur de workflows) **terminée** ; critère de sortie vérifié par `tests/integration/test_workflow_engine.py::test_new_nvd_cve_creates_vulnerability_in_matching_workspaces` (graphe seed réel). Phase 4 (moteurs IA, connecteurs et agents de veille) non commencée.
+- **Dernière étape terminée** : 3.11 workflows livrés en seed, avec les écrans minimaux des workflows et des exécutions.
+- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 4.
+- **Prochaine étape** : phase 4, étape 4.1 (interface `AIEngine` et adaptateurs).
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -26,9 +26,26 @@
   - Critère de sortie de la phase 2 aligné sur ADR-024 (décision du porteur) : le CERT voit la fiche et la qualification du VOC et peut la reprendre ; seuls les commentaires, le périmètre, les sources, connecteurs et secrets restent cloisonnés. L'ancienne formulation (« le CERT ne voit pas la vulnérabilité VOC ») datait d'avant cette décision.
   - Vérifié sur l'API NVD réelle (via le proxy du bac à sable, test temporaire non commité) : 159 `cve.published` sur 6 heures de modifications, format de dates accepté. Cette vérification a révélé les métriques SSVC (`ssvcV203`) qui faisaient rejeter 61 % des CVE : corrigé. Flux KEV et enregistrements CVE.org réels analysés sans erreur.
   - Interfaces : les textes externes (descriptions, références, preuves) s'affichent comme du texte, jamais comme du HTML ; les liens passent par `ExternalLink` (http(s) seulement, sans référent ni `opener`). Le rendu Markdown assaini des justifications et commentaires viendra avec les bulletins (phase 6) : affichage en texte brut d'ici là.
+  - Moteur de workflows (ADR-005) : un nœud n'accède à la base que par `WorkspaceRepo` (périmètre de l'espace), à l'extérieur que par `ctx.connectors.open(id, kinds)` ; ses paramètres sont un modèle Pydantic (`expect(params, Modèle)` pour les typer). Ajouter un nœud : `app/workflows/nodes/`, `@register_node`, test unitaire ; les types `test.*` sont masqués de l'API.
+  - Tests du moteur : `tests/integration/workflow_harness.py` exécute les tâches mises en file dans l'ordre (`drain`), et peut en « garer » pour simuler une perte (`skip_nodes`, `unpark`).
+  - `TaskQueue.send` accepte `task_id` et `countdown` ; `revoke` sert à l'annulation. Les tâches de nœud ont pour identifiant celui du `node_run`.
+  - Le worker `default` détient le trousseau `webhook` (vérification des signatures). La commande `seed-workflows` tourne après les migrations (service `migrate`) et ne recrée jamais un seed existant.
+  - SQLAlchemy 2.1 : `Result.tuples()` et `select().distinct(expr)` sont dépréciés, et les avertissements font échouer les tests ; utiliser `.all()` et `.ext(distinct_on(...))`. Après un `commit`, un `updated_at` mis à jour côté serveur est expiré : `await db.refresh(obj)` avant de le lire (sinon `MissingGreenlet`).
+  - Écarts assumés de la phase 3 : `test-node` et le flux SSE des exécutions arrivent avec l'éditeur visuel (phase 5), et l'écran d'exécution interroge l'API toutes les 3 secondes ; l'éditeur de graphe est provisoire (JSON validé par le serveur) ; les limites d'exécution ne sont pas encore réglables par espace ; la « Veille quotidienne » livrée ne lit que les ajouts KEV, car un flux RSS demande un connecteur propre à l'espace ; un secret de webhook reste dans le coffre si son nœud disparaît.
+  - Connecteurs ajoutés : `rss` (domaines déclarés dans la configuration), `http_api` (lecture GET, en-tête d'authentification facultatif dans le coffre), `github` (jeton facultatif). Le fichier `deploy/smokescreen/acl.yaml` versionné garde la liste des services prévus ; en production, le générer avec les connecteurs actifs (`egress-acl` sans `--static-only`).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 10 : phase 3, moteur de workflows
+
+- Schéma 0008 : workflows, versions immuables, déclencheurs, exécutions, exécutions de nœuds, validations, clés de déduplication ; RLS par espace sur chaque table.
+- Graphe v1 et validation (acyclicité, ports, paramètres, permissions de l'éditeur, connecteurs du même espace, validation humaine avant tout effet externe, limites) ; registre de nœuds exporté en JSON Schema ; expressions JMESPath et gabarits Liquid sans `include`/`render`, avec limites.
+- Exécuteur : orchestration sous verrou, une tâche par nœud dans la file de son type, retries, `on_error` (`stop`, `continue`, `route`), idempotence, annulation et révocation, échéance, concurrence (5 par workflow, 20 par espace), balayage de reprise.
+- Déclencheurs : manuel, cron (5 minutes au minimum, fuseau explicite), outbox (`cve.published`, `cve.updated` diffusés à chaque espace abonné, `vuln.created`), webhook signé HMAC.
+- 24 types de nœuds (déclencheurs, sources `nvd`, `cisa_kev`, `rss`, `http`, `github_advisories`, transformations, `vuln.*`, `control.if`, `control.approval`, `notify.email`) ; connecteurs `rss`, `http_api`, `github`.
+- API des workflows (versions, activation, lancements, exécutions, validations, import et export, rotation du secret de webhook), auditée ; seeds « Nouvelle CVE NVD » et « Veille quotidienne » ; écrans de liste, de détail (graphe, éditeur JSON provisoire, versions, déclencheurs) et d'exécution (journal par nœud, sorties en texte brut, validations).
+- Tests : 256 tests backend (dont le critère de sortie, la reprise après perte de worker, le rejeu, la concurrence et le webhook) ; 23 tests frontend.
 
 ### 2026-10-24 — Session 9 : phase 2, interfaces et clôture
 

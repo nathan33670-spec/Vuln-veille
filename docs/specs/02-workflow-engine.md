@@ -94,6 +94,8 @@ class NodeType(Protocol):
 
 Limites par défaut (configurables par espace) : 5 000 éléments par sortie, 256 Kio par élément, 5 Mio de sortie stockée par nœud (au-delà : troncature signalée), 30 minutes par exécution, 5 exécutions simultanées par workflow et 20 par espace.
 
+Mise en œuvre (phase 3, détail dans ADR-005) : orchestrateur sous le verrou de ligne de l'exécution, réclamation atomique des `node_runs`, effets en base du nœud et sortie dans la même transaction, nœud ignoré (`skipped`) quand toutes ses entrées sont vides (sauf les sources), un seul déclencheur « tire » par exécution (les autres sont ignorés), balayage de reprise par le scheduler. Le réglage des limites par espace viendra avec les paramètres d'espace ; les valeurs par défaut s'appliquent d'ici là.
+
 ## 6. Déclencheurs
 
 | Type | Détail |
@@ -104,6 +106,10 @@ Limites par défaut (configurables par espace) : 5 000 éléments par sortie, 25
 | `trigger.cve_updated` | Changement significatif d'une CVE sur NVD (`cvss_added`, `severity_raised`, `cpe_added`, `kev_added`, `exploit_reference_added`, `rejected`), filtre sur les types de changement |
 | `trigger.event` | Événement de l'outbox de l'espace (`vuln.created`, `vuln.qualified`, `bulletin.approved`…) avec un filtre JMESPath |
 | `trigger.webhook` | URL unique par déclencheur, HMAC-SHA256 obligatoire, anti-rejeu, 256 Kio au maximum, débit limité |
+
+Webhook entrant : `POST /api/v1/hooks/{trigger_id}`, en-têtes `X-VV-Timestamp` (secondes Unix, ±5 minutes) et `X-VV-Signature: sha256=<hex>` où la valeur est `HMAC-SHA256(secret, "<timestamp>.<corps>")`. Le corps est un objet JSON (256 Kio au maximum), qui devient les données de l'exécution. L'URL reste la même d'une version à l'autre tant que l'identifiant du nœud ne change pas. Le secret est généré à l'activation, affiché une seule fois, et renouvelable. Réponse `202` dans tous les cas où la requête est bien formée, y compris pour un déclencheur inconnu ; la vérification se fait dans le worker `default`. Débit : 120 requêtes par minute et par déclencheur, 600 par adresse IP.
+
+Les filtres `trigger.cve_published`, `trigger.cve_updated` et `trigger.event` s'évaluent sur `{ json: <événement> }`, par exemple `json.severity == 'CRITICAL'`.
 
 ## 7. Catalogue des nœuds
 
@@ -155,6 +161,8 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 4, 6 et 7 ; les autres vienn
 
 ## 8. Workflows livrés en exemple (seeds, désactivés par défaut)
 
+Livrés en phase 3 (commande `python -m app.cli seed-workflows`, lancée après les migrations) : « Nouvelle CVE NVD » (n° 1 sans IA, avec aussi le n° 4 : `trigger.cve_updated(cpe_added | cvss_added)` en second déclencheur du même graphe) et « Veille quotidienne » (ajouts KEV du jour ; les flux RSS demandent un connecteur RSS de l'espace, à ajouter par l'analyste).
+
 1. **Nouvelle CVE NVD → investigation** (flux principal, détail dans la spec 07 §5) : `trigger.cve_published` → `vuln.scope_match` → `vuln.upsert` → `vuln.enrich` → `vuln.match_technologies` → agent de triage → agents de veille en parallèle (PoC GitHub, réseaux sociaux, forums, avis éditeurs) → agent de synthèse → `vuln.attach_analysis` → `notify.email` (si KEV, exploitation ou P1). Livré en version sans IA en phase 3, puis complet en phase 4.
 2. **Saisie manuelle** : `trigger.event(vuln.created, origin=user)` → même chaîne à partir de `vuln.enrich`.
 3. **Re-veille** : `trigger.schedule` (toutes les 6 h) → `vuln.list` (ouvertes, moins de 14 jours) → agents PoC et réseaux sociaux → mise à jour de la synthèse → notification ; et `trigger.cve_updated(kev_added | exploit_reference_added)` → même traitement immédiat.
@@ -182,6 +190,8 @@ GET    /api/v1/workspaces/{ws}/workflows/{id}/export
 POST   /api/v1/workspaces/{ws}/workflows/import
 POST   /hooks/{trigger_id}                             # webhook entrant (signé)
 ```
+
+État en phase 3 : tout est livré, sauf `test-node` et le flux SSE `events` (avec l'éditeur visuel, phase 5 ; l'écran d'exécution interroge l'API toutes les 3 secondes en attendant). Ajouts : `GET /workspaces/{ws}/runs/{run_id}/nodes/{node_id}` (sortie et journal d'un nœud), `POST /workspaces/{ws}/workflows/{id}/triggers/{node_id}/rotate-secret`. Comme le reste de l'API, la modification d'un workflow porte la version courante dans le corps (`version`) plutôt que dans `If-Match` ; une nouvelle version peut porter `base_version_no` pour détecter une édition concurrente.
 
 ## 10. Éditeur (frontend)
 

@@ -9,7 +9,7 @@ import httpx
 
 from app.net.safe_http import MIB, EgressPolicy, SafeHttpClient
 
-Route = Callable[[httpx.Request], tuple[int, Any]]
+Route = Callable[[httpx.Request], tuple[Any, ...]]
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,8 @@ class FakeWeb:
         route = self.routes.get(url)
         if route is None:
             return httpx.Response(404, stream=httpx.ByteStream(b"not found"))
-        status, body = route(request)
+        status, body, *extra = route(request)
+        headers = extra[0] if extra else {}
         if isinstance(body, RawBody):
             return httpx.Response(
                 status,
@@ -44,7 +45,9 @@ class FakeWeb:
             )
         data = json.dumps(body).encode()
         return httpx.Response(
-            status, headers={"content-type": "application/json"}, stream=httpx.ByteStream(data)
+            status,
+            headers={"content-type": "application/json", **headers},
+            stream=httpx.ByteStream(data),
         )
 
     def client(self, *domains: str) -> SafeHttpClient:

@@ -2,11 +2,13 @@
 
 ## État courant
 
-- **Phase** : 3 (moteur de workflows) **terminée** ; critère de sortie vérifié par `tests/integration/test_workflow_engine.py::test_new_nvd_cve_creates_vulnerability_in_matching_workspaces` (graphe seed réel). Phase 4 (moteurs IA, connecteurs et agents de veille) non commencée.
-- **Dernière étape terminée** : 3.11 workflows livrés en seed, avec les écrans minimaux des workflows et des exécutions.
-- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 4.
-- **Prochaine étape** : phase 4, étape 4.1 (interface `AIEngine` et adaptateurs).
+- **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
+- **Dernière étape terminée** : 4.4 moteurs IA comme connecteurs (merge request 4A : étapes 4.1 à 4.4, et 4.5 sans le rapport de compatibilité).
+- **Étape en cours** : merge request 4A en revue.
+- **Prochaine étape** : 4.6 connecteurs de veille gratuits (merge request 4B), puis 4.7 à 4.11 agents et runtime (4C), qui terminera 4.5 avec le rapport de compatibilité (il dépend des besoins déclarés par les agents).
 - **Points d'attention** :
+  - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
+  - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
   - **Branches** : `Main` est la seule branche principale ; chaque sujet se développe sur une branche `claude/<sujet>` partie de `Main` et revient par une merge request, fusionnée avec la CI verte (PROCEDURES §0). L'ancienne branche `claude/veille-management-tool-845y6h` est fusionnée et supprimée.
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -37,6 +39,13 @@
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 11 : phase 4, moteurs IA (merge request 4A)
+
+- Couche moteur IA neutre (`app/ai/types.py`) et vérification automatique des capacités (complétion, sortie JSON conforme, aller-retour d'outil ; rétrogradation des capacités qui échouent).
+- Adaptateurs : Gemini (SDK `google-genai`, palier gratuit, quotas prudents), Claude (SDK `anthropic`, effort, sortie structurée, outils stricts, refus et repli `fallbacks: "default"`, cache du prompt système), compatible OpenAI (outils natifs ou émulés, `response_format`, décodage guidé). Les SDK passent par `SafeHttpClient` (ADR-026).
+- Moteurs comme connecteurs `ai_engine` : modèles déclarés, politique de données (Q6), catalogue `ai_models`, capacités vérifiées par le worker ; moteur préféré plateforme et espace (migration 0009, API, audit).
+- Tests : 266 tests backend (SDK réels contre serveurs simulés, refus, quotas, sortie de domaine refusée, cloisonnement des modèles entre équipes).
 
 ### 2026-10-21 — Session 10 (suite) : `Main` devient la branche principale
 

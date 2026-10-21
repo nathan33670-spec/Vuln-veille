@@ -23,5 +23,6 @@ default:
     - publish.x.com
     - www.reddit.com
     - hn.algolia.com
-    # AI engine (Gemini free tier, ADR-025)
+    # AI engines: Gemini free tier (ADR-025); Claude once an API budget exists
     - generativelanguage.googleapis.com
+    - api.anthropic.com

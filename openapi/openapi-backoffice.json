@@ -1,6 +1,138 @@
 {
   "components": {
     "schemas": {
+      "AIModelOut": {
+        "properties": {
+          "checks": {
+            "additionalProperties": true,
+            "title": "Checks",
+            "type": "object"
+          },
+          "connector_id": {
+            "format": "uuid",
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "connector_kind": {
+            "title": "Connector Kind",
+            "type": "string"
+          },
+          "connector_name": {
+            "title": "Connector Name",
+            "type": "string"
+          },
+          "data_classes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Classes",
+            "type": "array"
+          },
+          "declared": {
+            "additionalProperties": true,
+            "title": "Declared",
+            "type": "object"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "price_input_per_mtok": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Input Per Mtok"
+          },
+          "price_output_per_mtok": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Output Per Mtok"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "usable": {
+            "title": "Usable",
+            "type": "boolean"
+          },
+          "verified": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          }
+        },
+        "required": [
+          "id",
+          "connector_id",
+          "connector_kind",
+          "connector_name",
+          "scope",
+          "model_id",
+          "display_name",
+          "enabled",
+          "usable",
+          "declared",
+          "verified",
+          "verified_at",
+          "checks",
+          "data_classes",
+          "location",
+          "price_input_per_mtok",
+          "price_output_per_mtok"
+        ],
+        "title": "AIModelOut",
+        "type": "object"
+      },
       "ActivationOut": {
         "properties": {
           "active_version_no": {
@@ -1669,6 +1801,74 @@
           "total"
         ],
         "title": "CvePage",
+        "type": "object"
+      },
+      "EngineChoiceIn": {
+        "additionalProperties": false,
+        "properties": {
+          "model_row_id": {
+            "format": "uuid",
+            "title": "Model Row Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_row_id"
+        ],
+        "title": "EngineChoiceIn",
+        "type": "object"
+      },
+      "EnginePreferenceOut": {
+        "properties": {
+          "effective": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIModelOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIModelOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "workspace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIModelOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "platform",
+          "workspace",
+          "effective",
+          "source"
+        ],
+        "title": "EnginePreferenceOut",
         "type": "object"
       },
       "EnrollmentOut": {
@@ -5796,6 +5996,66 @@
         ]
       }
     },
+    "/api/v1/admin/ai-engine": {
+      "get": {
+        "operationId": "get_platform_api_v1_admin_ai_engine_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnginePreferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Platform",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "put_platform_api_v1_admin_ai_engine_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EngineChoiceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnginePreferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Platform",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/admin/audit": {
       "get": {
         "operationId": "list_audit_api_v1_admin_audit_get",
@@ -8020,6 +8280,32 @@
         ]
       }
     },
+    "/api/v1/ai-models": {
+      "get": {
+        "description": "Global engines' models, and those of the caller's workspaces (RLS).",
+        "operationId": "list_models_api_v1_ai_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AIModelOut"
+                  },
+                  "title": "Response List Models Api V1 Ai Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Models",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/auth/invitation/accept": {
       "post": {
         "operationId": "accept_invitation_api_v1_auth_invitation_accept_post",
@@ -9243,6 +9529,138 @@
         "summary": "Get Vulnerability",
         "tags": [
           "vulnerabilities"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/ai-engine": {
+      "delete": {
+        "operationId": "inherit_api_v1_workspaces__workspace__ai_engine_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnginePreferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Inherit",
+        "tags": [
+          "ai"
+        ]
+      },
+      "get": {
+        "operationId": "get_workspace_api_v1_workspaces__workspace__ai_engine_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnginePreferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Workspace",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "put_workspace_api_v1_workspaces__workspace__ai_engine_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EngineChoiceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnginePreferenceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Workspace",
+        "tags": [
+          "ai"
         ]
       }
     },

@@ -38,12 +38,15 @@ class AIEngine(Protocol):
 
 `AIRequest` contient le modèle, le prompt système, les messages, les outils (JSON Schema), le schéma de sortie, le niveau de raisonnement et `max_output_tokens`. `AIResponse` contient le contenu, les appels d'outils, le stop reason normalisé (`end_turn`, `tool_use`, `max_tokens`, `refusal`, `error`), l'usage (tokens d'entrée, de sortie, cache) et le modèle effectivement servi.
 
+Mise en œuvre (phase 4, `app/ai/`) : `AIRequest`, `AIResponse`, `Message` (avec un état propre au fournisseur, rejoué tel quel : blocs de réflexion de Claude, signatures de réflexion de Gemini), `ModelCapabilities` et des erreurs typées (`AIRateLimitedError`, `AIUnavailableError`, `AIConfigurationError`, chacune avec un code stable sans contenu). Les SDK passent par `SafeHttpClient` (ADR-026). Le streaming n'est pas encore utilisé.
+
 ### Adaptateur Gemini (moteur de démarrage, ADR-025)
 
 - SDK officiel `google-genai`, palier gratuit de Google AI Studio, **sans facturation activée** sur le projet.
 - Sorties structurées (schéma de réponse), appels de fonctions, recherche Google intégrée (grounding) utilisée par l'outil `x_discover` dans un appel dédié.
 - Limiteur de débit réglé sur les quotas gratuits (requêtes par minute et par jour) ; au-delà, mise en file d'attente par priorité (KEV, P1 d'abord), jamais de facturation.
 - Politique de données : public et TLP:CLEAR uniquement.
+- Mise en œuvre : modèle par défaut `gemini-2.5-flash` (à ajuster selon les modèles du palier gratuit du compte, Q35), quotas par défaut de 10 requêtes par minute et 250 par jour sur le connecteur. Un schéma de réponse et les appels de fonctions ne se combinent pas : quand l'agent a des outils, le schéma passe dans les consignes et le runtime valide la réponse.
 
 ### Adaptateur Claude (si un budget API apparaît)
 

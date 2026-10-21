@@ -162,11 +162,11 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 4 — Moteurs IA, connecteurs de veille et agents de veille (Jalon 1)
 
-- [ ] 4.1 Abstraction `AIEngine` (spec 07 §4) : complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés, paramètres abstraits (niveau de raisonnement)
-- [ ] 4.2 Adaptateur **Gemini** (moteur de démarrage, palier gratuit, ADR-025) : sorties structurées, appels de fonctions, recherche Google intégrée, limiteur de débit sur les quotas gratuits
-- [ ] 4.3 Adaptateur **compatible OpenAI** pour le futur LLMaaS (et OpenLLM, vLLM, Ollama, Mistral) ; mode outils émulé par sortie JSON contrainte
-- [ ] 4.3 bis Adaptateur **Claude** (SDK officiel `anthropic`, `claude-opus-5-5`), prêt pour le jour où un budget API existe ; testé contre un serveur simulé
-- [ ] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
+- [x] 4.1 Abstraction `AIEngine` (spec 07 §4) : complétion, sortie structurée, outils, streaming, usage, stop reasons normalisés, paramètres abstraits (niveau de raisonnement)
+- [x] 4.2 Adaptateur **Gemini** (moteur de démarrage, palier gratuit, ADR-025) : sorties structurées, appels de fonctions, recherche Google intégrée, limiteur de débit sur les quotas gratuits
+- [x] 4.3 Adaptateur **compatible OpenAI** pour le futur LLMaaS (et OpenLLM, vLLM, Ollama, Mistral) ; mode outils émulé par sortie JSON contrainte
+- [x] 4.3 bis Adaptateur **Claude** (SDK officiel `anthropic`, `claude-opus-5-5`), prêt pour le jour où un budget API existe ; testé contre un serveur simulé
+- [x] 4.4 Moteurs IA comme connecteurs : modèles, capacités déclarées puis vérifiées par un test automatique, politique de données (cloud externe ou auto-hébergé, classes de données autorisées)
 - [ ] 4.5 **Moteur préféré** : défaut plateforme (admin), surcharge par espace, héritage ou épinglage par agent ; rapport de compatibilité avant changement
 - [ ] 4.6 Connecteurs de veille gratuits : GitHub, **lecture gratuite de X** (découverte des URL de posts, puis lecture par l'oEmbed officiel ; spec 07 §2.1), Stack Exchange, Mastodon, Bluesky, Reddit (flux RSS), Hacker News, OSV, web (avis éditeurs, liste de domaines) ; SearXNG auto-hébergé en option
 - [ ] 4.7 Agents : configuration versionnée (moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt système, connecteurs autorisés, domaines, schéma de sortie, limites, budget par exécution)

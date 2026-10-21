@@ -178,6 +178,8 @@ Les agents se configurent avec des paramètres indépendants du fournisseur, que
 
 Les prompts sont rédigés pour être portables (consignes claires, balisage des documents, schéma explicite). Une **variante de prompt par moteur** reste possible si le banc d'évaluation montre un écart.
 
+Mise en œuvre (phase 4) : les modèles se déclarent dans la configuration du connecteur ; à l'enregistrement, ils alimentent le catalogue `ai_models` (lisible par tous les internes pour un moteur global, par l'espace pour les siens). Le test du connecteur (worker `ai`) lance les trois sondes sur chaque modèle actif et enregistre les capacités vérifiées : une capacité qui échoue est rétrogradée (outils à `none`, sortie structurée à `none`). Les politiques de données sont vérifiées à l'enregistrement : jamais `client_data`, palier gratuit Gemini limité à `public` et `tlp_clear`, Claude limité à TLP:AMBER au plus. Moteur préféré : `PUT /admin/ai-engine` (plateforme, moteurs globaux), `PUT` et `DELETE /workspaces/{espace}/ai-engine` (surcharge par espace ou héritage), résolution épinglé, puis espace, puis plateforme.
+
 ### 4.4 Rapport de compatibilité
 
 Avant de changer le moteur préféré (plateforme ou espace), l'interface affiche pour chaque agent concerné si le modèle cible couvre ses besoins (outils, sortie structurée, taille de contexte, niveau de raisonnement). Les agents incompatibles doivent être épinglés sur l'ancien moteur ou adaptés avant validation.

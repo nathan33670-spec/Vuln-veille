@@ -169,6 +169,7 @@ class _Ops:
         )
         db.add(connector)
         await flush_unique(db)
+        await type_().on_saved(db, connector)
         await _audit(db, request, principal, "connector.created", connector)
         await db.commit()
         await db.refresh(connector)
@@ -211,6 +212,7 @@ class _Ops:
             connector.version += 1
             connector.updated_by = principal.user_id
             await flush_unique(db)
+            await type_().on_saved(db, connector)
             await _audit(db, request, principal, "connector.updated", connector, fields=changed)
             await db.commit()
             await db.refresh(connector)

@@ -75,7 +75,11 @@ def test_parse_drops_invalid_metrics_but_refuses_broken_records() -> None:
     data = parse_cve(out_of_range)
     assert data.cvss == {}
     assert data.base_score is None
-    for broken in ({"cve": {"metrics": {}}}, {"cve": {"id": "CVE-2026-0001", "descriptions": "x"}}):
+    broken_records: list[dict[str, object]] = [
+        {"cve": {"metrics": {}}},
+        {"cve": {"id": "CVE-2026-0001", "descriptions": "x"}},
+    ]
+    for broken in broken_records:
         with pytest.raises(NvdParseError):
             parse_cve(broken)
 

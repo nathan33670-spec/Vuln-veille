@@ -105,3 +105,44 @@ def cve_fetch(cve_id: str) -> None:
     from app.catalog.fetch import fetch_cve  # noqa: PLC0415 - worker-only import
 
     asyncio.run(fetch_cve(get_settings(), cve_id))
+
+
+# Workflow engine (spec 02 §5): the orchestrator on ``default``, node tasks on the queue
+# of their type (the worker holding that family's keyring).
+
+
+def _advance(run_id: str, workspace_id: str) -> None:
+    from app.workflows.runner import advance_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(advance_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
+
+
+def _node(node_run_id: str, workspace_id: str) -> None:
+    from app.workflows.runner import node_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(node_entry(get_settings(), uuid.UUID(node_run_id), uuid.UUID(workspace_id)))
+
+
+@app.task(name="default.workflow_advance")
+def workflow_advance(run_id: str, workspace_id: str) -> None:
+    _advance(run_id, workspace_id)
+
+
+@app.task(name="default.workflow_node")
+def default_workflow_node(node_run_id: str, workspace_id: str) -> None:
+    _node(node_run_id, workspace_id)
+
+
+@app.task(name="collect.workflow_node")
+def collect_workflow_node(node_run_id: str, workspace_id: str) -> None:
+    _node(node_run_id, workspace_id)
+
+
+@app.task(name="ai.workflow_node")
+def ai_workflow_node(node_run_id: str, workspace_id: str) -> None:
+    _node(node_run_id, workspace_id)
+
+
+@app.task(name="publish.workflow_node")
+def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
+    _node(node_run_id, workspace_id)

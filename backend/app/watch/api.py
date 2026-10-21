@@ -25,48 +25,10 @@ from app.watch.schemas import (
     WatchSourceOut,
     WatchSourceUpdate,
 )
-from app.watch.scope import match
+from app.watch.scope import default_scope, load_scope, match, scope_technologies
 
 ScopeAccess = Annotated[WorkspaceAccess, Depends(require_workspace(Permission.WATCH_SCOPE_MANAGE))]
 SourceAccess = Annotated[WorkspaceAccess, Depends(require_workspace(Permission.SOURCE_MANAGE))]
-MAX_MERGE_HOPS = 5
-
-
-def default_scope(workspace_id: uuid.UUID) -> WatchScope:
-    return WatchScope(
-        workspace_id=workspace_id,
-        mode="scoped",
-        technology_ids=[],
-        vendors=[],
-        keywords=[],
-        cvss_min=None,
-        include_unscored="wait",
-        always_include_kev=True,
-        cwe_include=[],
-        cwe_exclude=[],
-        version=0,
-    )
-
-
-async def load_scope(db: AsyncSession, workspace_id: uuid.UUID) -> WatchScope:
-    return await db.get(WatchScope, workspace_id) or default_scope(workspace_id)
-
-
-async def scope_technologies(db: AsyncSession, scope: WatchScope) -> list[Technology]:
-    """Followed technologies, following merges to their target."""
-    found: dict[uuid.UUID, Technology] = {}
-    pending = list(scope.technology_ids)
-    for _ in range(MAX_MERGE_HOPS):
-        if not pending:
-            break
-        rows = await db.execute(select(Technology).where(Technology.id.in_(pending)))
-        pending = []
-        for tech in rows.scalars():
-            if tech.status == "merged" and tech.merged_into:
-                pending.append(tech.merged_into)
-            else:
-                found[tech.id] = tech
-    return list(found.values())
 
 
 def scope_out(scope: WatchScope) -> WatchScopeOut:

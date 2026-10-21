@@ -89,7 +89,7 @@ async def clean_state(database: Database, redis_url: str) -> None:
         await admin.execute(
             "TRUNCATE users, client_organizations, audit_events, connectors, cve_records, "
             "outbox_events, technologies, vulnerabilities, collected_items, watch_scopes, "
-            "watch_sources RESTART IDENTITY CASCADE"
+            "watch_sources, workflows, dedupe_keys RESTART IDENTITY CASCADE"
         )
     finally:
         await admin.close()

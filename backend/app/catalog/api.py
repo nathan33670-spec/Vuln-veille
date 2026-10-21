@@ -20,8 +20,7 @@ from app.iam.principal import Principal
 from app.vulns.api import cve_out
 from app.vulns.models import Vulnerability
 from app.vulns.schemas import CveChangeOut, CveDetailOut, CvePage, SyncStatusOut
-from app.watch.api import load_scope, scope_technologies
-from app.watch.scope import match
+from app.watch.scope import load_scope, match, scope_technologies
 
 Reader = Annotated[Principal, Depends(require(Permission.VULN_READ))]
 MAX_SCOPE_WINDOW = 2000

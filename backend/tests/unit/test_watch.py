@@ -9,11 +9,10 @@ from pydantic import ValidationError
 from app.catalog.models import CveRecord
 from app.technologies.models import Technology
 from app.technologies.schemas import TechnologyCreate
-from app.watch.api import default_scope
 from app.watch.collect import CVE_MENTION, clean_text, normalize_url
 from app.watch.models import WatchScope
 from app.watch.schemas import WatchSourceCreate
-from app.watch.scope import match
+from app.watch.scope import default_scope, match
 
 LOG4J = Technology(
     id=uuid.uuid4(),

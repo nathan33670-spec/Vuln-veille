@@ -138,6 +138,7 @@ async def create_vulnerability(
         now=now,
         workspace_id=workspace_id,
         actor_user_id=actor,
+        actor_type="workflow" if origin == "workflow" else "user",
         origin=origin,
         cve_id=cve_id,
         technologies=len(linked),

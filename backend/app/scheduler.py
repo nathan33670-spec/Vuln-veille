@@ -1,8 +1,9 @@
 """Scheduler process: fires due triggers at a fixed tick.
 
 Several replicas may run; a PostgreSQL advisory lock elects a single active
-leader per tick. Each tick queues the catalogue synchronisations that are due (phase 2);
-workflow triggers come in phase 3.
+leader per tick. Each tick queues the catalogue synchronisations that are due, fires
+the due workflow schedules, dispatches outbox events to subscribed workflows, and
+sweeps the engine for lost work (spec 02 §5-6).
 """
 
 import asyncio
@@ -20,6 +21,8 @@ from app.core.db import create_engine, create_sessionmaker
 from app.core.logging import configure_logging, get_logger
 from app.core.rls import init_context
 from app.core.tasks import CeleryTaskQueue, TaskQueue
+from app.workflows.dispatch import dispatch_outbox, fire_schedules
+from app.workflows.engine import sweep
 
 # Arbitrary constant identifying the scheduler's advisory lock.
 SCHEDULER_LOCK_ID = 0x5656_0001
@@ -51,6 +54,10 @@ def periodic_jobs(engine: AsyncEngine, tasks: TaskQueue) -> TickHandler:
         async with sessions() as db:
             init_context(db)
             await schedule_syncs(db, tasks, datetime.now(UTC))
+        for job in (fire_schedules, dispatch_outbox, sweep):
+            async with sessions() as db:
+                init_context(db)
+                await job(db, tasks, datetime.now(UTC))
 
     return tick
 

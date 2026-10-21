@@ -13,14 +13,19 @@ The decision carries its reasons, shown to analysts and kept in workflow runs.
 """
 
 import re
+import uuid
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Literal
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import CveRecord
 from app.technologies.models import Technology
 from app.watch.models import WatchScope
 
+MAX_MERGE_HOPS = 5
 Decision = Literal["in_scope", "out_of_scope", "pending"]
 
 
@@ -89,3 +94,40 @@ def match(  # noqa: PLR0911 - one return per rule reads like the spec
     if scope.cvss_min is not None and Decimal(cve.base_score) < scope.cvss_min:
         return ScopeDecision("out_of_scope", [*reasons, f"cvss_below:{scope.cvss_min}"])
     return ScopeDecision("in_scope", reasons)
+
+
+def default_scope(workspace_id: uuid.UUID) -> WatchScope:
+    return WatchScope(
+        workspace_id=workspace_id,
+        mode="scoped",
+        technology_ids=[],
+        vendors=[],
+        keywords=[],
+        cvss_min=None,
+        include_unscored="wait",
+        always_include_kev=True,
+        cwe_include=[],
+        cwe_exclude=[],
+        version=0,
+    )
+
+
+async def load_scope(db: AsyncSession, workspace_id: uuid.UUID) -> WatchScope:
+    return await db.get(WatchScope, workspace_id) or default_scope(workspace_id)
+
+
+async def scope_technologies(db: AsyncSession, scope: WatchScope) -> list[Technology]:
+    """Followed technologies, following merges to their target."""
+    found: dict[uuid.UUID, Technology] = {}
+    pending = list(scope.technology_ids)
+    for _ in range(MAX_MERGE_HOPS):
+        if not pending:
+            break
+        rows = await db.execute(select(Technology).where(Technology.id.in_(pending)))
+        pending = []
+        for tech in rows.scalars():
+            if tech.status == "merged" and tech.merged_into:
+                pending.append(tech.merged_into)
+            else:
+                found[tech.id] = tech
+    return list(found.values())

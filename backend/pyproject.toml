@@ -20,6 +20,10 @@ dependencies = [
     "cryptography>=44",
     "segno>=1.6",
     "email-validator>=2.2",
+    "jmespath>=1.1.0",
+    "python-liquid>=2.3.4",
+    "croniter>=6.2.4",
+    "defusedxml>=0.7.1",
 ]
 
 [dependency-groups]
@@ -70,7 +74,7 @@ plugins = ["pydantic.mypy"]
 files = ["app", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["testcontainers.*"]
+module = ["testcontainers.*", "jmespath.*", "defusedxml.*", "croniter.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

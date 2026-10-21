@@ -19,7 +19,7 @@ La sécurité est une exigence de premier rang : voir `docs/SECURITY.md`.
 ## Procédure de reprise (à suivre AVANT toute modification)
 
 1. Lire `docs/PROGRESS.md` : état courant, dernière étape terminée, prochaine étape, points bloquants.
-2. Vérifier l'état réel : `git status`, `git log --oneline -20`. **Le code fait foi** : si `PROGRESS.md` et le code divergent, corriger d'abord `PROGRESS.md`.
+2. Vérifier l'état réel : `git fetch origin Main`, `git status`, `git log --oneline -20 origin/Main`. **Le code fait foi** : si `PROGRESS.md` et le code divergent, corriger d'abord `PROGRESS.md`.
 3. Lire dans `docs/PLAN.md` la phase en cours (case cochée = fait et testé).
 4. Lire la spec de la phase dans `docs/specs/` et les décisions concernées dans `docs/DECISIONS.md`.
 5. Lire `docs/OPEN_QUESTIONS.md` : ne rien implémenter contre une réponse déjà donnée. Si une question bloque l'étape, appliquer l'hypothèse par défaut notée et le signaler.
@@ -27,7 +27,7 @@ La sécurité est une exigence de premier rang : voir `docs/SECURITY.md`.
 
 ## Règles de travail
 
-- Branche de développement : `claude/veille-management-tool-845y6h`. Push : `git push -u origin claude/veille-management-tool-845y6h`. Pas de PR sans demande explicite.
+- **`Main` est la seule branche principale, et elle reste propre** : on n'y pousse jamais directement. Tout changement part d'une branche courte créée depuis `Main` (`claude/<sujet>`, par exemple `claude/phase-4-ai-engines`), puis passe par une **merge request (PR GitHub) vers `Main`**. La merge request n'est fusionnée qu'avec la CI verte. Après la fusion, la branche est supprimée. Détail : `docs/PROCEDURES.md` §0.
 - Commits petits et fréquents, au format Conventional Commits (`feat(iam): ...`, `fix(engine): ...`, `docs: ...`).
 - À la fin de chaque étape du plan **et avant toute interruption probable** : mettre à jour `docs/PROGRESS.md` et cocher `docs/PLAN.md`, puis commit et push. Le conteneur est éphémère : ce qui n'est pas poussé est perdu.
 - Toute décision structurante nouvelle ou modifiée se note en ADR dans `docs/DECISIONS.md`.

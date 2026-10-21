@@ -1,9 +1,12 @@
 name: CI
 
+# `Main` is the only long-lived branch: it runs on every merge, and every merge request
+# targeting it runs the same checks before it can be merged (docs/PROCEDURES.md §0).
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [Main]
   pull_request:
+    branches: [Main]
 
 # Least privilege for the workflow token.
 permissions:

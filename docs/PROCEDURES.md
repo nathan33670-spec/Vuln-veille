@@ -1,9 +1,20 @@
 # PROCEDURES — Développement, conventions et reprise
 
+## 0. Branches et merge requests
+
+- **`Main`** est la branche par défaut et la seule branche durable. Elle reflète toujours un état vert (CI) et cohérent (`PLAN.md`, `PROGRESS.md` à jour). On n'y pousse jamais directement, et on ne réécrit jamais son historique.
+- **Une branche par sujet**, créée depuis `Main` à jour :
+  `git fetch origin Main && git checkout -b claude/<sujet> origin/Main`.
+  Nom court et explicite (`claude/phase-4-ai-engines`, `fix/caddy-go-version`). Une étape du plan, ou un petit groupe d'étapes liées, par branche.
+- **Merge request** (PR GitHub vers `Main`) ouverte dès le premier push. Titre au format Conventional Commits, description selon `.github/pull_request_template.md`. La CI tourne sur chaque push de la merge request (jobs `backend`, `frontend`, `security`, `images` avec le test de démarrage de la pile).
+- **Fusion** seulement avec la CI verte et une merge request à jour avec `Main`. Si `Main` a avancé, y fusionner `Main` (pas de `rebase` ni de `push --force` sur une branche partagée). Mode de fusion : *squash* pour une petite correction, *merge commit* pour une étape du plan aux commits déjà propres.
+- **Après la fusion** : supprimer la branche (distante et locale) et repartir de `Main` pour le sujet suivant.
+- **Réglages GitHub recommandés** (Settings → Branches → règle sur `Main`) : merge request obligatoire, statuts `backend`, `frontend`, `security` et `images` requis, branche à jour avant fusion, *force push* et suppression interdits.
+
 ## 1. Procédure de reprise après interruption
 
 1. Lire `CLAUDE.md`, puis `docs/PROGRESS.md` (section « État courant »).
-2. `git fetch origin claude/veille-management-tool-845y6h && git status && git log --oneline -20`.
+2. `git fetch origin && git status && git log --oneline -20 origin/Main` ; lister les merge requests ouvertes : une étape en cours vit sur sa branche `claude/<sujet>`, pas sur `Main`.
 3. Si `PROGRESS.md` annonce une étape « en cours » : relire le diff des derniers commits, lancer `make lint test`, puis terminer l'étape ou revenir à un état cohérent.
 4. Reprendre à la « Prochaine étape » de `PROGRESS.md`, en s'appuyant sur la spec de la phase (`docs/specs/`).
 5. Ne jamais recommencer une étape cochée sans raison écrite dans `PROGRESS.md`.
@@ -16,7 +27,7 @@
 4. Relire la checklist de sécurité (SECURITY.md §5).
 5. Mettre à jour la documentation impactée (spec, ADR, OPEN_QUESTIONS).
 6. Cocher l'étape dans `PLAN.md`, mettre à jour `PROGRESS.md` (fait, prochaine étape, points d'attention).
-7. Commit (Conventional Commits) et push sur la branche.
+7. Commit (Conventional Commits) et push sur la branche du sujet ; la merge request vers `Main` est fusionnée quand la CI est verte (§0).
 
 Pour une étape longue : commits intermédiaires réguliers (« wip » interdit, préférer des commits cohérents et verts), et `PROGRESS.md` mis à jour au moins toutes les quelques heures de travail.
 

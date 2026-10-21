@@ -100,6 +100,28 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
         "viewer": 404,
         "no_workspace": 404,
     },
+    # Agents are read like workflows (viewers included), inside their workspace only.
+    "/workspaces/voc/agents": {
+        ANON: 401,
+        "voc": 200,
+        "cert": 404,
+        "viewer": 200,
+        "no_workspace": 404,
+    },
+    "/workspaces/cert/agent-runs": {
+        ANON: 401,
+        "voc": 404,
+        "cert": 200,
+        "viewer": 404,
+        "no_workspace": 404,
+    },
+    "/workspaces/voc/ai-budget": {
+        ANON: 401,
+        "voc": 200,
+        "cert": 404,
+        "viewer": 200,
+        "no_workspace": 404,
+    },
     "/workspaces/voc/watch-scope": {
         ANON: 401,
         "voc": 200,

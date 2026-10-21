@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **en cours**. Phase 1 terminée, CI verte.
-- **Dernière étape terminée** : 2.7 à 2.12 (technos, périmètre de veille, éléments collectés, vulnérabilités, preuves et synthèses, sources), backend et tests.
-- **Étape en cours** : 2.13 interfaces de la phase 2.
-- **Prochaine étape** : clôture de la phase 2 (critère de sortie, CI), puis phase 3 (moteur de workflows).
+- **Phase** : 2 (socle de veille et vecteur d'entrée NVD) **terminée**. Phase 3 (moteur de workflows) non commencée.
+- **Dernière étape terminée** : 2.13 interfaces (vulnérabilités, catalogue CVE, périmètre, sources, technos, connecteurs, secrets).
+- **Étape en cours** : aucune. Attendre le feu vert du porteur pour la phase 3.
+- **Prochaine étape** : phase 3, étape 3.1 (modèles des workflows, versions immuables, exécutions).
 - **Points d'attention** :
   - Sous le rôle `vv_portal`, la RLS masque une ligne à peine insérée : **pas de `RETURNING`** sur les insertions du portail (renseigner les horodatages côté application).
   - Le garde « toute route a une politique » doit passer par `fastapi.routing.iter_route_contexts` (FastAPI 0.142 enveloppe les routeurs inclus) ; il échoue si moins de 10 routes sont trouvées.
@@ -23,9 +23,19 @@
   - Écart assumé (2.7) : « import depuis le dictionnaire CPE » est réalisé par des suggestions tirées des configurations CPE déjà synchronisées depuis NVD (`/technologies/cpe-suggestions`), sans appel à l'API CPE de NVD : l'API n'a pas d'accès Internet et la donnée est déjà là.
   - Lecture partagée (ADR-024) : `/vulnerabilities`, `/cves` et `/technologies` demandent `vuln.read` (tous les internes, lecteurs compris) ; les écritures passent par `/workspaces/{espace}/…` avec `vuln.qualify`. Les évaluations sont lisibles par l'autre équipe, modifiables par la sienne seulement (RLS).
   - Les éditeurs de texte de l'outil de développement transforment parfois les échappements `\u…` en caractères invisibles : un test bloquant (`tests/security/test_source_hygiene.py`) refuse tout caractère invisible ou de contrôle bidirectionnel dans le code.
+  - Critère de sortie de la phase 2 aligné sur ADR-024 (décision du porteur) : le CERT voit la fiche et la qualification du VOC et peut la reprendre ; seuls les commentaires, le périmètre, les sources, connecteurs et secrets restent cloisonnés. L'ancienne formulation (« le CERT ne voit pas la vulnérabilité VOC ») datait d'avant cette décision.
+  - Vérifié sur l'API NVD réelle (via le proxy du bac à sable, test temporaire non commité) : 159 `cve.published` sur 6 heures de modifications, format de dates accepté. Cette vérification a révélé les métriques SSVC (`ssvcV203`) qui faisaient rejeter 61 % des CVE : corrigé. Flux KEV et enregistrements CVE.org réels analysés sans erreur.
+  - Interfaces : les textes externes (descriptions, références, preuves) s'affichent comme du texte, jamais comme du HTML ; les liens passent par `ExternalLink` (http(s) seulement, sans référent ni `opener`). Le rendu Markdown assaini des justifications et commentaires viendra avec les bulletins (phase 6) : affichage en texte brut d'ici là.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-24 — Session 9 : phase 2, interfaces et clôture
+
+- Back-office : sélecteur d'équipe (VOC/CERT) mémorisé, file des vulnérabilités (à qualifier, qualifiées, en surveillance, filtres, pagination), fiche vulnérabilité (qualification de l'équipe avec transitions autorisées, « Reprendre cette qualification », fiche partagée, CVE, technos, preuves, synthèses, commentaires privés, chronologie), catalogue CVE (état des synchronisations, décision de périmètre par équipe, promotion), périmètre de veille avec aperçu, sources, catalogue des technos (recherche approchée, suggestions CPE, fusion), connecteurs par famille (formulaire généré depuis le schéma du type, test, santé), secrets en écriture seule (espace et globaux).
+- Composants : `TextArea`, `Checkbox`, `Tabs`, `ExternalLink` et `safeHttpUrl`.
+- Correctif : analyse NVD tolérante aux nouvelles familles de métriques (SSVC), découverte par une synchronisation réelle.
+- Tests : 21 tests frontend (liens hostiles, file et fiche vulnérabilité, reprise de qualification, navigation par permissions) ; 230 tests backend.
 
 ### 2026-10-22 — Session 8 : phase 2, coffre de secrets et sortie réseau
 

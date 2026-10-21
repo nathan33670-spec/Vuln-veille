@@ -2,6 +2,7 @@ import {
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
+  type TextareaHTMLAttributes,
   useEffect,
   useId,
   useRef,
@@ -191,5 +192,102 @@ export function Dialog({
       <h2 id="vv-dialog-title">{title}</h2>
       {open ? children : null}
     </dialog>
+  );
+}
+
+export function TextArea({
+  label,
+  hint,
+  id,
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; hint?: string }) {
+  const generated = useId();
+  const fieldId = id ?? generated;
+  return (
+    <div className="vv-field">
+      <label htmlFor={fieldId}>{label}</label>
+      <textarea id={fieldId} className="vv-textarea" {...props} />
+      {hint ? <span className="vv-field-hint">{hint}</span> : null}
+    </div>
+  );
+}
+
+export function Checkbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="vv-checkbox">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <label htmlFor={id}>{label}</label>
+    </div>
+  );
+}
+
+export function Tabs<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string }[];
+  label: string;
+}) {
+  return (
+    <div className="vv-tabs" role="tablist" aria-label={label}>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="tab"
+          aria-selected={o.value === value}
+          className={o.value === value ? "vv-tab vv-tab-active" : "vv-tab"}
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The URL if it is http(s), else null: collected data may carry javascript: or data: links. */
+export function safeHttpUrl(href: string | null | undefined): string | null {
+  if (!href) return null;
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Links found in collected data: http(s) only, no referrer, no opener, never script. */
+export function ExternalLink({
+  href,
+  children,
+}: {
+  href: string | null | undefined;
+  children: ReactNode;
+}) {
+  const safe = safeHttpUrl(href);
+  if (!safe) return <span>{children}</span>;
+  return (
+    <a href={safe} target="_blank" rel="noopener noreferrer nofollow">
+      {children}
+    </a>
   );
 }

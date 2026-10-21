@@ -140,9 +140,9 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 2.10 Vulnérabilités : modèle, statuts, file des non qualifiées, qualification, assignation, commentaires, historique, rattachement aux technos ; création manuelle à partir d'un identifiant CVE
 - [x] 2.11 Preuves et synthèses IA rattachées aux vulnérabilités (modèle et API ; la génération vient en phase 4)
 - [x] 2.12 Sources de veille de l'espace (catalogue de flux et de comptes à suivre, avec tags)
-- [ ] 2.13 Interfaces : connecteurs (liste, configuration, test, santé), catalogue CVE (nouveautés NVD, recherche, bouton « Promouvoir en vulnérabilité »), périmètre de veille, liste des vulnérabilités (filtres, tri, assignation), fiche vulnérabilité (enrichissement, preuves, chronologie, actions), catalogue des technos, sources
+- [x] 2.13 Interfaces : connecteurs (liste, configuration, test, santé), catalogue CVE (nouveautés NVD, recherche, bouton « Promouvoir en vulnérabilité »), périmètre de veille, liste des vulnérabilités (filtres, tri, assignation), fiche vulnérabilité (enrichissement, preuves, chronologie, actions), catalogue des technos, sources
 
-**Critère de sortie** : une CVE réellement publiée sur NVD apparaît dans le catalogue après la synchronisation, avec son événement `cve.published` ; un analyste VOC la promeut et la qualifie ; l'analyste CERT ne voit pas la vulnérabilité VOC.
+**Critère de sortie** : une CVE réellement publiée sur NVD apparaît dans le catalogue après la synchronisation, avec son événement `cve.published` ; un analyste VOC la promeut et la qualifie ; l'analyste CERT voit la fiche et la qualification du VOC et peut la reprendre, mais ne voit ni les commentaires, ni le périmètre, ni les sources, connecteurs et secrets du VOC (critère aligné sur ADR-024 : fiches partagées, qualification par équipe).
 
 ### Phase 3 — Moteur de workflows
 

@@ -65,16 +65,19 @@ def test_parse_refuses_invalid_identifiers(cve_id: str) -> None:
         parse_cve(nvd_item(cve_id))
 
 
-def test_parse_refuses_malformed_records() -> None:
-    with pytest.raises(NvdParseError):
-        parse_cve(
-            {
-                "cve": {
-                    "id": "CVE-2026-0001",
-                    "metrics": {"cvssMetricV31": [{"cvssData": {"baseScore": 42}}]},
-                }
-            }
-        )
+def test_parse_drops_invalid_metrics_but_refuses_broken_records() -> None:
+    out_of_range = {
+        "cve": {
+            "id": "CVE-2026-0001",
+            "metrics": {"cvssMetricV31": [{"cvssData": {"baseScore": 42}}]},
+        }
+    }
+    data = parse_cve(out_of_range)
+    assert data.cvss == {}
+    assert data.base_score is None
+    for broken in ({"cve": {"metrics": {}}}, {"cve": {"id": "CVE-2026-0001", "descriptions": "x"}}):
+        with pytest.raises(NvdParseError):
+            parse_cve(broken)
 
 
 def test_detection() -> None:
@@ -173,3 +176,22 @@ async def test_api_key_header_only_when_configured() -> None:
     fake.handler = spy  # type: ignore[method-assign]
     await NvdClient(fake.client(), NvdConfig()).cve("CVE-2021-44228")
     assert "apikey" not in seen[-1]
+
+
+def test_unknown_metric_families_do_not_reject_the_cve() -> None:
+    # Shape seen on the live API (2026-10): CISA SSVC metrics next to CVSS ones.
+    item = nvd_item("CVE-2026-84268")
+    item["cve"]["metrics"]["ssvcV203"] = [
+        {
+            "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+            "ssvcData": {
+                "timestamp": "2026-09-01T18:01:43Z",
+                "id": "CVE-2026-84268",
+                "options": [{"exploitation": "none"}],
+            },
+        }
+    ]
+    item["cve"]["metrics"]["cvssMetricV31"].append({"source": "odd", "cvssData": "not an object"})
+    data = parse_cve(item)
+    assert data.base_score == Decimal("7.5")
+    assert len(data.cvss["v31"]) == 2  # the odd metric is skipped, the others kept

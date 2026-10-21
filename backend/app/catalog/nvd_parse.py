@@ -89,7 +89,8 @@ class _Cve(_Loose):
     cisa_required_action: str | None = Field(default=None, alias="cisaRequiredAction")
     cisa_vulnerability_name: str | None = Field(default=None, alias="cisaVulnerabilityName")
     descriptions: list[_LangValue] = []
-    metrics: dict[str, list[_Metric]] = {}
+    # Raw: NVD adds metric families over time (e.g. SSVC); only CVSS ones are read.
+    metrics: dict[str, Any] = {}
     weaknesses: list[_Weakness] = []
     configurations: list[_Configuration] = []
     references: list[_Reference] = []
@@ -137,6 +138,18 @@ def _metric_out(metric: _Metric) -> dict[str, Any]:
     }
 
 
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _metric(raw: Any) -> dict[str, Any] | None:
+    """One CVSS metric; an unexpected entry is skipped, never the whole CVE."""
+    try:
+        return _metric_out(_Metric.model_validate(raw))
+    except ValidationError:
+        return None
+
+
 def _score_of_record(cvss: dict[str, list[dict[str, Any]]]) -> tuple[Decimal | None, str | None]:
     for _, key in CVSS_KEYS:
         metrics = [m for m in cvss.get(key, []) if m["score"] is not None]
@@ -158,11 +171,11 @@ def parse_cve(item: dict[str, Any]) -> CveData:
     description = next((d.value for d in cve.descriptions if d.lang == "en"), "")
     if not description and cve.descriptions:
         description = cve.descriptions[0].value
-    cvss = {
-        key: [_metric_out(m) for m in cve.metrics.get(nvd_key, [])[:10]]
-        for nvd_key, key in CVSS_KEYS
-        if cve.metrics.get(nvd_key)
-    }
+    cvss = {}
+    for nvd_key, key in CVSS_KEYS:
+        metrics = [m for m in map(_metric, _as_list(cve.metrics.get(nvd_key))[:10]) if m]
+        if metrics:
+            cvss[key] = metrics
     base_score, severity = _score_of_record(cvss)
     cwes = sorted(
         {

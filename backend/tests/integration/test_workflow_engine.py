@@ -25,6 +25,7 @@ from app.workflows.seeds import NEW_CVE
 from tests.integration.conftest import Database
 from tests.integration.seed import WORKSPACE_IDS, create_user
 from tests.integration.workflow_harness import Harness, harness
+from tests.web_fakes import FakeWeb
 
 pytestmark = pytest.mark.integration
 
@@ -439,3 +440,74 @@ async def test_run_deadline(database: Database, redis_url: str, clean_state: Non
         await h.drain()
         run = {r.id: r for r in await _runs(h, VOC)}[run_id]
         assert run.status == "timed_out"
+
+
+FEED = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>CERT-FR</title>
+<item><title>Multiples vuln\xc3\xa9rabilit\xc3\xa9s dans Apache Log4j</title>
+<link>https://www.cert.ssi.gouv.fr/avis/CERTFR-2026-AVI-0001/</link>
+<description>&lt;p&gt;CVE-2026-1001 et CVE-2026-1003&lt;/p&gt;</description>
+<pubDate>Tue, 20 Oct 2026 10:00:00 +0200</pubDate></item>
+<item><title>Bulletin sans CVE</title><link>https://www.cert.ssi.gouv.fr/avis/2/</link>
+<description>Rien</description></item></channel></rss>"""
+
+
+async def test_rss_source_through_a_connector(
+    database: Database, redis_url: str, clean_state: None
+) -> None:
+    connector_id = uuid.uuid4()
+    await _sql(
+        database,
+        "INSERT INTO connectors (id, workspace_id, family, kind, name, config, egress_domains) "
+        "VALUES ($1, $2, 'source', 'rss', 'CERT-FR', $3, ARRAY['www.cert.ssi.gouv.fr'])",
+        connector_id,
+        VOC,
+        json.dumps({"allowed_domains": ["www.cert.ssi.gouv.fr"]}),
+    )
+    web = FakeWeb()
+    web.raw("https://www.cert.ssi.gouv.fr/avis/feed/", FEED, "application/rss+xml")
+    async with harness(database, redis_url) as h:
+        h.deps.http = web.client("www.cert.ssi.gouv.fr")
+        graph = _linear(
+            (
+                "feed",
+                "source.rss",
+                {
+                    "connector_id": str(connector_id),
+                    "url": "https://www.cert.ssi.gouv.fr/avis/feed/",
+                },
+            ),
+            ("cves", "transform.extract_cve", {}),
+            ("upsert", "vuln.upsert", {"evidence_kind": "advisory"}),
+        )
+        workflow_id = await h.workflow(VOC, "CERT-FR", graph)
+        run_id = await _manual(h, workflow_id, VOC, {})
+        await h.drain()
+        nodes = await _node_runs(h, VOC, run_id)
+        assert nodes["feed"].status == "succeeded", nodes["feed"].error
+        assert nodes["feed"].output["out"][0]["meta"]["trust"] == "untrusted"
+        assert nodes["cves"].output_count == 1
+        assert nodes["upsert"].output_count == 2
+
+        rows = await _sql(
+            database,
+            "SELECT v.cve_id, e.kind, c.title FROM vulnerability_evidence e "
+            "JOIN vulnerabilities v ON v.id = e.vulnerability_id "
+            "JOIN collected_items c ON c.id = e.collected_item_id ORDER BY v.cve_id",
+        )
+        assert [(r["cve_id"], r["kind"]) for r in rows] == [
+            ("CVE-2026-1001", "advisory"),
+            ("CVE-2026-1003", "advisory"),
+        ]
+
+        # Second run: entries already collected are not emitted again (only_new).
+        run_id = await _manual(h, workflow_id, VOC, {})
+        await h.drain()
+        nodes = await _node_runs(h, VOC, run_id)
+        assert nodes["feed"].output_count == 0
+        assert nodes["cves"].status == "skipped"
+
+        # A connector of another workspace cannot be used, even by a stored graph.
+        await _sql(database, "UPDATE connectors SET workspace_id = $1", CERT)
+        run_id = await _manual(h, workflow_id, VOC, {})
+        await h.drain()
+        assert (await _node_runs(h, VOC, run_id))["feed"].error == "connector_not_found"

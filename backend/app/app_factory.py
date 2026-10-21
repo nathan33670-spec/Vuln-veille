@@ -34,6 +34,7 @@ from app.vault.api import build_vault_router
 from app.vault.service import Vault
 from app.vulns.api import build_vulnerability_router
 from app.watch.api import build_watch_router
+from app.workflows.api import build_workflow_router
 
 API_PREFIX: dict[Audience, str] = {
     "backoffice": "/api/v1",
@@ -93,6 +94,7 @@ def create_app(
         app.include_router(build_technology_router(), prefix=prefix)
         app.include_router(build_watch_router(), prefix=prefix)
         app.include_router(build_vulnerability_router(), prefix=prefix)
+        app.include_router(build_workflow_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
 

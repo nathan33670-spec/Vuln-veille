@@ -141,7 +141,7 @@ services:
     environment:
       VV_DB_ADMIN_URL: postgresql://${VV_DB_ADMIN_USER}:${VV_DB_ADMIN_PASSWORD}@postgres:5432/${VV_DB_NAME}
       VV_DATABASE_URL_MIGRATOR: postgresql://vv_migrator:${VV_DB_PASSWORD_MIGRATOR}@postgres:5432/${VV_DB_NAME}
-    command: ["sh", "-c", "python -m app.cli provision-db-roles && alembic upgrade head"]
+    command: ["sh", "-c", "python -m app.cli provision-db-roles && alembic upgrade head && python -m app.cli seed-workflows"]
     networks: [data]
     depends_on:
       postgres: { condition: service_healthy }

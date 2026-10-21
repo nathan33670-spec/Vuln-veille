@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -9,6 +10,12 @@ import httpx
 from app.net.safe_http import MIB, EgressPolicy, SafeHttpClient
 
 Route = Callable[[httpx.Request], tuple[int, Any]]
+
+
+@dataclass(frozen=True)
+class RawBody:
+    data: bytes
+    content_type: str
 
 
 class FakeWeb:
@@ -19,6 +26,9 @@ class FakeWeb:
     def json(self, url: str, body: Any, status: int = 200) -> None:
         self.routes[url] = lambda _request: (status, body)
 
+    def raw(self, url: str, body: bytes, content_type: str, status: int = 200) -> None:
+        self.routes[url] = lambda _request: (status, RawBody(body, content_type))
+
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         url = f"https://{request.headers['host']}{request.url.path}"
@@ -26,6 +36,12 @@ class FakeWeb:
         if route is None:
             return httpx.Response(404, stream=httpx.ByteStream(b"not found"))
         status, body = route(request)
+        if isinstance(body, RawBody):
+            return httpx.Response(
+                status,
+                headers={"content-type": body.content_type},
+                stream=httpx.ByteStream(body.data),
+            )
         data = json.dumps(body).encode()
         return httpx.Response(
             status, headers={"content-type": "application/json"}, stream=httpx.ByteStream(data)

@@ -6,6 +6,7 @@ import base64
 import json
 import os
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import asyncpg
@@ -108,6 +109,15 @@ def _egress_acl(output: Path, with_connectors: bool) -> None:
     print(f"wrote {output} ({len(domains)} domains); restart smokescreen to apply")  # noqa: T201
 
 
+def _seed_workflows() -> None:
+    from app.workflows.seeds import seed_all  # noqa: PLC0415 - loads the node registry
+
+    configure_logging("WARNING")
+    created = asyncio.run(seed_all(get_settings(), datetime.now(UTC)))
+    for slug, keys in created.items():
+        print(f"{slug}: {', '.join(keys) or 'already seeded'}")  # noqa: T201
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli", description="Vuln-Veille administration")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -132,6 +142,8 @@ def main(argv: list[str] | None = None) -> None:
         "--static-only", action="store_true", help="only the domains declared by the types"
     )
 
+    sub.add_parser("seed-workflows", help="create the delivered workflows (disabled) per workspace")
+
     args = parser.parse_args(argv)
     if args.command == "provision-db-roles":
         asyncio.run(_provision_db_roles())
@@ -145,6 +157,8 @@ def main(argv: list[str] | None = None) -> None:
         _vault_rotate(SecretPurpose(args.purpose))
     elif args.command == "egress-acl":
         _egress_acl(args.output, with_connectors=not args.static_only)
+    elif args.command == "seed-workflows":
+        _seed_workflows()
 
 
 if __name__ == "__main__":

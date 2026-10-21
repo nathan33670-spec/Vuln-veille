@@ -12,7 +12,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings
+from app.core.db import create_engine, create_sessionmaker
 from app.core.ids import uuid7
+from app.core.rls import init_context, set_context
+from app.iam.models import Workspace
 from app.workflows.graph import compile_graph, graph_hash
 from app.workflows.models import Workflow, WorkflowVersion
 
@@ -160,4 +164,22 @@ async def seed_workspace(db: AsyncSession, workspace_id: uuid.UUID, now: datetim
             )
         )
         created.append(key)
+    return created
+
+
+async def seed_all(settings: Settings, now: datetime) -> dict[str, list[str]]:
+    """``python -m app.cli seed-workflows`` (after migrations): app role, one workspace
+    context at a time."""
+    engine = create_engine(settings.database_url_app.get_secret_value())
+    created: dict[str, list[str]] = {}
+    try:
+        async with create_sessionmaker(engine)() as db:
+            init_context(db)
+            workspaces = (await db.execute(select(Workspace.id, Workspace.slug))).all()
+            for workspace_id, slug in workspaces:
+                await set_context(db, workspace_ids=(workspace_id,))
+                created[slug] = await seed_workspace(db, workspace_id, now)
+                await db.commit()
+    finally:
+        await engine.dispose()
     return created

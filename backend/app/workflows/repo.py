@@ -190,7 +190,7 @@ class WorkspaceRepo:
         rows = await self.db.execute(
             query.order_by(Vulnerability.first_seen_at.desc()).limit(limit)
         )
-        return [(v, a) for v, a in rows.tuples()]
+        return [(v, a) for v, a in rows.all()]
 
     async def attach_evidence(
         self, vulnerability: Vulnerability, collected_item_id: uuid.UUID, kind: str

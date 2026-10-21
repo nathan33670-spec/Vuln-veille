@@ -106,7 +106,8 @@ class ScheduleTrigger(TriggerNode):
 
 class CvePublishedParams(NodeParams):
     filter: Expr | None = Field(
-        default=None, description="Condition JMESPath sur l'événement (cve_id, severity…)"
+        default=None,
+        description="Condition JMESPath sur l'événement, par ex. json.severity == 'CRITICAL'",
     )
 
 

@@ -10,6 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.connectors.models import Connector
 from app.core.ids import uuid7
 from app.iam.permissions import Permission
+from app.vault.keys import SecretPurpose
+from app.vault.models import Secret
+from app.vault.service import Vault, create_secret, replace_value
 from app.workflows.base import Reference
 from app.workflows.dispatch import activate_triggers
 from app.workflows.graph import (
@@ -19,7 +22,8 @@ from app.workflows.graph import (
     graph_hash,
     validate_graph,
 )
-from app.workflows.models import Workflow, WorkflowVersion
+from app.workflows.models import Workflow, WorkflowTrigger, WorkflowVersion
+from app.workflows.webhooks import new_secret
 
 
 def reference_checker(db: AsyncSession, workspace_id: uuid.UUID) -> ReferenceCheck:
@@ -84,11 +88,49 @@ async def add_version(
 
 
 async def activate(
-    db: AsyncSession, workflow: Workflow, version: WorkflowVersion, now: datetime
-) -> None:
+    db: AsyncSession,
+    workflow: Workflow,
+    version: WorkflowVersion,
+    now: datetime,
+    *,
+    vault: Vault | None = None,
+    actor: uuid.UUID | None = None,
+) -> dict[str, str]:
+    """Activates ``version``; returns the secrets of new webhook triggers (shown once)."""
     compiled = compile_graph(version.graph)
     workflow.active_version_id = version.id
     workflow.status = "active"
     workflow.version += 1
-    await activate_triggers(db, workflow, version, compiled, now)
+    triggers = await activate_triggers(db, workflow, version, compiled, now)
+    created: dict[str, str] = {}
+    for trigger in triggers:
+        if trigger.type == "webhook" and trigger.webhook_secret_id is None:
+            if vault is None or actor is None:
+                raise ValueError("webhook triggers need the vault and an actor")
+            created[trigger.node_id] = await rotate_webhook_secret(db, vault, trigger, actor)
     await db.flush()
+    return created
+
+
+async def rotate_webhook_secret(
+    db: AsyncSession, vault: Vault, trigger: WorkflowTrigger, actor: uuid.UUID
+) -> str:
+    """A new signing secret (write-only: the plaintext is only returned here)."""
+    value = new_secret()
+    if trigger.webhook_secret_id is not None:
+        current = await db.get(Secret, trigger.webhook_secret_id)
+        if current is not None:
+            replace_value(vault, current, value, actor)
+            return value
+    secret = await create_secret(
+        db,
+        vault,
+        workspace_id=trigger.workspace_id,
+        purpose=SecretPurpose.WEBHOOK,
+        name=f"webhook-{trigger.id}",
+        description="Signature du webhook entrant d'un workflow",
+        value=value,
+        actor=actor,
+    )
+    trigger.webhook_secret_id = secret.id
+    return value

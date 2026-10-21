@@ -143,6 +143,21 @@ class CveUpdatedTrigger(TriggerNode):
         return bool(changes & set(params.change_types)) and _filter_accepts(params.filter, payload)
 
 
+class WebhookParams(NodeParams):
+    pass
+
+
+@register_node
+class WebhookTrigger(TriggerNode):
+    """URL unique per trigger; HMAC-SHA256 signature, timestamp and replay checks
+    (``app.workflows.webhooks``). The JSON body becomes the run's payload."""
+
+    type = "trigger.webhook"
+    label = "Webhook entrant (signé)"
+    trigger_type = "webhook"
+    Params = WebhookParams
+
+
 class EventParams(NodeParams):
     event_type: Literal["vuln.created"] = "vuln.created"
     filter: Expr | None = None

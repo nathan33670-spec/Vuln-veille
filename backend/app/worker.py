@@ -146,3 +146,17 @@ def ai_workflow_node(node_run_id: str, workspace_id: str) -> None:
 @app.task(name="publish.workflow_node")
 def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)
+
+
+@app.task(name="default.workflow_webhook")
+def workflow_webhook(trigger_id: str, timestamp: str, signature: str, body: str) -> None:
+    """Incoming webhook, verified here: this worker holds the ``webhook`` keyring."""
+    import base64  # noqa: PLC0415
+
+    from app.workflows.runner import webhook_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(
+        webhook_entry(
+            get_settings(), uuid.UUID(trigger_id), timestamp, signature, base64.b64decode(body)
+        )
+    )

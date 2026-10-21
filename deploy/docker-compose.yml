@@ -92,6 +92,8 @@ services:
   worker-default:
     <<: *worker
     command: ["celery", "-A", "app.worker", "worker", "-Q", "default", "--concurrency", "2", "--loglevel", "INFO"]
+    # Verifies incoming webhook signatures (spec 02 §6).
+    secrets: [{ source: keyring_webhook, target: webhook.keyring }]
 
   worker-collect:
     <<: *worker

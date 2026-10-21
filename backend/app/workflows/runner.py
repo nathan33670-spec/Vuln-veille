@@ -1,6 +1,7 @@
 """Entry points of the engine tasks, with the run's workspace as RLS context."""
 
 import uuid
+from datetime import UTC, datetime
 
 from redis.asyncio import Redis
 
@@ -8,7 +9,9 @@ from app.core.config import Settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.rls import init_context, set_context
 from app.core.tasks import CeleryTaskQueue
+from app.vault.service import Vault
 from app.workflows.engine import EngineDeps, advance, execute_node
+from app.workflows.webhooks import receive
 
 
 async def advance_run(deps: EngineDeps, run_id: uuid.UUID, workspace_id: uuid.UUID) -> str | None:
@@ -35,4 +38,25 @@ async def node_entry(settings: Settings, node_run_id: uuid.UUID, workspace_id: u
         await execute_node(deps, node_run_id, workspace_id)
     finally:
         await redis.aclose()
+        await engine.dispose()
+
+
+async def webhook_entry(
+    settings: Settings, trigger_id: uuid.UUID, timestamp: str, signature: str, body: bytes
+) -> str:
+    engine = create_engine(settings.database_url_worker.get_secret_value())
+    try:
+        async with create_sessionmaker(engine)() as db:
+            init_context(db)
+            return await receive(
+                db,
+                Vault.from_settings(settings),
+                CeleryTaskQueue(),
+                trigger_id=trigger_id,
+                timestamp=timestamp,
+                signature=signature,
+                body=body,
+                now=datetime.now(UTC),
+            )
+    finally:
         await engine.dispose()

@@ -1,6 +1,137 @@
 {
   "components": {
     "schemas": {
+      "ActivationOut": {
+        "properties": {
+          "active_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Version No"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_graph": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Graph"
+          },
+          "latest_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Version No"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "seed_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed Key"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "triggers": {
+            "items": {
+              "$ref": "#/components/schemas/TriggerOut"
+            },
+            "title": "Triggers",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          },
+          "webhook_secrets": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookSecretOut"
+            },
+            "title": "Webhook Secrets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "tags",
+          "seed_key",
+          "active_version_no",
+          "latest_version_no",
+          "version",
+          "updated_at",
+          "last_run",
+          "versions",
+          "latest_graph",
+          "triggers"
+        ],
+        "title": "ActivationOut",
+        "type": "object"
+      },
       "AdoptIn": {
         "additionalProperties": false,
         "properties": {
@@ -3465,6 +3596,11 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
           "next_fire_at": {
             "anyOf": [
               {
@@ -3484,9 +3620,22 @@
           "type": {
             "title": "Type",
             "type": "string"
+          },
+          "webhook_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Chemin du webhook (requ\u00eates sign\u00e9es HMAC-SHA256)",
+            "title": "Webhook Path"
           }
         },
         "required": [
+          "id",
           "node_id",
           "type",
           "config",
@@ -4859,6 +5008,36 @@
           "version"
         ],
         "title": "WatchSourceUpdate",
+        "type": "object"
+      },
+      "WebhookSecretOut": {
+        "description": "Shown once: the signing secret is write-only afterwards.",
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "secret": {
+            "title": "Secret",
+            "type": "string"
+          },
+          "trigger_id": {
+            "format": "uuid",
+            "title": "Trigger Id",
+            "type": "string"
+          },
+          "webhook_path": {
+            "title": "Webhook Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "trigger_id",
+          "webhook_path",
+          "secret"
+        ],
+        "title": "WebhookSecretOut",
         "type": "object"
       },
       "WebsiteConfig": {
@@ -8422,6 +8601,54 @@
         "summary": "Get Cve",
         "tags": [
           "catalogue"
+        ]
+      }
+    },
+    "/api/v1/hooks/{trigger_id}": {
+      "post": {
+        "description": "Public, signed: checked here for size, rate and freshness, then by a worker.",
+        "operationId": "incoming_webhook_api_v1_hooks__trigger_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trigger_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Trigger Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Incoming Webhook Api V1 Hooks  Trigger Id  Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Incoming Webhook",
+        "tags": [
+          "workflows"
         ]
       }
     },
@@ -12081,6 +12308,68 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/triggers/{node_id}/rotate-secret": {
+      "post": {
+        "operationId": "rotate_secret_api_v1_workspaces__workspace__workflows__workflow_id__triggers__node_id__rotate_secret_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "title": "Node Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSecretOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rotate Secret",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions": {
       "post": {
         "operationId": "create_version_api_v1_workspaces__workspace__workflows__workflow_id__versions_post",
@@ -12242,7 +12531,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkflowDetailOut"
+                  "$ref": "#/components/schemas/ActivationOut"
                 }
               }
             },

@@ -881,6 +881,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/hooks/{trigger_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Incoming Webhook
+     * @description Public, signed: checked here for size, rate and freshness, then by a worker.
+     */
+    post: operations["incoming_webhook_api_v1_hooks__trigger_id__post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/node-types": {
     parameters: {
       query?: never;
@@ -1660,6 +1680,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/triggers/{node_id}/rotate-secret": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Rotate Secret */
+    post: operations["rotate_secret_api_v1_workspaces__workspace__workflows__workflow_id__triggers__node_id__rotate_secret_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions": {
     parameters: {
       query?: never;
@@ -1752,6 +1789,46 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** ActivationOut */
+    ActivationOut: {
+      /** Active Version No */
+      active_version_no: number | null;
+      /** Description */
+      description: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      last_run: components["schemas"]["RunSummaryOut"] | null;
+      /** Latest Graph */
+      latest_graph: {
+        [key: string]: unknown;
+      } | null;
+      /** Latest Version No */
+      latest_version_no: number | null;
+      /** Name */
+      name: string;
+      /** Seed Key */
+      seed_key: string | null;
+      /** Status */
+      status: string;
+      /** Tags */
+      tags: string[];
+      /** Triggers */
+      triggers: components["schemas"]["TriggerOut"][];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Versions */
+      versions: components["schemas"]["VersionOut"][];
+      /** Webhook Secrets */
+      webhook_secrets?: components["schemas"]["WebhookSecretOut"][];
+    };
     /** AdoptIn */
     AdoptIn: {
       /** From Workspace */
@@ -2960,12 +3037,22 @@ export interface components {
       };
       /** Enabled */
       enabled: boolean;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
       /** Next Fire At */
       next_fire_at: string | null;
       /** Node Id */
       node_id: string;
       /** Type */
       type: string;
+      /**
+       * Webhook Path
+       * @description Chemin du webhook (requêtes signées HMAC-SHA256)
+       */
+      webhook_path?: string | null;
     };
     /**
      * UsageOut
@@ -3415,6 +3502,23 @@ export interface components {
       trust_level?: ("low" | "medium" | "high") | null;
       /** Version */
       version: number;
+    };
+    /**
+     * WebhookSecretOut
+     * @description Shown once: the signing secret is write-only afterwards.
+     */
+    WebhookSecretOut: {
+      /** Node Id */
+      node_id: string;
+      /** Secret */
+      secret: string;
+      /**
+       * Trigger Id
+       * Format: uuid
+       */
+      trigger_id: string;
+      /** Webhook Path */
+      webhook_path: string;
     };
     /** WebsiteConfig */
     WebsiteConfig: {
@@ -5662,6 +5766,39 @@ export interface operations {
       };
     };
   };
+  incoming_webhook_api_v1_hooks__trigger_id__post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        trigger_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            [key: string]: string;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   list_node_types_api_v1_node_types_get: {
     parameters: {
       query?: never;
@@ -7855,6 +7992,39 @@ export interface operations {
       };
     };
   };
+  rotate_secret_api_v1_workspaces__workspace__workflows__workflow_id__triggers__node_id__rotate_secret_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        node_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WebhookSecretOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   create_version_api_v1_workspaces__workspace__workflows__workflow_id__versions_post: {
     parameters: {
       query?: never;
@@ -7943,7 +8113,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["WorkflowDetailOut"];
+          "application/json": components["schemas"]["ActivationOut"];
         };
       };
       /** @description Validation Error */

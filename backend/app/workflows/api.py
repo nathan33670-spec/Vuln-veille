@@ -16,12 +16,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import AuditEntry, record
+from app.core.access import public_endpoint
 from app.core.errors import ApiError
 from app.core.ids import uuid7
+from app.core.rate_limit import RateLimiter
 from app.core.tasks import TaskQueue
 from app.iam.deps import DB, WorkspaceAccess, authenticated, require_workspace
 from app.iam.permissions import Permission
 from app.iam.principal import Principal
+from app.vault.service import Vault
 from app.workflows.base import node_types
 from app.workflows.engine import RunRefusedError, advance_task, decide_approval, start_run
 from app.workflows.graph import GraphValidationError
@@ -34,6 +37,7 @@ from app.workflows.models import (
     WorkflowVersion,
 )
 from app.workflows.schemas import (
+    ActivationOut,
     ApprovalDecision,
     ApprovalOut,
     NodeRunDetailOut,
@@ -47,6 +51,7 @@ from app.workflows.schemas import (
     VersionCreate,
     VersionDetailOut,
     VersionOut,
+    WebhookSecretOut,
     WorkflowCreate,
     WorkflowDetailOut,
     WorkflowExport,
@@ -54,7 +59,15 @@ from app.workflows.schemas import (
     WorkflowOut,
     WorkflowUpdate,
 )
-from app.workflows.service import activate, add_version, validate_for
+from app.workflows.service import activate, add_version, rotate_webhook_secret, validate_for
+from app.workflows.webhooks import (
+    MAX_BODY_BYTES,
+    SIGNATURE_HEADER,
+    TIMESTAMP_HEADER,
+    enqueue,
+    fresh,
+    well_formed,
+)
 
 Reader = Annotated[WorkspaceAccess, Depends(require_workspace(Permission.WORKFLOW_READ))]
 Editor = Annotated[WorkspaceAccess, Depends(require_workspace(Permission.WORKFLOW_EDIT))]
@@ -65,6 +78,15 @@ NodeIdPath = Annotated[str, Path(pattern=r"^[a-z][a-z0-9_]{0,63}$")]
 
 def now() -> datetime:
     return datetime.now(UTC)
+
+
+def hook_path(trigger_id: uuid.UUID) -> str:
+    return f"/api/v1/hooks/{trigger_id}"
+
+
+def vault_of(request: Request) -> Vault:
+    vault: Vault = request.app.state.vault
+    return vault
 
 
 def tasks_of(request: Request) -> TaskQueue:
@@ -209,11 +231,13 @@ async def _detail(db: AsyncSession, workflow: Workflow) -> WorkflowDetailOut:
         latest_graph=versions[0].graph if versions else None,
         triggers=[
             TriggerOut(
+                id=t.id,
                 node_id=t.node_id,
                 type=t.type,
                 config=t.config,
                 next_fire_at=t.next_fire_at,
                 enabled=t.enabled,
+                webhook_path=hook_path(t.id) if t.type == "webhook" else None,
             )
             for t in triggers
         ],
@@ -419,22 +443,75 @@ def _routes_versions(router: APIRouter) -> None:
 
     @router.post(
         "/workflows/{workflow_id}/versions/{version_no}/activate",
-        response_model=WorkflowDetailOut,
+        response_model=ActivationOut,
     )
     async def activate_version(
         workflow_id: uuid.UUID, version_no: int, request: Request, access: Editor, db: DB
-    ) -> WorkflowDetailOut:
+    ) -> ActivationOut:
         workflow = await _workflow(db, access, workflow_id)
         await db.refresh(workflow, with_for_update=True)
         version = await _version(db, workflow, version_no)
         # Re-validated with the activating analyst's permissions and current references.
         await _validated(db, access, version.graph)
-        await activate(db, workflow, version, now())
+        secrets = await activate(
+            db, workflow, version, now(), vault=vault_of(request), actor=access.principal.user_id
+        )
         await _audit(
             db, request, access, "workflow.activated", str(workflow.id), version_no=version_no
         )
         await db.commit()
-        return await _detail(db, workflow)
+        detail = await _detail(db, workflow)
+        by_node = {t.node_id: t.id for t in detail.triggers}
+        return ActivationOut(
+            **detail.model_dump(),
+            webhook_secrets=[
+                WebhookSecretOut(
+                    node_id=node_id,
+                    trigger_id=by_node[node_id],
+                    webhook_path=hook_path(by_node[node_id]),
+                    secret=value,
+                )
+                for node_id, value in secrets.items()
+            ],
+        )
+
+    @router.post(
+        "/workflows/{workflow_id}/triggers/{node_id}/rotate-secret",
+        response_model=WebhookSecretOut,
+    )
+    async def rotate_secret(
+        workflow_id: uuid.UUID, node_id: NodeIdPath, request: Request, access: Editor, db: DB
+    ) -> WebhookSecretOut:
+        workflow = await _workflow(db, access, workflow_id)
+        trigger = (
+            await db.execute(
+                select(WorkflowTrigger).where(
+                    WorkflowTrigger.workflow_id == workflow.id,
+                    WorkflowTrigger.node_id == node_id,
+                    WorkflowTrigger.type == "webhook",
+                )
+            )
+        ).scalar_one_or_none()
+        if trigger is None:
+            raise HTTPException(status_code=404, detail="not_found")
+        value = await rotate_webhook_secret(
+            db, vault_of(request), trigger, access.principal.user_id
+        )
+        await _audit(
+            db,
+            request,
+            access,
+            "workflow.webhook_secret_rotated",
+            str(workflow.id),
+            node_id=node_id,
+        )
+        await db.commit()
+        return WebhookSecretOut(
+            node_id=node_id,
+            trigger_id=trigger.id,
+            webhook_path=hook_path(trigger.id),
+            secret=value,
+        )
 
 
 async def _version(db: AsyncSession, workflow: Workflow, version_no: int) -> WorkflowVersion:
@@ -653,8 +730,35 @@ def _node_run_out(node_run: NodeRun) -> NodeRunOut:
     )
 
 
+def _route_hooks(router: APIRouter) -> None:
+    @router.post("/hooks/{trigger_id}", status_code=202, dependencies=[Depends(public_endpoint)])
+    async def incoming_webhook(trigger_id: uuid.UUID, request: Request) -> dict[str, str]:
+        """Public, signed: checked here for size, rate and freshness, then by a worker."""
+        limiter: RateLimiter = request.app.state.rate_limiter
+        ip = request.client.host if request.client else "unknown"
+        if not await limiter.hit("webhook_ip", ip, 600, 60) or not await limiter.hit(
+            "webhook_trigger", str(trigger_id), 120, 60
+        ):
+            raise HTTPException(status_code=429, detail="rate_limited")
+        timestamp = request.headers.get(TIMESTAMP_HEADER)
+        signature = request.headers.get(SIGNATURE_HEADER)
+        if not well_formed(timestamp, signature):
+            raise HTTPException(status_code=401, detail="signature_required")
+        assert timestamp is not None and signature is not None  # noqa: S101, PT018
+        if not fresh(timestamp, now()):
+            raise HTTPException(status_code=401, detail="stale_timestamp")
+        body = bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body) > MAX_BODY_BYTES:
+                raise HTTPException(status_code=413, detail="body_too_large")
+        enqueue(tasks_of(request), trigger_id, timestamp, signature, bytes(body))
+        return {"status": "accepted"}
+
+
 def build_workflow_router() -> APIRouter:
     router = APIRouter(tags=["workflows"])
+    _route_hooks(router)
 
     @router.get("/node-types", response_model=list[NodeTypeOut])
     async def list_node_types(

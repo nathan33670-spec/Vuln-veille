@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import OutboxEvent
@@ -39,27 +39,47 @@ async def activate_triggers(
     compiled: Compiled,
     now: datetime,
 ) -> list[WorkflowTrigger]:
-    await db.execute(delete(WorkflowTrigger).where(WorkflowTrigger.workflow_id == workflow.id))
+    """Points the workflow's triggers at ``version``. A trigger keeps its id (the webhook
+    URL) and its secret across versions as long as its node id is unchanged."""
+    existing = {
+        t.node_id: t
+        for t in (
+            await db.execute(
+                select(WorkflowTrigger).where(WorkflowTrigger.workflow_id == workflow.id)
+            )
+        ).scalars()
+    }
     triggers = []
     for node_id in compiled.triggers:
         node_type = compiled.types[node_id]
         params = compiled.params[node_id]
         if not issubclass(node_type, TriggerNode) or not node_type.trigger_type:
             continue
-        trigger = WorkflowTrigger(
-            id=uuid.uuid4(),
-            workspace_id=workflow.workspace_id,
-            workflow_id=workflow.id,
-            version_id=version.id,
-            node_id=node_id,
-            type=node_type.trigger_type,
-            config=node_type().config(params),
-            enabled=True,
+        trigger = existing.pop(node_id, None)
+        if trigger is None or trigger.type != node_type.trigger_type:
+            if trigger is not None:
+                await db.delete(trigger)
+                await db.flush()
+            trigger = WorkflowTrigger(
+                id=uuid.uuid4(),
+                workspace_id=workflow.workspace_id,
+                workflow_id=workflow.id,
+                node_id=node_id,
+                type=node_type.trigger_type,
+            )
+            db.add(trigger)
+        trigger.version_id = version.id
+        trigger.config = node_type().config(params)
+        trigger.enabled = True
+        trigger.next_fire_at = (
+            next_fire(params.cron, params.timezone, now)
+            if isinstance(params, ScheduleParams)
+            else None
         )
-        if isinstance(params, ScheduleParams):
-            trigger.next_fire_at = next_fire(params.cron, params.timezone, now)
-        db.add(trigger)
         triggers.append(trigger)
+    for stale in existing.values():
+        await db.delete(stale)
+    await db.flush()
     return triggers
 
 

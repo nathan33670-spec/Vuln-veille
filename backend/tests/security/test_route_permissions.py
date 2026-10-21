@@ -19,6 +19,8 @@ PUBLIC_ROUTE_SUFFIXES = {
     "POST /auth/invitation/accept",
     "POST /auth/password/forgot",
     "POST /auth/password/reset",
+    # Signed with HMAC-SHA256 (spec 02 §6); verified by the worker holding the key.
+    "POST /hooks/{trigger_id}",
 }
 
 AUDIENCES: list[Audience] = ["backoffice", "portal"]

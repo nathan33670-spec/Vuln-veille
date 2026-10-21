@@ -1,17 +1,23 @@
 """Workflow API: definitions, validation, versions, activation, runs (spec 02 §9)."""
 
+import base64
 import json
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
 import asyncpg
+import httpx
 import pytest
 from pydantic import SecretStr
 
+from app.core.db import create_engine, create_sessionmaker
+from app.core.rls import init_context
+from app.vault.service import Vault
 from app.workflows.engine import ADVANCE_TASK
 from app.workflows.seeds import seed_all
-from tests.conftest import make_settings
+from app.workflows.webhooks import SIGNATURE_HEADER, TIMESTAMP_HEADER, WEBHOOK_TASK, receive, sign
+from tests.conftest import TEST_KEYRINGS, make_settings
 from tests.integration.conftest import PASSWORDS, Api, ApiFactory, Database
 from tests.integration.helpers import sign_in
 from tests.integration.seed import WORKSPACE_IDS, create_user
@@ -123,9 +129,10 @@ async def test_workflow_lifecycle(make_api: ApiFactory, database: Database) -> N
     body = activated.json()
     assert body["status"] == "active"
     assert body["active_version_no"] == 2
-    assert body["triggers"] == [
-        {"node_id": "start", "type": "manual", "config": {}, "next_fire_at": None, "enabled": True}
+    assert [(t["node_id"], t["type"], t["webhook_path"]) for t in body["triggers"]] == [
+        ("start", "manual", None)
     ]
+    assert body["webhook_secrets"] == []
 
     started = await api.client.post(
         f"{url}/runs", json={"input": {"a": 1}, "idempotency_key": "key-0001"}, headers=h
@@ -243,3 +250,96 @@ async def test_seed_workflows(make_api: ApiFactory, database: Database) -> None:
     )
     assert activated.status_code == 200, activated.text
     assert {t["type"] for t in activated.json()["triggers"]} == {"cve_published", "cve_updated"}
+
+
+async def test_signed_webhook(make_api: ApiFactory, database: Database) -> None:
+    api, h = await _analyst(make_api, database, "voc")
+    graph = {
+        "schema_version": 1,
+        "nodes": [
+            {"id": "hook", "type": "trigger.webhook"},
+            {"id": "limit", "type": "transform.limit", "params": {"count": 5}},
+        ],
+        "edges": [
+            {
+                "id": "e1",
+                "from": {"node": "hook", "port": "out"},
+                "to": {"node": "limit", "port": "in"},
+            }
+        ],
+    }
+    created = await api.client.post(
+        api.url("/workspaces/voc/workflows"), json={"name": "Hook", "graph": graph}, headers=h
+    )
+    url = api.url(f"/workspaces/voc/workflows/{created.json()['id']}")
+    activated = (await api.client.post(f"{url}/versions/1/activate", headers=h)).json()
+    (secret,) = activated["webhook_secrets"]
+    trigger_id = secret["trigger_id"]
+    assert secret["webhook_path"] == f"/api/v1/hooks/{trigger_id}"
+    # Re-activating keeps the URL and does not reveal the secret again.
+    again = (await api.client.post(f"{url}/versions/1/activate", headers=h)).json()
+    assert again["webhook_secrets"] == []
+    assert again["triggers"][0]["id"] == trigger_id
+
+    body = json.dumps({"cve_id": "CVE-2026-0001"}).encode()
+    timestamp = str(int(datetime.now(UTC).timestamp()))
+    # A server-to-server call: no Origin, no cookie.
+    hook = httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=api.app), base_url="https://backoffice.test"
+    )
+    unsigned = await hook.post(f"/api/v1/hooks/{trigger_id}", content=body)
+    assert unsigned.status_code == 401
+    stale = await hook.post(
+        f"/api/v1/hooks/{trigger_id}",
+        content=body,
+        headers={
+            TIMESTAMP_HEADER: "1000000000",
+            SIGNATURE_HEADER: sign(secret["secret"], "1000000000", body),
+        },
+    )
+    assert stale.status_code == 401
+    api.tasks.sent.clear()
+    for signature in (sign(secret["secret"], timestamp, body), "sha256=" + "0" * 64):
+        accepted = await hook.post(
+            f"/api/v1/hooks/{trigger_id}",
+            content=body,
+            headers={TIMESTAMP_HEADER: timestamp, SIGNATURE_HEADER: signature},
+        )
+        assert accepted.status_code == 202
+    unknown = await hook.post(
+        f"/api/v1/hooks/{uuid.uuid4()}",
+        content=body,
+        headers={TIMESTAMP_HEADER: timestamp, SIGNATURE_HEADER: "sha256=" + "0" * 64},
+    )
+    assert unknown.status_code == 202  # same answer: trigger ids cannot be probed
+    await hook.aclose()
+
+    settings = make_settings(
+        database_url_worker=SecretStr(database.dsn("vv_worker", PASSWORDS.worker))
+    )
+    engine = create_engine(settings.database_url_worker.get_secret_value())
+    worker_vault = Vault(public_keys={}, keyrings=TEST_KEYRINGS)
+    outcomes = []
+    try:
+        for name, kwargs in [*api.tasks.sent, api.tasks.sent[0]]:  # the first one replayed
+            assert name == WEBHOOK_TASK
+            async with create_sessionmaker(engine)() as db:
+                init_context(db)
+                outcomes.append(
+                    await receive(
+                        db,
+                        worker_vault,
+                        api.tasks,
+                        trigger_id=uuid.UUID(kwargs["trigger_id"]),
+                        timestamp=kwargs["timestamp"],
+                        signature=kwargs["signature"],
+                        body=base64.b64decode(kwargs["body"]),
+                        now=datetime.now(UTC),
+                    )
+                )
+    finally:
+        await engine.dispose()
+    assert outcomes == ["started", "bad_signature", "unknown_trigger", "ignored"]
+    runs = (await api.client.get(f"{url}/runs")).json()
+    assert len(runs) == 1
+    assert runs[0]["trigger_type"] == "webhook"

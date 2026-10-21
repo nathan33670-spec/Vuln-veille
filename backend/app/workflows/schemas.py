@@ -74,11 +74,15 @@ class VersionDetailOut(VersionOut):
 
 
 class TriggerOut(BaseModel):
+    id: uuid.UUID
     node_id: str
     type: str
     config: dict[str, Any]
     next_fire_at: datetime | None
     enabled: bool
+    webhook_path: str | None = Field(
+        default=None, description="Chemin du webhook (requêtes signées HMAC-SHA256)"
+    )
 
 
 class RunSummaryOut(BaseModel):
@@ -172,3 +176,16 @@ class RunDetailOut(RunSummaryOut):
 class RunStarted(BaseModel):
     run_id: uuid.UUID
     created: bool
+
+
+class WebhookSecretOut(BaseModel):
+    """Shown once: the signing secret is write-only afterwards."""
+
+    node_id: str
+    trigger_id: uuid.UUID
+    webhook_path: str
+    secret: str
+
+
+class ActivationOut(WorkflowDetailOut):
+    webhook_secrets: list[WebhookSecretOut] = Field(default_factory=list)

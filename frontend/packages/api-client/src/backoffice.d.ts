@@ -1064,6 +1064,168 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/agent-runs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Runs */
+    get: operations["list_runs_api_v1_workspaces__workspace__agent_runs_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agent-runs/{run_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Run */
+    get: operations["get_run_api_v1_workspaces__workspace__agent_runs__run_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Agents */
+    get: operations["list_agents_api_v1_workspaces__workspace__agents_get"];
+    put?: never;
+    /** Create Agent */
+    post: operations["create_agent_api_v1_workspaces__workspace__agents_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents/{agent_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Agent */
+    get: operations["get_agent_api_v1_workspaces__workspace__agents__agent_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Agent */
+    patch: operations["update_agent_api_v1_workspaces__workspace__agents__agent_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents/{agent_id}/test": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Test Agent
+     * @description Sandbox run on a CVE or a text: queued, traced like any run.
+     */
+    post: operations["test_agent_api_v1_workspaces__workspace__agents__agent_id__test_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents/{agent_id}/versions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Version */
+    post: operations["create_version_api_v1_workspaces__workspace__agents__agent_id__versions_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents/{agent_id}/versions/{version_no}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Version */
+    get: operations["get_version_api_v1_workspaces__workspace__agents__agent_id__versions__version_no__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/agents/{agent_id}/versions/{version_no}/activate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Activate Version
+     * @description Rolls back (or forward) to an existing version, checked again first.
+     */
+    post: operations["activate_version_api_v1_workspaces__workspace__agents__agent_id__versions__version_no__activate_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-budget": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Budget */
+    get: operations["get_budget_api_v1_workspaces__workspace__ai_budget_get"];
+    /** Put Budget */
+    put: operations["put_budget_api_v1_workspaces__workspace__ai_budget_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/ai-engine": {
     parameters: {
       query?: never;
@@ -1078,6 +1240,27 @@ export interface paths {
     post?: never;
     /** Inherit */
     delete: operations["inherit_api_v1_workspaces__workspace__ai_engine_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-engine/compatibility": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Compatibility
+     * @description Before changing the workspace's preferred engine: which agents it would break.
+     *     Pinned agents are listed as unaffected.
+     */
+    get: operations["compatibility_api_v1_workspaces__workspace__ai_engine_compatibility_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -1940,6 +2123,388 @@ export interface components {
       /** From Workspace */
       from_workspace: string;
     };
+    /** AgentCompatibilityOut */
+    AgentCompatibilityOut: {
+      /** Affected */
+      affected: boolean;
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Compatible */
+      compatible: boolean;
+      /** Engine Mode */
+      engine_mode: string;
+      /** Name */
+      name: string;
+      /** Needs */
+      needs: components["schemas"]["NeedOut"][];
+    };
+    /** AgentCreate */
+    AgentCreate: {
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
+      /**
+       * Description
+       * @default
+       */
+      description: string;
+      /** Name */
+      name: string;
+      spec: components["schemas"]["AgentSpec"];
+    };
+    /** AgentDetailOut */
+    AgentDetailOut: {
+      /** Active Spec */
+      active_spec: {
+        [key: string]: unknown;
+      } | null;
+      /** Active Version No */
+      active_version_no: number | null;
+      /** Description */
+      description: string;
+      /** Enabled */
+      enabled: boolean;
+      /** Engine Mode */
+      engine_mode: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /** Preset */
+      preset: string | null;
+      /** Tools */
+      tools: string[];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Versions */
+      versions: components["schemas"]["AgentVersionOut"][];
+    };
+    /** AgentLimits */
+    AgentLimits: {
+      /**
+       * Max Cost Usd
+       * @default 1
+       */
+      max_cost_usd: number | string | null;
+      /**
+       * Max Output Tokens
+       * @default 8192
+       */
+      max_output_tokens: number;
+      /**
+       * Max Tool Calls
+       * @default 30
+       */
+      max_tool_calls: number;
+      /**
+       * Max Turns
+       * @default 12
+       */
+      max_turns: number;
+      /**
+       * Timeout Seconds
+       * @default 600
+       */
+      timeout_seconds: number;
+    };
+    /** AgentOut */
+    AgentOut: {
+      /** Active Version No */
+      active_version_no: number | null;
+      /** Description */
+      description: string;
+      /** Enabled */
+      enabled: boolean;
+      /** Engine Mode */
+      engine_mode: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
+      /** Preset */
+      preset: string | null;
+      /** Tools */
+      tools: string[];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+    };
+    /** AgentRunDetailOut */
+    AgentRunDetailOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Agent Version No */
+      agent_version_no: number | null;
+      /** Cache Read Tokens */
+      cache_read_tokens: number;
+      /** Cache Write Tokens */
+      cache_write_tokens: number;
+      /** Context Id */
+      context_id: string | null;
+      /** Context Type */
+      context_type: string;
+      /** Cost Estimate Usd */
+      cost_estimate_usd: string;
+      /** Engine Kind */
+      engine_kind: string | null;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Injection Flag Count */
+      injection_flag_count: number;
+      /** Injection Flags */
+      injection_flags: unknown[];
+      /** Input */
+      input: {
+        [key: string]: unknown;
+      };
+      /** Input Tokens */
+      input_tokens: number;
+      /** Model Requested */
+      model_requested: string | null;
+      /** Model Served */
+      model_served: string | null;
+      /** Output */
+      output: {
+        [key: string]: unknown;
+      } | null;
+      /** Output Tokens */
+      output_tokens: number;
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Refusal Category */
+      refusal_category: string | null;
+      /** Sources */
+      sources: unknown[];
+      /** Started At */
+      started_at: string | null;
+      /** Status */
+      status: string;
+      /** Steps */
+      steps: components["schemas"]["AgentStepOut"][];
+      /** Tool Calls */
+      tool_calls: number;
+      /** Turns */
+      turns: number;
+    };
+    /** AgentRunOut */
+    AgentRunOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Agent Version No */
+      agent_version_no: number | null;
+      /** Context Id */
+      context_id: string | null;
+      /** Context Type */
+      context_type: string;
+      /** Cost Estimate Usd */
+      cost_estimate_usd: string;
+      /** Engine Kind */
+      engine_kind: string | null;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Injection Flag Count */
+      injection_flag_count: number;
+      /** Input Tokens */
+      input_tokens: number;
+      /** Model Requested */
+      model_requested: string | null;
+      /** Model Served */
+      model_served: string | null;
+      /** Output Tokens */
+      output_tokens: number;
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Refusal Category */
+      refusal_category: string | null;
+      /** Started At */
+      started_at: string | null;
+      /** Status */
+      status: string;
+      /** Tool Calls */
+      tool_calls: number;
+      /** Turns */
+      turns: number;
+    };
+    /** AgentRunQueued */
+    AgentRunQueued: {
+      /**
+       * Run Id
+       * Format: uuid
+       */
+      run_id: string;
+      /** Status */
+      status: string;
+    };
+    /** AgentSpec */
+    AgentSpec: {
+      /** Allowed Connectors */
+      allowed_connectors?: string[];
+      /** Data Classes */
+      data_classes?: (
+        "public" | "tlp_clear" | "tlp_green" | "tlp_amber" | "tlp_red" | "client_data"
+      )[];
+      /**
+       * Engine Mode
+       * @default inherit
+       * @enum {string}
+       */
+      engine_mode: "inherit" | "pinned";
+      /** Engine Model Row Id */
+      engine_model_row_id?: string | null;
+      limits?: components["schemas"]["AgentLimits"];
+      /** Output Schema */
+      output_schema?: {
+        [key: string]: unknown;
+      } | null;
+      /** @default medium */
+      reasoning_level: components["schemas"]["ReasoningLevel"];
+      /** System Prompt */
+      system_prompt: string;
+      tool_config?: components["schemas"]["ToolConfig"];
+      /** Tools */
+      tools?: string[];
+    };
+    /** AgentStepOut */
+    AgentStepOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Payload */
+      payload: {
+        [key: string]: unknown;
+      };
+      /** Seq */
+      seq: number;
+      /** Type */
+      type: string;
+    };
+    /** AgentTestIn */
+    AgentTestIn: {
+      /** Input */
+      input?: {
+        [key: string]: unknown;
+      };
+      /** Version No */
+      version_no?: number | null;
+    };
+    /** AgentUpdate */
+    AgentUpdate: {
+      /** Description */
+      description?: string | null;
+      /** Enabled */
+      enabled?: boolean | null;
+      /** Name */
+      name?: string | null;
+      /**
+       * Version
+       * @description Version courante (verrouillage optimiste)
+       */
+      version: number;
+    };
+    /** AgentVersionCreate */
+    AgentVersionCreate: {
+      /**
+       * Base Version No
+       * @description Version éditée ; 409 si une autre a été créée depuis
+       */
+      base_version_no?: number | null;
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
+      spec: components["schemas"]["AgentSpec"];
+    };
+    /** AgentVersionDetailOut */
+    AgentVersionDetailOut: {
+      /** Comment */
+      comment: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /** Version No */
+      version_no: number;
+    };
+    /** AgentVersionOut */
+    AgentVersionOut: {
+      /** Comment */
+      comment: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Version No */
+      version_no: number;
+    };
     /** AnalysisOut */
     AnalysisOut: {
       /** Content */
@@ -2101,6 +2666,38 @@ export interface components {
        */
       type: "bluesky_account";
     };
+    /** BudgetIn */
+    BudgetIn: {
+      /**
+       * Hard Stop
+       * @default true
+       */
+      hard_stop: boolean;
+      /** Monthly Limit Usd */
+      monthly_limit_usd: number | string | null;
+    };
+    /** BudgetOut */
+    BudgetOut: {
+      /** Alerts Sent */
+      alerts_sent: number[];
+      /** Exhausted */
+      exhausted: boolean;
+      /** Hard Stop */
+      hard_stop: boolean;
+      /** History */
+      history: components["schemas"]["SpendOut"][];
+      /** Monthly Limit Usd */
+      monthly_limit_usd: string | null;
+      /** Percent */
+      percent: number | null;
+      /**
+       * Period
+       * Format: date
+       */
+      period: string;
+      /** Spent Usd */
+      spent_usd: string;
+    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -2165,6 +2762,20 @@ export interface components {
        * Format: uuid
        */
       id: string;
+    };
+    /** CompatibilityReportOut */
+    CompatibilityReportOut: {
+      /** Agents */
+      agents: components["schemas"]["AgentCompatibilityOut"][];
+      /** Compatible */
+      compatible: boolean;
+      /** Model Id */
+      model_id: string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       */
+      model_row_id: string;
     };
     /** ConnectorCreate */
     ConnectorCreate: {
@@ -2612,6 +3223,18 @@ export interface components {
       /** Code */
       code: string;
     };
+    /** NeedOut */
+    NeedOut: {
+      /** Detail */
+      detail: string;
+      /**
+       * Level
+       * @enum {string}
+       */
+      level: "ok" | "degraded" | "missing";
+      /** Name */
+      name: string;
+    };
     /** NodeRunDetailOut */
     NodeRunDetailOut: {
       /** Attempt */
@@ -2741,6 +3364,11 @@ export interface components {
        */
       status: "ready" | "unavailable";
     };
+    /**
+     * ReasoningLevel
+     * @enum {string}
+     */
+    ReasoningLevel: "low" | "medium" | "high" | "max";
     /** RecoveryCodesOut */
     RecoveryCodesOut: {
       /** Csrf Token */
@@ -2992,6 +3620,22 @@ export interface components {
       /** User Agent */
       user_agent: string | null;
     };
+    /** SpendOut */
+    SpendOut: {
+      /** Calls */
+      calls: number;
+      /** Input Tokens */
+      input_tokens: number;
+      /** Output Tokens */
+      output_tokens: number;
+      /**
+       * Period
+       * Format: date
+       */
+      period: string;
+      /** Spent Usd */
+      spent_usd: string;
+    };
     /** StepUpIn */
     StepUpIn: {
       /** Code */
@@ -3150,6 +3794,21 @@ export interface components {
       password: string;
       /** Token */
       token: string;
+    };
+    /** ToolConfig */
+    ToolConfig: {
+      /**
+       * Max Result Chars
+       * @default 20000
+       */
+      max_result_chars: number;
+      /**
+       * Max Results
+       * @default 10
+       */
+      max_results: number;
+      /** Web Domains */
+      web_domains?: string[];
     };
     /** TriggerOut */
     TriggerOut: {
@@ -6319,6 +6978,412 @@ export interface operations {
       };
     };
   };
+  list_runs_api_v1_workspaces__workspace__agent_runs_get: {
+    parameters: {
+      query?: {
+        agent_id?: string | null;
+        context_type?: string | null;
+        context_id?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentRunOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_run_api_v1_workspaces__workspace__agent_runs__run_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        run_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentRunDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_agents_api_v1_workspaces__workspace__agents_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_agent_api_v1_workspaces__workspace__agents_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_agent_api_v1_workspaces__workspace__agents__agent_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_agent_api_v1_workspaces__workspace__agents__agent_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  test_agent_api_v1_workspaces__workspace__agents__agent_id__test_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentTestIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentRunQueued"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_version_api_v1_workspaces__workspace__agents__agent_id__versions_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentVersionCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentVersionDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_version_api_v1_workspaces__workspace__agents__agent_id__versions__version_no__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        version_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentVersionDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  activate_version_api_v1_workspaces__workspace__agents__agent_id__versions__version_no__activate_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: string;
+        version_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_budget_api_v1_workspaces__workspace__ai_budget_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BudgetOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_budget_api_v1_workspaces__workspace__ai_budget_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BudgetIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BudgetOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   get_workspace_api_v1_workspaces__workspace__ai_engine_get: {
     parameters: {
       query?: never;
@@ -6403,6 +7468,39 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["EnginePreferenceOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  compatibility_api_v1_workspaces__workspace__ai_engine_compatibility_get: {
+    parameters: {
+      query: {
+        model_row_id: string;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CompatibilityReportOut"];
         };
       };
       /** @description Validation Error */

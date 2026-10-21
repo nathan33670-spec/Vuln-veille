@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
-- **Dernière étape terminée** : 4.4 moteurs IA comme connecteurs (merge request 4A : étapes 4.1 à 4.4, et 4.5 sans le rapport de compatibilité).
-- **Étape en cours** : merge request 4A en revue.
-- **Prochaine étape** : 4.6 connecteurs de veille gratuits (merge request 4B), puis 4.7 à 4.11 agents et runtime (4C), qui terminera 4.5 avec le rapport de compatibilité (il dépend des besoins déclarés par les agents).
+- **Dernière étape terminée** : 4.11 budgets (merge request 4C : agents versionnés, runtime, outils en lecture seule, garde-fous anti-injection, comptabilité et budgets, rapport de compatibilité qui termine 4.5). Les merge requests 4A et 4B sont fusionnées.
+- **Étape en cours** : merge request 4C en revue (branche `claude/phase-4-agents`).
+- **Prochaine étape** : merge request 4D : agents prédéfinis en seed (4.12), nœuds `ai.*` et sources de veille (4.13), workflows « Nouvelle CVE NVD → investigation » et re-veille (4.14).
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -36,9 +36,24 @@
   - SQLAlchemy 2.1 : `Result.tuples()` et `select().distinct(expr)` sont dépréciés, et les avertissements font échouer les tests ; utiliser `.all()` et `.ext(distinct_on(...))`. Après un `commit`, un `updated_at` mis à jour côté serveur est expiré : `await db.refresh(obj)` avant de le lire (sinon `MissingGreenlet`).
   - Écarts assumés de la phase 3 : `test-node` et le flux SSE des exécutions arrivent avec l'éditeur visuel (phase 5), et l'écran d'exécution interroge l'API toutes les 3 secondes ; l'éditeur de graphe est provisoire (JSON validé par le serveur) ; les limites d'exécution ne sont pas encore réglables par espace ; la « Veille quotidienne » livrée ne lit que les ajouts KEV, car un flux RSS demande un connecteur propre à l'espace ; un secret de webhook reste dans le coffre si son nœud disparaît.
   - Connecteurs ajoutés : `rss` (domaines déclarés dans la configuration), `http_api` (lecture GET, en-tête d'authentification facultatif dans le coffre), `github` (jeton facultatif). Le fichier `deploy/smokescreen/acl.yaml` versionné garde la liste des services prévus ; en production, le générer avec les connecteurs actifs (`egress-acl` sans `--static-only`).
+  - Agents (spec 03, `app/ai/agents/`) : une version d'agent est un JSON validé (`AgentSpec`) ; chaque exécution est liée à sa version. Le runtime (`runtime.py`) tourne dans `worker-ai`, qui détient aussi le trousseau `source` pour les outils (ADR-027). Ajouter un outil : l'ajouter à `TOOL_NAMES` (`spec.py`) et au registre `TOOLS` (`tools.py`) avec un schéma d'arguments strict, en lecture seule, et un test.
+  - Le contenu non fiable va au modèle en **JSON** (`{"untrusted_document": {...}}`) plutôt qu'en balises : l'échappement JSON empêche de fermer le conteneur (même choix que l'émulation d'outils de 4A, Semgrep refusant le HTML construit à la main).
+  - Budgets : `llm_budgets` (plafond, écrit par l'API) et `llm_spend` (dépense du mois, écrite par le worker seulement). Pas de ligne de budget = pas de plafond, coûts suivis quand même. Le coût est une estimation à partir des prix déclarés du modèle (gratuit = 0).
+  - Écarts assumés de 4C : le rapport de compatibilité est par espace (`/workspaces/{espace}/ai-engine/compatibility`) ; au niveau plateforme, l'administrateur ne voit pas les agents des espaces (RLS), et chaque espace consulte son rapport. `x_discover` ne fait que la couche 1 (liens déjà collectés, références NVD) ; la recherche web du moteur restreinte à x.com viendra avec l'agent réseaux sociaux (4D). Les variantes de prompt par moteur et les outils serveur des fournisseurs ne sont pas encore proposés. Les alertes de budget partent par e-mail aux analystes de l'espace.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 11 (suite) : agents, runtime, outils, garde-fous et budgets (merge request 4C)
+
+- Migration 0010 : agents et versions immuables, exécutions et étapes (journal append-only), plafonds et dépenses mensuelles ; RLS par espace sur chaque table, droits restreints (le worker ne crée pas d'agent, l'API n'écrit pas les dépenses).
+- Runtime d'agent : boucle d'outils pilotée par notre code (budget et coût par exécution avant chaque appel, outil autorisé et arguments validés par JSON Schema, résultats regroupés en un message, sortie validée avec une relance, refus enregistrés avec leur catégorie, délai global, relances sur 429/5xx).
+- 13 outils en lecture seule sur le catalogue local, les données de l'espace et les connecteurs autorisés de l'agent ; `github_get` refuse binaires et archives.
+- Garde-fous : documents non fiables en JSON avec provenance, suppression des caractères invisibles, détection des consignes injectées, des tentatives d'exfiltration et des indices de faux PoC, URL citées hors sources signalées, URL non http(s) refusées.
+- Rapport de compatibilité agent ↔ modèle (outils, sortie structurée, contexte, tokens de sortie, raisonnement, classes de données), vérifié aussi à l'enregistrement d'un agent épinglé et avant chaque exécution.
+- API : agents (versions, activation d'une version), bac à sable de test (30 par heure et par utilisateur), traces d'exécution, budget mensuel ; ADR-027.
+- Tests : 43 tests unitaires (spécification, garde-fous, compatibilité, coûts, outils sur connecteurs dont `github_get`, `web_fetch`, `social_search`, `x_read`) et deux scénarios d'intégration (boucle complète avec signaux, alerte à 50 %, arrêt dur, refus, cloisonnement et versions ; outils sur les données locales limités à l'espace) ; 323 tests backend au total.
+- Tests : la séquence des références `VV-AAAA-NNNN` est remise à zéro entre les tests d'intégration (elle n'appartient à aucune colonne, `RESTART IDENTITY` ne la touche pas).
 
 ### 2026-10-21 — Session 11 : phase 4, moteurs IA (merge request 4A)
 

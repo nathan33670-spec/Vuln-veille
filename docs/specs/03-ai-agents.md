@@ -76,6 +76,8 @@ Boucle d'outils contrôlée par notre code, avec des hooks à chaque tour :
 4. **Fin** : validation de la sortie contre `output_schema`. En cas d'échec, une seule relance avec le message d'erreur de validation, puis échec explicite.
 5. **Comptabilité** : tokens, coût estimé, moteur et modèle réellement servis enregistrés dans `agent_runs` et ajoutés au budget de l'espace.
 
+Mise en œuvre (phase 4, `app/ai/agents/`) : une version d'agent est un JSON validé (`AgentSpec`, `spec.py`) ; le moteur est résolu (épinglé, sinon espace, sinon plateforme) puis la compatibilité et la politique de données sont vérifiées au démarrage (`compat.py`). Le contenu non fiable est passé en JSON (`{"untrusted_document": {"source", "url", "title", "content"}}`), ce qui empêche un document de fermer son conteneur. Statuts d'une exécution : `succeeded`, `failed`, `refused`, `invalid_output`, `budget_exceeded`, `timed_out`. Chaque appel au moteur, appel d'outil, résultat et échec de validation est une étape de `agent_steps`.
+
 ## 5. Registre d'outils (lecture seule, branchés sur les connecteurs)
 
 | Outil | Connecteur | Rôle | Garde-fous |
@@ -122,6 +124,8 @@ Aucun outil n'écrit en base, n'envoie de message ou n'appelle un connecteur de 
 ```
 
 ## 8. Budgets et coûts
+
+Mise en œuvre : `llm_budgets` (plafond mensuel en USD et arrêt dur, réglés par `ai.engine.manage`) et `llm_spend` (dépense du mois, écrite par le worker). Coût estimé à partir des prix déclarés du modèle : entrée, écritures de cache à 125 %, lectures de cache à 10 %, sortie. Les seuils de 50, 80 et 100 % envoient une fois un e-mail aux analystes de l'espace.
 
 - Budget mensuel par espace (USD estimé, sur l'abonnement IA, seul poste payant autorisé) avec seuils d'alerte à 50, 80 et 100 % et arrêt dur optionnel ; sous-budget pour les recherches web du moteur IA (découverte de posts X notamment).
 - Coût maximal par exécution d'agent, et par CVE pour le workflow d'investigation.

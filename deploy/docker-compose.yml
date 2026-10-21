@@ -103,7 +103,10 @@ services:
   worker-ai:
     <<: *worker
     command: ["celery", "-A", "app.worker", "worker", "-Q", "ai", "--concurrency", "2", "--loglevel", "INFO"]
-    secrets: [{ source: keyring_llm, target: llm.keyring }]
+    # Engines (llm) and the read-only tools of agents on source connectors (ADR-027).
+    secrets:
+      - { source: keyring_llm, target: llm.keyring }
+      - { source: keyring_source, target: source.keyring }
 
   worker-publish:
     <<: *worker

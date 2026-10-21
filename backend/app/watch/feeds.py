@@ -12,6 +12,13 @@ from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
 
 MAX_ENTRIES = 500
+FEED_TYPES = (
+    "application/rss+xml",
+    "application/atom+xml",
+    "application/xml",
+    "text/xml",
+    "application/rdf+xml",
+)
 _TAG = re.compile(r"<[^>]{0,2000}>")
 _SPACE = re.compile(r"\s+")
 ATOM = "{http://www.w3.org/2005/Atom}"

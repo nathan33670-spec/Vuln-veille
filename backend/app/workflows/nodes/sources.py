@@ -18,6 +18,7 @@ from app.connectors.types.github import API as GITHUB_API
 from app.connectors.types.github import github_headers
 from app.connectors.types.http_api import HttpApiConfig, HttpApiConnector, join
 from app.net.safe_http import EgressError, SafeResponse
+from app.watch.feeds import FeedError, parse_feed
 from app.workflows.base import (
     Item,
     NodeCategory,
@@ -32,7 +33,6 @@ from app.workflows.base import (
     register_node,
 )
 from app.workflows.expressions import Expr
-from app.workflows.feeds import FeedError, parse_feed
 from app.workflows.repo import cve_summary
 
 MAX_REMOTE_ITEMS = 200

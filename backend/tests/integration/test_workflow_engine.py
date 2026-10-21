@@ -21,7 +21,7 @@ from app.workflows.base import (
 )
 from app.workflows.engine import Limits, decide_approval
 from app.workflows.models import NodeRun, WorkflowRun
-from app.workflows.seeds import NEW_CVE
+from app.workflows.seeds import _edge, _node
 from tests.integration.conftest import Database
 from tests.integration.seed import WORKSPACE_IDS, create_user
 from tests.integration.workflow_harness import Harness, harness
@@ -72,6 +72,45 @@ class Sink(NodeType):
 
     async def execute(self, ctx: NodeContext, params: NodeParams, inputs: Outputs) -> Outputs:
         return {"out": inputs.get("in", [])}
+
+
+# The phase 3 delivery of "Nouvelle CVE NVD" (no AI): the exit criterion of phase 3.
+BASE_NEW_CVE: dict[str, Any] = {
+    "schema_version": 1,
+    "nodes": [
+        _node("new_cve", "trigger.cve_published", "Nouvelle CVE NVD", 0, 0),
+        _node(
+            "cve_changed",
+            "trigger.cve_updated",
+            "CPE ou CVSS ajouté",
+            0,
+            160,
+            change_types=["cpe_added", "cvss_added"],
+        ),
+        _node("scope", "vuln.scope_match", "Périmètre de veille", 260, 80),
+        _node("upsert", "vuln.upsert", "Fiche vulnérabilité", 520, 40),
+        _node("enrich", "vuln.enrich", "CVSS, EPSS, KEV", 780, 40),
+        _node("technologies", "vuln.match_technologies", "Technologies", 1040, 40),
+        _node(
+            "urgent",
+            "control.if",
+            "KEV ou critique",
+            1300,
+            40,
+            condition={"$expr": "json.kev || json.severity == 'CRITICAL'"},
+        ),
+        _node("notify", "notify.email", "Alerte aux analystes", 1560, 0),
+    ],
+    "edges": [
+        _edge(1, "new_cve", "scope"),
+        _edge(2, "cve_changed", "scope"),
+        _edge(3, "scope", "upsert", port="in_scope"),
+        _edge(4, "upsert", "enrich"),
+        _edge(5, "enrich", "technologies"),
+        _edge(6, "technologies", "urgent"),
+        _edge(7, "urgent", "notify", port="true"),
+    ],
+}
 
 
 async def _sql(database: Database, query: str, *args: object) -> list[asyncpg.Record]:
@@ -201,7 +240,7 @@ async def test_new_nvd_cve_creates_vulnerability_in_matching_workspaces(
     await _cve(database, "CVE-2026-1002", cpes=[])
     async with harness(database, redis_url) as h:
         for workspace_id in (VOC, CERT):
-            await h.workflow(workspace_id, "Nouvelle CVE NVD", NEW_CVE)
+            await h.workflow(workspace_id, "Nouvelle CVE NVD", BASE_NEW_CVE)
         await _event(
             database, "cve.published", {"cve_id": "CVE-2026-1001", "change_types": ["published"]}
         )

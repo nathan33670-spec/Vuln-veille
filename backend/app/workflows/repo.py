@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.catalog.models import CveRecord
 from app.iam.models import User, WorkspaceMembership
 from app.technologies.models import Technology
-from app.vulns.models import Assessment, Evidence, Vulnerability
+from app.vulns.models import Analysis, Assessment, Evidence, Vulnerability
 from app.vulns.service import UNQUALIFIED, create_vulnerability, event, link_technologies_by_cpe
 from app.watch.collect import store_item
 from app.watch.models import WatchScope
@@ -211,6 +211,36 @@ class WorkspaceRepo:
             .returning(Evidence.id)
         )
         return added.scalar_one_or_none() is not None
+
+    async def attach_analysis(
+        self,
+        vulnerability: Vulnerability,
+        content: dict[str, Any],
+        agent_run_id: uuid.UUID | None,
+        injection_flags: list[Any],
+    ) -> uuid.UUID:
+        """An AI synthesis (validated JSON): kept as history, never rendered as markup."""
+        analysis = Analysis(
+            id=uuid.uuid4(),
+            vulnerability_id=vulnerability.id,
+            workspace_id=self.workspace_id,
+            agent_run_id=agent_run_id,
+            content=content,
+            injection_flags=injection_flags,
+            created_at=self.now,
+        )
+        self.db.add(analysis)
+        event(
+            self.db,
+            vulnerability.id,
+            "analysis.added",
+            now=self.now,
+            workspace_id=self.workspace_id,
+            actor_type="agent",
+            analysis_id=str(analysis.id),
+            flags=len(injection_flags),
+        )
+        return analysis.id
 
     # Collected content (untrusted) ------------------------------------------------
 

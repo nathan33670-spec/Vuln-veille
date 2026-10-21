@@ -11,6 +11,7 @@ import httpx
 import pytest
 from pydantic import SecretStr
 
+from app.ai.agents.presets import PRESETS
 from app.core.db import create_engine, create_sessionmaker
 from app.core.rls import init_context
 from app.vault.service import Vault
@@ -232,17 +233,54 @@ async def test_references_and_permissions_are_checked(
     assert denied.status_code == 403
 
 
+async def _sql_admin(database: Database, query: str, *args: object) -> None:
+    conn = await asyncpg.connect(database.admin_dsn)
+    try:
+        await conn.execute(query, *args)
+    finally:
+        await conn.close()
+
+
 async def test_seed_workflows(make_api: ApiFactory, database: Database) -> None:
     settings = make_settings(database_url_app=SecretStr(database.dsn("vv_app", PASSWORDS.app)))
     first = await seed_all(settings, datetime.now(UTC))
-    assert first == {"voc": ["new_cve", "daily_watch"], "cert": ["new_cve", "daily_watch"]}
+    agents = [f"agent:{k}" for k in PRESETS]
+    workflows = ["new_cve", "rewatch", "daily_watch"]
+    assert first == {"voc": [*agents, *workflows], "cert": [*agents, *workflows]}
     assert await seed_all(settings, datetime.now(UTC)) == {"voc": [], "cert": []}
 
+    # A newer delivery reaches the workflows nobody edited, as an inactive version.
+    await _sql_admin(
+        database,
+        "UPDATE workflow_versions SET graph_hash = 'old' FROM workflows w "
+        "WHERE w.id = workflow_versions.workflow_id AND w.seed_key = 'rewatch'",
+    )
+
     api, h = await _analyst(make_api, database, "cert")
+    await _sql_admin(
+        database,
+        "UPDATE workflow_versions SET created_by = (SELECT id FROM users LIMIT 1) "
+        "FROM workflows w WHERE w.id = workflow_versions.workflow_id "
+        "AND w.seed_key = 'rewatch' AND w.workspace_id = $1",
+        WORKSPACE_IDS["voc"],
+    )
+    refreshed = await seed_all(settings, datetime.now(UTC))
+    assert refreshed == {"voc": [], "cert": ["rewatch"]}  # the VOC copy was edited
     workflows = (await api.client.get(api.url("/workspaces/cert/workflows"))).json()
     assert {w["seed_key"]: w["status"] for w in workflows} == {
         "new_cve": "draft",
+        "rewatch": "draft",
         "daily_watch": "draft",
+    }
+    # Preset agents: local tools only are enabled; the others wait for a connector.
+    listed = (await api.client.get(api.url("/workspaces/cert/agents"))).json()
+    assert {a["preset"]: a["enabled"] for a in listed} == {
+        "triage": True,
+        "poc_hunter": False,
+        "social": False,
+        "forums": False,
+        "vendor": False,
+        "synthesis": True,
     }
     new_cve = next(w for w in workflows if w["seed_key"] == "new_cve")
     activated = await api.client.post(

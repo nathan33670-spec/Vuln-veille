@@ -224,3 +224,45 @@ class ListVulnerabilities(VulnNode):
                 for v, a in rows
             ]
         }
+
+
+class AttachAnalysisParams(NodeParams):
+    field: str = Field(
+        default="synthesis",
+        pattern=r"^[a-z][a-z0-9_]{0,39}$",
+        description="Clé de l'élément qui porte le résultat de l'agent (ai.agent)",
+    )
+
+
+@register_node
+class AttachAnalysis(VulnNode):
+    """Stores an agent's validated output as the vulnerability's analysis (history kept).
+    Only succeeded runs are stored; their injection signals go with them."""
+
+    type = "vuln.attach_analysis"
+    label = "Enregistrer la synthèse IA"
+    Params = AttachAnalysisParams
+
+    async def execute(self, ctx: NodeContext, params: NodeParams, inputs: Outputs) -> Outputs:
+        params = expect(params, AttachAnalysisParams)
+        out = []
+        for entry in inputs.get("in", []):
+            result = entry["json"].get(params.field)
+            if not isinstance(result, dict) or result.get("status") != "succeeded":
+                out.append(_with(entry, analysis_id=None))
+                continue
+            output = result.get("output")
+            if not isinstance(output, dict):
+                raise NodeError("analysis_output_missing")
+            vulnerability = await _vulnerability(ctx, entry)
+            run_id = result.get("run_id")
+            flags = result.get("injection_flags")
+            analysis_id = await ctx.repo.attach_analysis(
+                vulnerability,
+                output,
+                uuid.UUID(run_id) if isinstance(run_id, str) else None,
+                flags if isinstance(flags, list) else [],
+            )
+            out.append(_with(entry, analysis_id=str(analysis_id)))
+        ctx.log("analyses", stored=sum(1 for i in out if i["json"]["analysis_id"]))
+        return {"out": out}

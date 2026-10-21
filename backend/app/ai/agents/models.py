@@ -45,8 +45,13 @@ class AgentRun(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "agent_runs"
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"))
-    agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ai_agents.id", ondelete="CASCADE"))
-    agent_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ai_agent_versions.id"))
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("ai_agents.id", ondelete="CASCADE")
+    )
+    agent_version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("ai_agent_versions.id"))
+    # Task runs (ai.summarize…): the node type and the configuration it built.
+    task: Mapped[str | None] = mapped_column(Text)
+    spec: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     context_type: Mapped[str] = mapped_column(Text)
     context_id: Mapped[str | None] = mapped_column(Text)
     requested_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey(_USER, ondelete="SET NULL"))

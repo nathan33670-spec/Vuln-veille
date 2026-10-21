@@ -32,7 +32,16 @@ from app.connectors.base import ConnectorContext
 from app.connectors.found import FetchError, Found, as_dict, fetch, json_of
 from app.connectors.models import Connector
 from app.connectors.runtime import build_context
-from app.connectors.types import bluesky, hackernews, mastodon, osv, reddit, stackexchange, web
+from app.connectors.types import (
+    bluesky,
+    github,
+    hackernews,
+    mastodon,
+    osv,
+    reddit,
+    stackexchange,
+    web,
+)
 from app.connectors.types.github import API as GITHUB_API
 from app.connectors.types.github import github_headers
 from app.connectors.types.rss import host_allowed
@@ -368,74 +377,16 @@ async def osv_lookup(ctx: ToolContext, args: dict[str, Any]) -> ToolOutput:
     return out
 
 
-GITHUB_KINDS = ("repositories", "code", "commits", "issues")
-
-
-def _github_item(kind: str, entry: dict[str, Any]) -> Found | None:
-    url = entry.get("html_url")
-    if not isinstance(url, str) or not url.startswith("https://github.com/"):
-        return None
-    repo = as_dict(entry.get("repository"))
-    if kind == "repositories":
-        owner = as_dict(entry.get("owner"))
-        return Found(
-            source="github",
-            url=url,
-            title=str(entry.get("full_name") or ""),
-            content=str(entry.get("description") or ""),
-            author=str(owner.get("login") or ""),
-            extra={
-                "stars": entry.get("stargazers_count"),
-                "forks": entry.get("forks_count"),
-                "fork": entry.get("fork"),
-                "archived": entry.get("archived"),
-                "created_at": entry.get("created_at"),
-                "pushed_at": entry.get("pushed_at"),
-            },
-        )
-    if kind == "code":
-        return Found(
-            source="github",
-            url=url,
-            title=f"{repo.get('full_name', '')}:{entry.get('path', '')}",
-            content="",
-        )
-    if kind == "commits":
-        commit = as_dict(entry.get("commit"))
-        return Found(
-            source="github",
-            url=url,
-            title=str(repo.get("full_name") or ""),
-            content=str(commit.get("message") or "")[:2000],
-        )
-    return Found(
-        source="github",
-        url=url,
-        title=str(entry.get("title") or ""),
-        content=str(entry.get("body") or "")[:2000],
-        extra={"state": entry.get("state")},
-    )
-
-
 async def github_search(ctx: ToolContext, args: dict[str, Any]) -> ToolOutput:
     connector = await ctx.connectors.one(("github",))
     kind = str(args.get("kind") or "repositories")
     try:
-        response = await fetch(
-            connector,
-            "GET",
-            f"{GITHUB_API}/search/{kind}",
-            headers=github_headers(connector),
-            params={"q": str(args["query"]), "per_page": str(_limit(ctx))},
-        )
+        found = await github.search(connector, kind, str(args["query"]), _limit(ctx))
     except FetchError as exc:
         raise ToolError(exc.code) from None
     out = ToolOutput()
-    items = as_dict(json_of(response)).get("items")
-    for entry in items if isinstance(items, list) else []:
-        found = _github_item(kind, as_dict(entry))
-        if found is not None:
-            out.add(found, poc=kind == "repositories")
+    for entry in found:
+        out.add(entry, poc=kind == "repositories")
     return out
 
 
@@ -640,7 +591,10 @@ TOOLS: Mapping[str, Tool] = {
             "github_search",
             "Recherche GitHub (dépôts, code, commits, issues), par exemple des PoC d'une CVE.",
             _object(
-                {"query": _string(256), "kind": {"type": "string", "enum": list(GITHUB_KINDS)}},
+                {
+                    "query": _string(256),
+                    "kind": {"type": "string", "enum": list(github.SEARCH_KINDS)},
+                },
                 ("query",),
             ),
             github_search,

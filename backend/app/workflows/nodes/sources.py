@@ -133,7 +133,7 @@ class KevSource(SourceNode):
 # Remote sources ----------------------------------------------------------------
 
 
-async def _collected(
+async def collect_item(
     ctx: NodeContext, source_type: str, only_new: bool, **fields: Any
 ) -> Item | None:
     stored_id, new = await ctx.repo.store_collected(source_type, **fields)
@@ -182,7 +182,7 @@ class RssSource(RemoteSource):
         out = []
         for entry in entries[: params.max_items]:
             try:
-                collected = await _collected(
+                collected = await collect_item(
                     ctx,
                     "rss",
                     params.only_new,
@@ -309,7 +309,7 @@ class GithubAdvisoriesSource(RemoteSource):
             if not isinstance(advisory, dict) or not advisory.get("ghsa_id"):
                 continue
             try:
-                collected = await _collected(
+                collected = await collect_item(
                     ctx,
                     "github_advisory",
                     params.only_new,

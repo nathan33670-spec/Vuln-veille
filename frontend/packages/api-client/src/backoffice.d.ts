@@ -2251,11 +2251,8 @@ export interface components {
     };
     /** AgentRunDetailOut */
     AgentRunDetailOut: {
-      /**
-       * Agent Id
-       * Format: uuid
-       */
-      agent_id: string;
+      /** Agent Id */
+      agent_id: string | null;
       /** Agent Version No */
       agent_version_no: number | null;
       /** Cache Read Tokens */
@@ -2314,6 +2311,8 @@ export interface components {
       status: string;
       /** Steps */
       steps: components["schemas"]["AgentStepOut"][];
+      /** Task */
+      task: string | null;
       /** Tool Calls */
       tool_calls: number;
       /** Turns */
@@ -2321,11 +2320,8 @@ export interface components {
     };
     /** AgentRunOut */
     AgentRunOut: {
-      /**
-       * Agent Id
-       * Format: uuid
-       */
-      agent_id: string;
+      /** Agent Id */
+      agent_id: string | null;
       /** Agent Version No */
       agent_version_no: number | null;
       /** Context Id */
@@ -2366,6 +2362,8 @@ export interface components {
       started_at: string | null;
       /** Status */
       status: string;
+      /** Task */
+      task: string | null;
       /** Tool Calls */
       tool_calls: number;
       /** Turns */

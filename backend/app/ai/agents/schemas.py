@@ -73,7 +73,8 @@ class AgentDetailOut(AgentOut):
 
 class AgentRunOut(BaseModel):
     id: uuid.UUID
-    agent_id: uuid.UUID
+    agent_id: uuid.UUID | None
+    task: str | None
     agent_version_no: int | None
     context_type: str
     context_id: str | None

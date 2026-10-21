@@ -342,14 +342,22 @@ async def _claim(db: AsyncSession, run_id: uuid.UUID, now: datetime) -> bool:
     return claimed.scalar_one_or_none() is not None
 
 
-async def _prepare(db: AsyncSession, deps: AgentDeps, run: AgentRun) -> _Loop:
-    version = await db.get(AIAgentVersion, run.agent_version_id)
-    if version is None:
-        raise _Stop("failed", "agent_version_not_found")
+async def _spec(db: AsyncSession, run: AgentRun) -> AgentSpec:
+    """The agent version's configuration, or the one a task node built (``ai.*``)."""
+    raw = run.spec
+    if run.agent_version_id is not None:
+        version = await db.get(AIAgentVersion, run.agent_version_id)
+        if version is None:
+            raise _Stop("failed", "agent_version_not_found")
+        raw = version.spec
     try:
-        spec = AgentSpec.model_validate(version.spec)
+        return AgentSpec.model_validate(raw)
     except ValidationError:
         raise _Stop("failed", "invalid_agent_version") from None
+
+
+async def _prepare(db: AsyncSession, deps: AgentDeps, run: AgentRun) -> _Loop:
+    spec = await _spec(db, run)
     try:
         resolved = await resolve(db, run.workspace_id, spec.pinned)
     except AIConfigurationError as exc:

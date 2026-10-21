@@ -1,6 +1,8 @@
 """GitHub REST API (advisories now, PoC search in phase 4). A free token is optional;
 without it the unauthenticated rate limit applies (60 requests per hour)."""
 
+from typing import Any, Literal, get_args
+
 from pydantic import Field
 
 from app.connectors.base import (
@@ -15,6 +17,7 @@ from app.connectors.base import (
     SecretSlot,
     register,
 )
+from app.connectors.found import Found, as_dict, fetch, json_of
 
 API = "https://api.github.com"
 
@@ -29,6 +32,72 @@ def github_headers(ctx: ConnectorContext) -> dict[str, str]:
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
+
+
+SearchKind = Literal["repositories", "code", "commits", "issues"]
+SEARCH_KINDS: tuple[str, ...] = get_args(SearchKind)
+
+
+def _found(kind: str, entry: dict[str, Any]) -> Found | None:
+    url = entry.get("html_url")
+    if not isinstance(url, str) or not url.startswith("https://github.com/"):
+        return None
+    repo = as_dict(entry.get("repository"))
+    if kind == "repositories":
+        owner = as_dict(entry.get("owner"))
+        return Found(
+            source="github",
+            url=url,
+            title=str(entry.get("full_name") or ""),
+            content=str(entry.get("description") or ""),
+            author=str(owner.get("login") or ""),
+            extra={
+                "stars": entry.get("stargazers_count"),
+                "forks": entry.get("forks_count"),
+                "fork": entry.get("fork"),
+                "archived": entry.get("archived"),
+                "created_at": entry.get("created_at"),
+                "pushed_at": entry.get("pushed_at"),
+            },
+        )
+    if kind == "code":
+        return Found(
+            source="github",
+            url=url,
+            title=f"{repo.get('full_name', '')}:{entry.get('path', '')}",
+            content="",
+        )
+    if kind == "commits":
+        commit = as_dict(entry.get("commit"))
+        return Found(
+            source="github",
+            url=url,
+            title=str(repo.get("full_name") or ""),
+            content=str(commit.get("message") or "")[:2000],
+        )
+    return Found(
+        source="github",
+        url=url,
+        title=str(entry.get("title") or ""),
+        content=str(entry.get("body") or "")[:2000],
+        extra={"state": entry.get("state")},
+    )
+
+
+async def search(ctx: ConnectorContext, kind: str, query: str, limit: int) -> list[Found]:
+    """Repositories, code, commits or issues mentioning ``query`` (e.g. a CVE: PoCs)."""
+    if kind not in SEARCH_KINDS:
+        raise ValueError("unknown search kind")
+    response = await fetch(
+        ctx,
+        "GET",
+        f"{API}/search/{kind}",
+        headers=github_headers(ctx),
+        params={"q": query[:256], "per_page": str(min(limit, 100))},
+    )
+    items = as_dict(json_of(response)).get("items")
+    found = (_found(kind, as_dict(e)) for e in (items if isinstance(items, list) else []))
+    return [f for f in found if f is not None]
 
 
 @register

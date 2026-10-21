@@ -219,6 +219,8 @@ Avant de changer le moteur préféré (plateforme ou espace), l'interface affich
 
 Chaque agent est un objet ordinaire de l'espace : les analystes VOC et CERT modifient leurs copies (prompt, moteur, modèle, connecteurs, limites) indépendamment.
 
+Mise en œuvre (phase 4, `app/ai/agents/presets.py`) : les six premiers agents sont créés par `seed-workflows` ; le rédacteur de bulletin viendra avec les bulletins (phase 6). Un agent est rattaché à la création aux connecteurs actifs de l'espace (ou globaux) dont ses outils ont besoin ; s'il en manque, il est créé désactivé. Dans les workflows, les fusions se font par jointure sur `vulnerability_id`, et chaque agent écrit sous sa propre clé (`triage`, `poc`, `social`, `forums`, `vendor`, `synthesis`). La re-veille dédoublonne l'alerte par vulnérabilité sur 30 jours.
+
 Workflow seed « Nouvelle CVE NVD → investigation » :
 
 ```

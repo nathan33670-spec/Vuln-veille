@@ -7,7 +7,9 @@ import fr from "./locales/fr.json";
 void i18n.use(initReactI18next).init({
   lng: "fr",
   fallbackLng: "fr",
-  resources: { fr: { translation: { ...authFr, ...fr } } },
+  resources: {
+    fr: { translation: { ...authFr, ...fr, errors: { ...authFr.errors, ...fr.errors } } },
+  },
   interpolation: { escapeValue: false }, // React already escapes output
 });
 

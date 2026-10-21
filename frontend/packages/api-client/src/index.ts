@@ -1,13 +1,14 @@
 import createClient, { type Middleware } from "openapi-fetch";
 
 import type { components as BackofficeComponents, paths as BackofficePaths } from "./backoffice";
-import { ApiError, csrfHeaders } from "./http";
+import { ApiError, csrfHeaders, type FieldError } from "./http";
 import type { components as PortalComponents, paths as PortalPaths } from "./portal";
 
 export type { BackofficePaths, PortalPaths };
 export type Schemas = BackofficeComponents["schemas"];
 export type PortalSchemas = PortalComponents["schemas"];
 export { ApiError, setCsrfToken } from "./http";
+export type { FieldError } from "./http";
 export { createAuthApi } from "./auth";
 export type { AccountSession, AuthApi, Enrollment, LoginResult, Me, RecoveryCodes } from "./auth";
 
@@ -22,15 +23,25 @@ const csrfMiddleware: Middleware = {
 
 interface Problem {
   detail?: unknown;
+  errors?: unknown;
+}
+
+function fieldErrors(value: unknown): FieldError[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((e): e is { path: unknown; code: unknown } => typeof e === "object" && e !== null)
+    .map((e) => ({ path: String(e.path ?? ""), code: String(e.code ?? "") }));
 }
 
 /** Turns an openapi-fetch result into data or a thrown ApiError. */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
   if (result.response.ok) return result.data as T;
-  const detail = (result.error as Problem | undefined)?.detail;
+  const problem = result.error as Problem | undefined;
+  const detail = problem?.detail;
   throw new ApiError(
     result.response.status,
     typeof detail === "string" ? detail : `http_${result.response.status}`,
+    fieldErrors(problem?.errors),
   );
 }
 

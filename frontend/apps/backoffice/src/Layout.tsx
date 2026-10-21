@@ -34,6 +34,7 @@ function Shell() {
           {link("/", t("nav.home"), true)}
           {can("vuln.read") ? link("/vulnerabilities", t("nav.vulnerabilities")) : null}
           {can("vuln.read") ? link("/cves", t("nav.cves")) : null}
+          {canInWorkspace("workflow.read") ? link("/workflows", t("nav.workflows")) : null}
           {canInWorkspace("watch_scope.manage") ? link("/watch-scope", t("nav.scope")) : null}
           {canInWorkspace("source.manage") ? link("/sources", t("nav.sources")) : null}
           {can("vuln.read") ? link("/technologies", t("nav.technologies")) : null}

@@ -15,15 +15,23 @@ export function csrfHeaders(method: string): Record<string, string> {
   return !SAFE_METHODS.has(method.toUpperCase()) && csrfToken ? { [CSRF_HEADER]: csrfToken } : {};
 }
 
+/** A located validation error (``path`` like ``nodes.2.params.url``, stable ``code``). */
+export interface FieldError {
+  path: string;
+  code: string;
+}
+
 /** An API failure carrying the server's stable error code (RFC 9457 `detail`). */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly errors: FieldError[];
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, errors: FieldError[] = []) {
     super(code);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.errors = errors;
   }
 }

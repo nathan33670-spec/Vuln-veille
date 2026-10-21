@@ -25,6 +25,9 @@ import { TechnologiesPage } from "./pages/technologies/TechnologiesPage";
 import { VulnerabilitiesPage } from "./pages/vulns/VulnerabilitiesPage";
 import { VulnerabilityPage } from "./pages/vulns/VulnerabilityPage";
 import { ScopePage } from "./pages/watch/ScopePage";
+import { RunPage } from "./pages/workflows/RunPage";
+import { WorkflowPage } from "./pages/workflows/WorkflowPage";
+import { WorkflowsPage } from "./pages/workflows/WorkflowsPage";
 import { SourcesPage } from "./pages/watch/SourcesPage";
 
 const pages: RouteObject[] = [
@@ -49,6 +52,14 @@ const pages: RouteObject[] = [
               { path: "/vulnerabilities/:ref", element: <VulnerabilityPage /> },
               { path: "/cves", element: <CvesPage /> },
               { path: "/technologies", element: <TechnologiesPage /> },
+            ],
+          },
+          {
+            element: <RequireWorkspacePermission permission="workflow.read" />,
+            children: [
+              { path: "/workflows", element: <WorkflowsPage /> },
+              { path: "/workflows/:id", element: <WorkflowPage /> },
+              { path: "/runs/:id", element: <RunPage /> },
             ],
           },
           {

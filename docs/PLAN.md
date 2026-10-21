@@ -174,9 +174,9 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 4.9 Outils en lecture seule branchés sur les connecteurs de l'espace : `web_fetch`, `github_search`, `github_get`, `x_discover`, `x_read`, `stackexchange_search`, `social_search`, `nvd_lookup`, `epss_lookup`, `kev_lookup`, `osv_lookup`, `internal_vuln_search`, `technology_lookup`
 - [x] 4.10 Garde-fous anti-injection de prompt : isolation du contenu non fiable, validation des sorties, citations obligatoires, détection heuristique signalée à l'analyste ; détection des faux PoC piégés
 - [x] 4.11 Comptabilité des tokens et des coûts, budgets mensuels par espace avec arrêt dur
-- [ ] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
-- [ ] 4.13 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; sources `source.github_search`, `source.x`, `source.stackexchange`, `source.social`
-- [ ] 4.14 Workflow seed complet **« Nouvelle CVE NVD → investigation »** (agents de veille en parallèle, puis synthèse) et workflow de **re-veille** des vulnérabilités ouvertes (nouveaux PoC, exploitation, ajout au KEV)
+- [x] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
+- [x] 4.13 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; sources `source.github_search`, `source.x`, `source.stackexchange`, `source.social`
+- [x] 4.14 Workflow seed complet **« Nouvelle CVE NVD → investigation »** (agents de veille en parallèle, puis synthèse) et workflow de **re-veille** des vulnérabilités ouvertes (nouveaux PoC, exploitation, ajout au KEV)
 - [ ] 4.15 Interfaces : moteurs IA (moteur préféré, test de capacités), connecteurs de veille, agents (édition, bac à sable de test, historique des versions), traces d'exécution d'agent, tableau de bord des coûts
 - [ ] 4.16 **Banc d'évaluation des moteurs** : jeu de CVE de référence validé par les analystes, critères (validité du schéma, citations, exactitude, coût, latence), rapport comparatif ; prérequis à tout changement de moteur préféré
 - [ ] 4.17 Corpus de tests d'injection de prompt (contenus collectés piégés) intégré à la CI

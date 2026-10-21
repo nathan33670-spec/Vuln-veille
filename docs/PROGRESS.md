@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
-- **Dernière étape terminée** : 4.11 budgets (merge request 4C : agents versionnés, runtime, outils en lecture seule, garde-fous anti-injection, comptabilité et budgets, rapport de compatibilité qui termine 4.5). Les merge requests 4A et 4B sont fusionnées.
-- **Étape en cours** : merge request 4C en revue (branche `claude/phase-4-agents`).
-- **Prochaine étape** : merge request 4D : agents prédéfinis en seed (4.12), nœuds `ai.*` et sources de veille (4.13), workflows « Nouvelle CVE NVD → investigation » et re-veille (4.14).
+- **Dernière étape terminée** : 4.14 workflows seed d'investigation et de re-veille (merge request 4D : agents prédéfinis, nœuds `ai.*` et sources de veille). Les merge requests 4A, 4B et 4C sont fusionnées.
+- **Étape en cours** : merge request 4D en revue (branche `claude/phase-4-ai-nodes`).
+- **Prochaine étape** : merge request 4E : interfaces (4.15), banc d'évaluation des moteurs (4.16), corpus d'injection en CI (4.17), indicateur de couverture de X (4.18) ; puis critère de sortie du jalon 1.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -40,9 +40,21 @@
   - Le contenu non fiable va au modèle en **JSON** (`{"untrusted_document": {...}}`) plutôt qu'en balises : l'échappement JSON empêche de fermer le conteneur (même choix que l'émulation d'outils de 4A, Semgrep refusant le HTML construit à la main).
   - Budgets : `llm_budgets` (plafond, écrit par l'API) et `llm_spend` (dépense du mois, écrite par le worker seulement). Pas de ligne de budget = pas de plafond, coûts suivis quand même. Le coût est une estimation à partir des prix déclarés du modèle (gratuit = 0).
   - Écarts assumés de 4C : le rapport de compatibilité est par espace (`/workspaces/{espace}/ai-engine/compatibility`) ; au niveau plateforme, l'administrateur ne voit pas les agents des espaces (RLS), et chaque espace consulte son rapport. `x_discover` ne fait que la couche 1 (liens déjà collectés, références NVD) ; la recherche web du moteur restreinte à x.com viendra avec l'agent réseaux sociaux (4D). Les variantes de prompt par moteur et les outils serveur des fournisseurs ne sont pas encore proposés. Les alertes de budget partent par e-mail aux analystes de l'espace.
+  - Nœuds IA (`app/workflows/nodes/ai.py`, file `ai`) : ils passent par le runtime d'agent (budgets, traces, garde-fous). Un agent échoué, refusé ou désactivé n'arrête pas le workflow : son statut est dans l'élément, sous `output_key`. Seuls un agent introuvable ou l'absence d'accès aux agents font échouer le nœud. Chaque exécution d'agent a sa propre session : sa trace survit à l'échec du nœud. Les tâches `ai.summarize`, `ai.classify`, `ai.extract` et `ai.relevance` sont des exécutions sans agent (`agent_runs.task` et `spec`, migration 0011).
+  - Agents prédéfinis (`app/ai/agents/presets.py`) : créés par `seed-workflows` dans chaque espace, avant les workflows. Un agent dont les outils demandent un connecteur absent de l'espace est créé désactivé. Le « Rédacteur de bulletin » arrivera avec les bulletins (phase 6).
+  - Seeds : une nouvelle livraison d'un seed ajoute une version non activée seulement si aucune version n'a été créée par un analyste. « Nouvelle CVE NVD » devient « Nouvelle CVE NVD → investigation » ; le test de sortie de la phase 3 garde sa propre copie du graphe sans IA.
+  - Écarts assumés de 4D : la re-veille enregistre une nouvelle synthèse à chaque passage, au lieu de ne mettre à jour qu'en cas de nouveauté (historique conservé, alerte dédupliquée sur 30 jours) ; la comparaison avec la synthèse précédente viendra avec les interfaces (4.15). Les fusions parallèles passent par trois `transform.merge` en jointure sur `vulnerability_id`, le nœud n'ayant que deux entrées.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-21 — Session 11 (suite) : agents prédéfinis, nœuds IA et workflows d'investigation (merge request 4D)
+
+- Six agents prédéfinis par espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse (schéma d'investigation de la spec 03 §7). Ils sont rattachés aux connecteurs de l'espace, et désactivés si un connecteur manque.
+- Nœuds `ai.agent` (agent de l'espace ou prédéfini), `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` (périmètre de veille ou profil rédigé) ; migration 0011 pour les exécutions de tâches sans agent.
+- Sources `source.github_search`, `source.x` (posts cités, lus par l'oEmbed officiel), `source.stackexchange`, `source.social` (Mastodon, Bluesky, Reddit, Hacker News) ; la recherche GitHub est partagée avec l'outil d'agent. Nœud `vuln.attach_analysis`.
+- Workflows livrés : « Nouvelle CVE NVD → investigation » (triage, quatre agents de veille en parallèle, synthèse, alerte si KEV, exploitée ou P1) et « Re-veille des vulnérabilités ouvertes » (toutes les 6 heures et à l'ajout KEV ou d'une référence d'exploit). Livraison des mises à jour de seeds non modifiés.
+- Tests : 11 tests unitaires (nœuds IA, sources, presets, seeds) et le critère de sortie de 4.14 en intégration (investigation complète avec moteur simulé, CVE non pertinente arrêtée au triage, synthèse enregistrée avec ses signaux, alerte) ; 335 tests backend au total.
 
 ### 2026-10-21 — Session 11 (suite) : agents, runtime, outils, garde-fous et budgets (merge request 4C)
 

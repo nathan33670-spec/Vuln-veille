@@ -163,6 +163,8 @@ Les nœuds marqués (MVP) sont livrés en phases 3, 4, 6 et 7 ; les autres vienn
 
 Livrés en phase 3 (commande `python -m app.cli seed-workflows`, lancée après les migrations) : « Nouvelle CVE NVD » (n° 1 sans IA, avec aussi le n° 4 : `trigger.cve_updated(cpe_added | cvss_added)` en second déclencheur du même graphe) et « Veille quotidienne » (ajouts KEV du jour ; les flux RSS demandent un connecteur RSS de l'espace, à ajouter par l'analyste).
 
+Livrés en phase 4 : « Nouvelle CVE NVD → investigation » (remplace la version sans IA, livrée comme nouvelle version des copies non modifiées) et « Re-veille des vulnérabilités ouvertes », avec les agents prédéfinis de chaque espace. Les nœuds `ai.*` passent l'élément sous `output_key` avec le statut, la sortie validée, le coût et les signaux d'injection de l'exécution ; un agent échoué ou désactivé ne fait pas échouer le nœud.
+
 1. **Nouvelle CVE NVD → investigation** (flux principal, détail dans la spec 07 §5) : `trigger.cve_published` → `vuln.scope_match` → `vuln.upsert` → `vuln.enrich` → `vuln.match_technologies` → agent de triage → agents de veille en parallèle (PoC GitHub, réseaux sociaux, forums, avis éditeurs) → agent de synthèse → `vuln.attach_analysis` → `notify.email` (si KEV, exploitation ou P1). Livré en version sans IA en phase 3, puis complet en phase 4.
 2. **Saisie manuelle** : `trigger.event(vuln.created, origin=user)` → même chaîne à partir de `vuln.enrich`.
 3. **Re-veille** : `trigger.schedule` (toutes les 6 h) → `vuln.list` (ouvertes, moins de 14 jours) → agents PoC et réseaux sociaux → mise à jour de la synthèse → notification ; et `trigger.cve_updated(kev_added | exploit_reference_added)` → même traitement immédiat.

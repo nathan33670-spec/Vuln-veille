@@ -5,7 +5,9 @@ A connector reaches only the domains its type declares for its configuration, an
 private range only once an administrator approved it.
 """
 
+import contextlib
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime
 
 from pydantic import ValidationError
@@ -55,6 +57,10 @@ async def build_context(
         allowed_content_types=type_.content_types,
         max_bytes=type_.max_response_bytes,
     )
+    if type_.read_timeout is not None:
+        policy = replace(policy, read_timeout=type_.read_timeout)
+    if type_.total_timeout is not None:
+        policy = replace(policy, total_timeout=type_.total_timeout)
     purpose = FAMILY_PURPOSE[Family(connector.family)]
     secrets = {
         slot: await resolve_secret(
@@ -131,6 +137,9 @@ async def check_connector(
             if connector is None or connector.workspace_id != workspace_id:
                 return None  # deleted meanwhile, or not in this task's scope
             result = await run_check(db, settings, Vault.from_settings(settings), connector, redis)
+            with contextlib.suppress(KeyError):  # type no longer registered
+                type_ = get_type(connector.kind)()
+                await type_.on_checked(db, connector, result, datetime.now(UTC))
             await db.commit()
             return result
     finally:

@@ -22,6 +22,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from app.connectors.models import Connector
+
 from app.net.safe_http import SafeHttpClient
 from app.vault.keys import SecretPurpose
 
@@ -100,6 +102,8 @@ class HealthResult:
     ok: bool
     # Short, user-facing message written by the type's code; never contains secrets.
     message: str = ""
+    # Structured outcome for the type's own ``on_checked`` (never shown raw).
+    details: dict[str, Any] | None = None
 
 
 @dataclass
@@ -132,6 +136,9 @@ class ConnectorType(ABC):
     # Content types expected from the service (empty: any), and the response cap.
     content_types: ClassVar[tuple[str, ...]] = ()
     max_response_bytes: ClassVar[int] = 10 * 1024 * 1024
+    # Longer than the egress defaults for slow services (model calls).
+    read_timeout: ClassVar[float | None] = None
+    total_timeout: ClassVar[float | None] = None
 
     @classmethod
     def egress_for(cls, config: ConnectorConfig) -> tuple[str, ...]:
@@ -149,6 +156,14 @@ class ConnectorType(ABC):
     async def sync(self, job: "SyncJob") -> dict[str, int]:
         """One synchronisation run; returns counters for the logs."""
         raise NotImplementedError(self.kind)
+
+    async def on_saved(self, db: "AsyncSession", connector: "Connector") -> None:  # noqa: B027
+        """Called by the API after a create or update, in its transaction."""
+
+    async def on_checked(  # noqa: B027 - optional hook
+        self, db: "AsyncSession", connector: "Connector", result: HealthResult, now: datetime
+    ) -> None:
+        """Called by the worker after a connection test, in its transaction."""
 
 
 Sleep = Callable[[float], Awaitable[None]]
@@ -210,6 +225,7 @@ def unregister(kind: str) -> None:
 
 
 def registered() -> Mapping[str, type[ConnectorType]]:
+    from app.ai import engines  # noqa: F401, PLC0415 - registers the AI engine types
     from app.connectors import types  # noqa: F401, PLC0415 - registers the built-in types
 
     return dict(_REGISTRY)

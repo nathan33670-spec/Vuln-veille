@@ -213,3 +213,15 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - Politique de données du palier gratuit : uniquement des données publiques et TLP:CLEAR, car le fournisseur peut réutiliser les données du palier gratuit.
   - Les adaptateurs **compatible OpenAI** (pour le futur LLMaaS) et **Claude** (si un budget API apparaît) sont développés et testés avec des serveurs simulés ; la bascule est une configuration.
 - **Conséquences** : débit limité, donc on donne la priorité aux CVE du périmètre (KEV, P1 d'abord) et on file d'attente le reste. La qualité doit être mesurée (banc d'évaluation facultatif). L'adaptateur `gemini` s'ajoute à la liste de la spec 07 §4.
+
+## ADR-026 — SDK officiels des fournisseurs IA, branchés sur `SafeHttpClient`
+
+- **Statut** : Acceptée (2026-10-21, phase 4)
+- **Contexte** : les specs 03 et ADR-025 prévoient les SDK officiels (`anthropic`, `google-genai`), mais un SDK ouvre par défaut ses propres connexions, ce qui contournerait la règle non négociable « tout appel sortant passe par `SafeHttpClient` et le proxy de sortie ».
+- **Décision** :
+  - Les adaptateurs Claude et Gemini utilisent les **SDK officiels**, auxquels on fournit un client HTTP dont le transport délègue chaque requête à `SafeHttpClient` (`app/ai/engines/transport.py` : `httpx2` pour `anthropic` 1.x, `httpx` pour `google-genai`). Domaines déclarés, contrôle des adresses, proxy, taille bornée et décompression bornée s'appliquent donc aux appels de modèles. Le client synchrone de `google-genai` est remplacé par un transport qui refuse tout.
+  - L'adaptateur **compatible OpenAI** parle directement le protocole `/chat/completions` par `SafeHttpClient` : les serveurs visés (LLMaaS, vLLM, Ollama, Mistral) n'ont pas de SDK commun, et le mode outils émulé demande la maîtrise du protocole.
+  - Deux tests bloquants : seuls les adaptateurs importent un SDK de fournisseur (`tests/security/test_ai_isolation.py`), et seul le transport importe une bibliothèque HTTP (`tests/security/test_egress_guard.py`).
+  - Le streaming n'est pas utilisé pour l'instant (réponses tamponnées, délai de 180 s par défaut) ; il viendra avec la génération des drafts (phase 6) si les sorties longues l'exigent.
+- **Conséquences** : une mise à jour majeure d'un SDK (changement de bibliothèque HTTP) doit être suivie d'un test de l'adaptateur de transport ; les tests unitaires font tourner les SDK réels contre des serveurs simulés.
+

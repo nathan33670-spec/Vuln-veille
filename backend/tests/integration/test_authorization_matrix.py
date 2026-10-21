@@ -77,6 +77,15 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
     "/cves/sync-status": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
     "/technologies": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
     "/node-types": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 200},
+    "/ai-models": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
+    "/admin/ai-engine": {ANON: 401, "voc": 200, "cert": 403, "viewer": 403, "no_workspace": 403},
+    "/workspaces/cert/ai-engine": {
+        ANON: 401,
+        "voc": 404,
+        "cert": 200,
+        "viewer": 404,
+        "no_workspace": 404,
+    },
     "/workspaces/voc/workflows": {
         ANON: 401,
         "voc": 200,

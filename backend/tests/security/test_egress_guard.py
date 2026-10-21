@@ -1,7 +1,10 @@
 """Every outbound connection goes through SafeHttpClient (CLAUDE.md, SECURITY.md §4.6).
 
 Network libraries may only be imported by ``app/net/``; the SMTP relay (configured by
-the operator, never by users) is the single documented exception.
+the operator, never by users) is a documented exception. The AI providers' SDKs are
+network clients too: each adapter may import its own SDK, which is handed an HTTP
+client whose transport delegates to SafeHttpClient (``app/ai/engines/transport.py``,
+the only other place allowed to touch an HTTP library).
 """
 
 import ast
@@ -22,10 +25,17 @@ NETWORK_MODULES = {
     "smtplib",
     "telnetlib",
     "websockets",
+    "httpx2",
+    "anthropic",
+    "google.genai",
+    "openai",
 }
 ALLOWED = {
     "net/": NETWORK_MODULES,
     "core/mailer.py": {"smtplib"},  # operator-configured relay (VV_SMTP_*)
+    "ai/engines/transport.py": {"httpx", "httpx2"},  # delegates to SafeHttpClient
+    "ai/engines/anthropic.py": {"anthropic"},  # given a SafeHttpx2Transport client
+    "ai/engines/gemini.py": {"google.genai"},  # given a SafeHttpxTransport client
 }
 
 

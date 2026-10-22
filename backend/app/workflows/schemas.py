@@ -189,3 +189,32 @@ class WebhookSecretOut(BaseModel):
 
 class ActivationOut(WorkflowDetailOut):
     webhook_secrets: list[WebhookSecretOut] = Field(default_factory=list)
+
+
+class DraftIn(_In):
+    graph: dict[str, Any]
+    base_version_no: int | None = Field(
+        default=None, description="Version dont part le brouillon (détection d'édition concurrente)"
+    )
+
+
+class DraftOut(BaseModel):
+    graph: dict[str, Any]
+    base_version_no: int | None
+    latest_version_no: int | None
+    stale: bool = Field(description="Une version a été publiée depuis le début du brouillon")
+    updated_by: uuid.UUID | None
+    updated_at: datetime
+    errors: list[dict[str, Any]] = Field(description="Erreurs de validation du graphe (indicatif)")
+
+
+class TestNodeIn(_In):
+    node_id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    graph: dict[str, Any] | None = Field(
+        default=None,
+        description="Graphe à tester ; par défaut le brouillon, sinon la dernière version",
+    )
+    inputs: dict[str, list[dict[str, Any]]] = Field(
+        default_factory=dict,
+        description="Éléments épinglés par port d'entrée ({json, meta}), par ex. une CVE réelle",
+    )

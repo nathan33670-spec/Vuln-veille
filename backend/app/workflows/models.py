@@ -64,7 +64,12 @@ class WorkflowRun(UUIDPrimaryKeyMixin, Base):
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"))
     workflow_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workflows.id", ondelete="CASCADE"))
-    version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workflow_versions.id"))
+    version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workflow_versions.id"))
+    # Test runs (editor, step 5.4): the graph edited, the node tested and its inputs.
+    mode: Mapped[str] = mapped_column(Text, default="normal")
+    test_graph: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    test_node_id: Mapped[str | None] = mapped_column(Text)
+    test_inputs: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     trigger_type: Mapped[str] = mapped_column(Text)
     trigger_node_id: Mapped[str] = mapped_column(Text)
     triggered_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey(_USER, ondelete="SET NULL"))
@@ -130,3 +135,20 @@ class DedupeKey(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class WorkflowDraft(Base):
+    """The graph being edited, kept server side until published (schema 0014_editor)."""
+
+    __tablename__ = "workflow_drafts"
+
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workflows.id", ondelete="CASCADE"), primary_key=True
+    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"))
+    graph: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    base_version_no: Mapped[int | None] = mapped_column(Integer)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey(_USER, ondelete="SET NULL"))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

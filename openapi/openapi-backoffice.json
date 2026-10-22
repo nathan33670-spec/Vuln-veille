@@ -3046,6 +3046,106 @@
         "title": "CvePage",
         "type": "object"
       },
+      "DraftIn": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version dont part le brouillon (d\u00e9tection d'\u00e9dition concurrente)",
+            "title": "Base Version No"
+          },
+          "graph": {
+            "additionalProperties": true,
+            "title": "Graph",
+            "type": "object"
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "title": "DraftIn",
+        "type": "object"
+      },
+      "DraftOut": {
+        "properties": {
+          "base_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Version No"
+          },
+          "errors": {
+            "description": "Erreurs de validation du graphe (indicatif)",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "graph": {
+            "additionalProperties": true,
+            "title": "Graph",
+            "type": "object"
+          },
+          "latest_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Version No"
+          },
+          "stale": {
+            "description": "Une version a \u00e9t\u00e9 publi\u00e9e depuis le d\u00e9but du brouillon",
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "required": [
+          "graph",
+          "base_version_no",
+          "latest_version_no",
+          "stale",
+          "updated_by",
+          "updated_at",
+          "errors"
+        ],
+        "title": "DraftOut",
+        "type": "object"
+      },
       "EngineChoiceIn": {
         "additionalProperties": false,
         "properties": {
@@ -5410,6 +5510,46 @@
           "version"
         ],
         "title": "TechnologyUpdate",
+        "type": "object"
+      },
+      "TestNodeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "graph": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Graphe \u00e0 tester ; par d\u00e9faut le brouillon, sinon la derni\u00e8re version",
+            "title": "Graph"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "description": "\u00c9l\u00e9ments \u00e9pingl\u00e9s par port d'entr\u00e9e ({json, meta}), par ex. une CVE r\u00e9elle",
+            "title": "Inputs",
+            "type": "object"
+          },
+          "node_id": {
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Node Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id"
+        ],
+        "title": "TestNodeIn",
         "type": "object"
       },
       "TimelineEventOut": {
@@ -14039,6 +14179,57 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/runs/{run_id}/events": {
+      "get": {
+        "description": "Server-sent events: one ``node`` event per node state change, ``run`` events,\nuntil the run ends (or ten minutes). Polls the database, holds no transaction.",
+        "operationId": "run_events_api_v1_workspaces__workspace__runs__run_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Events",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/runs/{run_id}/nodes/{node_id}": {
       "get": {
         "operationId": "get_node_run_api_v1_workspaces__workspace__runs__run_id__nodes__node_id__get",
@@ -15562,6 +15753,162 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/draft": {
+      "delete": {
+        "operationId": "delete_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Draft",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "get": {
+        "operationId": "get_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Draft",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "put": {
+        "description": "Saved as typed, even if invalid: validation errors come back with it.",
+        "operationId": "put_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Draft",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/export": {
       "get": {
         "operationId": "export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get",
@@ -15749,6 +16096,69 @@
           }
         },
         "summary": "Start Manual Run",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/test-node": {
+      "post": {
+        "description": "Runs one node alone on pinned inputs, on the worker of its queue: dry-run for\noutput nodes, database effects rolled back. The graph is validated against the\neditor's permissions and the workspace's connectors, like a published version.",
+        "operationId": "test_node_api_v1_workspaces__workspace__workflows__workflow_id__test_node_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestNodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Node",
         "tags": [
           "workflows"
         ]

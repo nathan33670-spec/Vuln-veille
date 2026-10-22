@@ -2071,7 +2071,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Export Workflow */
+    /**
+     * Export Workflow
+     * @description The latest version, or the one asked for, in the portable import format.
+     */
     get: operations["export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get"];
     put?: never;
     post?: never;
@@ -2203,6 +2206,27 @@ export interface paths {
     put?: never;
     /** Activate Version */
     post: operations["activate_version_api_v1_workspaces__workspace__workflows__workflow_id__versions__version_no__activate_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions/{version_no}/restore": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Restore Version
+     * @description A new version with an older one's graph: history is never rewritten. The graph is
+     *     validated again, with the restoring analyst's permissions and today's references.
+     */
+    post: operations["restore_version_api_v1_workspaces__workspace__workflows__workflow_id__versions__version_no__restore_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4630,6 +4654,19 @@ export interface components {
       id: string;
       /** Version No */
       version_no: number;
+    };
+    /** VersionRestore */
+    VersionRestore: {
+      /**
+       * Base Version No
+       * @description Dernière version connue ; 409 si une autre a été publiée
+       */
+      base_version_no?: number | null;
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
     };
     /** VulnerabilityCreate */
     VulnerabilityCreate: {
@@ -10400,7 +10437,9 @@ export interface operations {
   };
   export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get: {
     parameters: {
-      query?: never;
+      query?: {
+        version_no?: number | null;
+      };
       header?: never;
       path: {
         workflow_id: string;
@@ -10692,6 +10731,43 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ActivationOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  restore_version_api_v1_workspaces__workspace__workflows__workflow_id__versions__version_no__restore_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        version_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VersionRestore"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["VersionDetailOut"];
         };
       };
       /** @description Validation Error */

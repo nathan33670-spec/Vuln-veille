@@ -60,6 +60,13 @@ class VersionCreate(_In):
     )
 
 
+class VersionRestore(_In):
+    comment: str = Field(default="", max_length=500)
+    base_version_no: int | None = Field(
+        default=None, description="Dernière version connue ; 409 si une autre a été publiée"
+    )
+
+
 class RunCreate(_In):
     input: dict[str, Any] = Field(default_factory=dict)
     idempotency_key: str | None = Field(default=None, min_length=8, max_length=100)

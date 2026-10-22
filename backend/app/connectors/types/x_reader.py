@@ -1,8 +1,8 @@
 """Free reading of X (spec 07 §2.1): no paid API, no scraping, no session tokens.
 
 - Discovery (layer 1): post URLs already cited by collected sources are extracted
-  with ``discover_post_urls``; layer 2 (the AI engine's web search restricted to x.com)
-  belongs to the social media agent.
+  with ``discover_post_urls``; layer 2 is the AI engine's own web search restricted to
+  x.com (agent tool ``x_discover``), counted in this connector's quotas.
 - Reading: the official oEmbed endpoint (``publish.x.com/oembed``), free and without
   authentication; the returned HTML is reduced to text. A post deleted or made
   private is reported as withdrawn.
@@ -31,6 +31,7 @@ from app.connectors.found import FetchError, Found, fetch, json_of
 
 OEMBED = "https://publish.x.com/oembed"
 # A public post URL: x.com or twitter.com, a handle, /status/, a numeric id.
+X_DOMAINS = ("x.com", "twitter.com")
 POST_URL = re.compile(
     r"https?://(?:www\.|mobile\.)?(?:x|twitter)\.com/([A-Za-z0-9_]{1,15})/status(?:es)?/(\d{5,25})",
     re.IGNORECASE,
@@ -41,6 +42,13 @@ MAX_DISCOVERED = 50
 
 class XReaderConfig(ConnectorConfig):
     max_reads_per_cve: int = Field(default=5, ge=1, le=20, description="Lectures oEmbed par CVE")
+    # The engine's search runs on the provider's side, outside our egress proxy: an
+    # explicit choice of the workspace (spec 03 §5), off by default.
+    engine_web_search: bool = Field(
+        default=False,
+        description="Couche 2 : recherche web du moteur IA restreinte à x.com (Q32) ; "
+        "le trafic de recherche passe alors chez le fournisseur IA, hors de notre proxy",
+    )
 
 
 def canonical(handle: str, post_id: str) -> str:

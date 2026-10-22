@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
-- **Dernière étape terminée** : 4.17 corpus d'injection en CI et 4.16 banc d'évaluation des moteurs (merge request 4E). Les merge requests 4A à 4D sont fusionnées.
-- **Étape en cours** : merge request 4E en revue (branche `claude/phase-4-eval-bench`).
-- **Prochaine étape** : merge request 4F : couche 2 de la découverte de X (recherche web du moteur IA restreinte à x.com) et indicateur de couverture de X (4.18) ; puis merge request 4G : interfaces de la phase 4 (4.15) et critère de sortie du jalon 1.
+- **Dernière étape terminée** : 4.18 couverture de X (merge request 4F : couche 2 de la découverte par la recherche web du moteur IA, indicateur de couverture). Les merge requests 4A à 4E sont fusionnées.
+- **Étape en cours** : merge request 4F en revue (branche `claude/phase-4-x-coverage`).
+- **Prochaine étape** : merge request 4G : interfaces de la phase 4 (4.15) et critère de sortie du jalon 1.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -46,9 +46,18 @@
   - Écarts assumés de 4D : la re-veille enregistre une nouvelle synthèse à chaque passage, au lieu de ne mettre à jour qu'en cas de nouveauté (historique conservé, alerte dédupliquée sur 30 jours) ; la comparaison avec la synthèse précédente viendra avec les interfaces (4.15). Les fusions parallèles passent par trois `transform.merge` en jointure sur `vulnerability_id`, le nœud n'ayant que deux entrées.
   - Corpus d'injection (`tests/security/injection_corpus.py`, joué par `tests/integration/test_injection_corpus.py`) : chaque charge piégée est placée dans chaque lieu de lecture d'un agent, puis un modèle entièrement compromis lui obéit, derrière les vrais adaptateurs (Claude par le SDK, compatible OpenAI natif et émulé). Ajouter une charge : un `Payload` avec le signal attendu ; le test vérifie l'absence de requête hors domaine, d'outil hors liste et d'écriture hors de la trace de l'agent. Les charges invisibles se construisent avec `chr` (test d'hygiène des sources).
   - Banc d'évaluation (`app/ai/evaluation/`) : cas de référence par espace (`expected` : champs clés validés par un analyste), exécution de la version active d'un agent épinglée sur le modèle candidat (`ai.evaluation_run`, budget propre et budget mensuel), notation déterministe (schéma, citations, refus, exactitude des champs, coût, latence), comparaison de deux exécutions. Le changement de moteur préféré accepte un `evaluation_id` facultatif, cité dans l'audit (Q26). La grille de relecture par un analyste ou un LLM juge n'est pas encore proposée.
+  - Découverte de X, couche 2 (ADR-028) : désactivée par défaut, activée par l'espace sur son connecteur `x_reader` (`engine_web_search`), car la recherche part de chez le fournisseur IA. Le modèle préféré doit déclarer `web_search` (Claude et Gemini par défaut). La re-veille ne limite pas encore la couche 2 aux CVE KEV, P1 ou P2 (spec 07 §2.1) : à faire avec les interfaces, par une condition dans le workflow.
+  - Indicateur de couverture de X (`app/ai/coverage.py`) : un post compte s'il est cité dans la sortie validée de l'agent « Réseaux sociaux » **et** lu par l'oEmbed pendant la même exécution ; comparaison avec les vérifications manuelles (`/x-coverage/checks`, permission `vuln.qualify`).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 12 (suite) : découverte de X par le moteur IA et couverture (merge request 4F)
+
+- Paramètre abstrait `web_search` d'`AIEngine` : outil serveur `web_search` de Claude (domaines autorisés), ancrage Google Search de Gemini, refus explicite côté compatible OpenAI ; usage et coût des recherches comptés (migration 0013 : prix par millier de recherches).
+- `x_discover`, couche 2 : recherche restreinte à x.com sur l'identifiant CVE seul, consommant les quotas du connecteur X, URL candidates vérifiées ensuite par l'oEmbed ; désactivée par défaut (ADR-028).
+- Indicateur de couverture de X et échantillon vérifié à la main (rappel, précision, CVE manquées).
+- Tests : adaptateurs (paramètres envoyés, lecture des résultats), indicateur, et parcours complet de l'agent « Réseaux sociaux » (une URL inventée n'est pas comptée).
 
 ### 2026-10-22 — Session 12 : corpus d'injection en CI et banc d'évaluation (merge request 4E)
 

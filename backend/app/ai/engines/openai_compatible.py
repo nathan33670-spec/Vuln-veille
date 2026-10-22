@@ -158,6 +158,9 @@ class OpenAICompatibleEngine:
 
     def _body(self, request: AIRequest) -> tuple[dict[str, Any], bool]:
         caps = self.capabilities(request.model)
+        if request.web_search is not None:
+            # No common web search in the protocol: discovery keeps its first layer.
+            raise AIConfigurationError("web_search_unsupported")
         emulated = bool(request.tools) and caps.tools == "emulated"
         system = request.system
         if emulated:

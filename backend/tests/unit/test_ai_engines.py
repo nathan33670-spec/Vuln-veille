@@ -7,6 +7,7 @@ schemas, strict tools, fallbacks, replayed thinking, emulated tools) are checked
 
 import json
 import uuid
+from dataclasses import replace
 from decimal import Decimal
 from typing import Any
 
@@ -28,6 +29,7 @@ from app.ai.types import (
     ToolCall,
     ToolResult,
     ToolSpec,
+    WebSearch,
 )
 from app.connectors.base import ConnectorConfig, ConnectorContext
 from tests.web_fakes import FakeWeb
@@ -408,3 +410,107 @@ async def test_emulated_tool_results_cannot_escape_their_container() -> None:
     header, payload = sent.split("\n", 1)
     assert header.startswith("Résultats des outils")
     assert json.loads(payload) == [{"tool": "lookup", "error": False, "result": hostile}]
+
+
+# Engine web search (X discovery, layer 2) ------------------------------------------
+
+SEARCH = AIRequest(
+    model="",
+    system="s",
+    messages=(Message(role="user", text='"CVE-2026-1" site:x.com'),),
+    web_search=WebSearch(("x.com", "twitter.com"), max_uses=2),
+)
+
+
+async def test_claude_web_search_is_restricted_and_billed() -> None:
+    web = FakeWeb()
+    web.routes[CLAUDE_URL] = lambda _r: (
+        200,
+        _claude_message(
+            [
+                {
+                    "type": "server_tool_use",
+                    "id": "srv_1",
+                    "name": "web_search",
+                    "input": {"query": "CVE-2026-1 site:x.com"},
+                },
+                {
+                    "type": "web_search_tool_result",
+                    "tool_use_id": "srv_1",
+                    "content": [
+                        {
+                            "type": "web_search_result",
+                            "url": "https://x.com/r/status/1849",
+                            "title": "post",
+                            "encrypted_content": "e",
+                            "page_age": None,
+                        }
+                    ],
+                },
+                {"type": "text", "text": "https://x.com/r/status/1849"},
+            ],
+            "end_turn",
+            usage={
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "server_tool_use": {"web_search_requests": 1},
+            },
+        ),
+    )
+    engine = AnthropicEngine(_ctx(web, AnthropicConfig(), "api.anthropic.com"))
+    response = await engine.complete(replace(SEARCH, model="claude-opus-5-5"))
+    tool = _body(web.requests[0])["tools"][-1]
+    assert tool == {
+        "type": "web_search_20260318",
+        "name": "web_search",
+        "allowed_domains": ["x.com", "twitter.com"],
+        "max_uses": 2,
+    }
+    assert [r.url for r in response.web_results] == ["https://x.com/r/status/1849"]
+    assert response.usage.web_search_requests == 1
+
+
+async def test_gemini_grounding_and_unsupported_engines() -> None:
+    web = FakeWeb()
+    web.routes[GEMINI_URL] = lambda _r: (
+        200,
+        {
+            **_gemini_response([{"text": "https://x.com/r/status/1849 est pertinent"}]),
+            "candidates": [
+                {
+                    "content": {
+                        "role": "model",
+                        "parts": [{"text": "https://x.com/r/status/1849"}],
+                    },
+                    "finishReason": "STOP",
+                    "groundingMetadata": {
+                        "webSearchQueries": ["CVE-2026-1 site:x.com"],
+                        "groundingChunks": [
+                            {
+                                "web": {
+                                    "uri": "https://vertexaisearch.example/redirect",
+                                    "title": "x.com",
+                                }
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    engine = GeminiEngine(_ctx(web, GeminiConfig(), "generativelanguage.googleapis.com"))
+    response = await engine.complete(replace(SEARCH, model="gemini-2.5-flash"))
+    sent = _body(web.requests[0])
+    assert sent["tools"] == [{"googleSearch": {}}]
+    assert response.text == "https://x.com/r/status/1849"
+    assert response.usage.web_search_requests == 1
+    assert response.web_results[0].title == "x.com"
+
+    llm = OpenAICompatibleEngine(_ctx(web, _llm_config(), "llm.example.org"))
+    with pytest.raises(AIConfigurationError, match="web_search_unsupported"):
+        await llm.complete(replace(SEARCH, model="mistral-small"))
+    claude = AnthropicEngine(
+        _ctx(web, AnthropicConfig(models=[ModelConfig(model_id="claude-x")]), "api.anthropic.com")
+    )
+    with pytest.raises(AIConfigurationError, match="web_search_unsupported"):
+        await claude.complete(replace(SEARCH, model="claude-x"))

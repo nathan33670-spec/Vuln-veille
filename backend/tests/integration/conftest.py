@@ -90,7 +90,7 @@ async def clean_state(database: Database, redis_url: str) -> None:
             "TRUNCATE users, client_organizations, audit_events, connectors, cve_records, "
             "outbox_events, technologies, vulnerabilities, collected_items, watch_scopes, "
             "watch_sources, workflows, dedupe_keys, ai_models, ai_agents, llm_budgets, llm_spend, "
-            "ai_eval_cases, ai_eval_runs "
+            "ai_eval_cases, ai_eval_runs, x_coverage_checks "
             "RESTART IDENTITY CASCADE"
         )
         # Not owned by a column, so RESTART IDENTITY leaves it: reset for stable refs.

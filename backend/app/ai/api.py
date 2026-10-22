@@ -45,6 +45,7 @@ def model_out(model: AIModel, workspace_id: uuid.UUID | None = None) -> AIModelO
         location=model.location,
         price_input_per_mtok=model.price_input_per_mtok,
         price_output_per_mtok=model.price_output_per_mtok,
+        price_web_search_per_k=model.price_web_search_per_k,
     )
 
 

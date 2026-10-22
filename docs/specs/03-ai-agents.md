@@ -85,7 +85,7 @@ Mise en œuvre (phase 4, `app/ai/agents/`) : une version d'agent est un JSON val
 | `web_fetch` | `web` | Récupérer une page et en extraire le texte | Domaines autorisés de l'agent, SafeHttpClient, 2 Mio au maximum, texte seul |
 | `github_search` | `github` | Dépôts, code, commits et issues liés à une CVE | Quotas |
 | `github_get` | `github` | Lire le README ou un fichier source d'un dépôt, en texte | Taille bornée, **aucun binaire ni archive**, rien n'est exécuté |
-| `x_discover` | `x_reader` | Trouver des URL de posts X sur une CVE ou un produit : liens déjà collectés, puis recherche web du moteur IA restreinte à `x.com`, puis SearXNG si configuré (spec 07 §2.1) | Gratuit, ou budget sur la facture IA pour la recherche web |
+| `x_discover` | `x_reader` | Trouver des URL de posts X sur une CVE ou un produit : liens déjà collectés, puis recherche web du moteur IA restreinte à `x.com` si l'espace l'a activée (spec 07 §2.1, ADR-028) | Gratuit, ou budget sur la facture IA pour la recherche web |
 | `x_read` | `x_reader` | Lire le texte d'un post X à partir de son URL, par l'oEmbed officiel | Gratuit, sans authentification ; cache ; texte assaini |
 | `social_search` | `mastodon`, `bluesky`, `reddit` (RSS), `hackernews` | Posts et discussions | Quotas |
 | `stackexchange_search` | `stackexchange` | Questions et réponses par mots-clés ou tags | Quotas |

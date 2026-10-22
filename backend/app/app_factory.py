@@ -11,6 +11,7 @@ from redis.asyncio import Redis
 
 from app.ai.agents.api import build_agent_router
 from app.ai.api import build_ai_router
+from app.ai.coverage import build_coverage_router
 from app.ai.evaluation.api import build_evaluation_router
 from app.audit.api import build_audit_router
 from app.catalog.api import build_catalog_router
@@ -101,6 +102,7 @@ def create_app(
         app.include_router(build_ai_router(), prefix=prefix)
         app.include_router(build_agent_router(), prefix=prefix)
         app.include_router(build_evaluation_router(), prefix=prefix)
+        app.include_router(build_coverage_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
 

@@ -31,6 +31,7 @@ class AIModel(UUIDPrimaryKeyMixin, Base):
     location: Mapped[str] = mapped_column(Text)
     price_input_per_mtok: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
     price_output_per_mtok: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    price_web_search_per_k: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

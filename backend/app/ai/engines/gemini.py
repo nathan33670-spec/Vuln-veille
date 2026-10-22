@@ -10,6 +10,7 @@ public and TLP:CLEAR data may be sent (Q6). Every request goes through
 
 import base64
 import json
+from dataclasses import replace
 from typing import Any
 
 from google import genai
@@ -35,6 +36,7 @@ from app.ai.types import (
     StopReason,
     ToolCall,
     Usage,
+    WebResult,
 )
 from app.connectors.base import ConnectorContext, CostClass, Quotas, SecretSlot, register
 from app.core.narrow import expect
@@ -73,6 +75,7 @@ def _default_models() -> list[ModelConfig]:
             reasoning_levels=[ReasoningLevel.LOW, ReasoningLevel.MEDIUM, ReasoningLevel.HIGH],
             price_input_per_mtok=None,
             price_output_per_mtok=None,
+            web_search=True,  # Google Search grounding, within the free quota
         )
     ]
 
@@ -173,8 +176,13 @@ class GeminiEngine:
                     ]
                 )
             ]
+        if request.web_search is not None:
+            if not caps.web_search or request.tools:
+                # Grounding does not combine with function calling: a dedicated call.
+                raise AIConfigurationError("web_search_unsupported")
+            config["tools"] = [types.Tool(google_search=types.GoogleSearch())]
         if request.output_schema is not None:
-            if request.tools or caps.structured_output == "none":
+            if request.tools or request.web_search or caps.structured_output == "none":
                 # Response schemas and function calling do not combine: the schema
                 # goes in the instructions and the runtime validates the answer.
                 system += SCHEMA_INSTRUCTION + json.dumps(request.output_schema, ensure_ascii=False)
@@ -261,6 +269,14 @@ def _parse(response: types.GenerateContentResponse, model: str) -> AIResponse:
         stop = StopReason.TOOL_USE if calls else StopReason.END_TURN
     else:
         stop = StopReason.ERROR
+    grounding = candidate.grounding_metadata
+    results = tuple(
+        WebResult(url=str(c.web.uri), title=str(c.web.title or ""))
+        for c in (grounding.grounding_chunks or [] if grounding else [])
+        if c.web is not None and c.web.uri
+    )
+    if grounding and grounding.web_search_queries:
+        usage = replace(usage, web_search_requests=len(grounding.web_search_queries))
     return AIResponse(
         stop_reason=stop,
         text=text,
@@ -268,6 +284,7 @@ def _parse(response: types.GenerateContentResponse, model: str) -> AIResponse:
         usage=usage,
         model_served=served,
         provider_state={"gemini_parts": [_dump_part(p) for p in parts]},
+        web_results=results,
     )
 
 

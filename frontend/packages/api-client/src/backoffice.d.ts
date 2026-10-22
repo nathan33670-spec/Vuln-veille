@@ -1523,6 +1523,207 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/bulletins": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Bulletins
+     * @description ``own``: the workspace's bulletins; ``shared``: those the other team published.
+     */
+    get: operations["list_bulletins_api_v1_workspaces__workspace__bulletins_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Bulletin */
+    get: operations["get_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update Bulletin
+     * @description Marking and audience (spec 04, 6.7): a change is reviewed again; a TLP change
+     *     is a new revision, the marking being part of the rendered bulletin.
+     */
+    patch: operations["update_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/approve": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve Bulletin */
+    post: operations["approve_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__approve_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/publish": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Publish Bulletin
+     * @description Publication needs a recent second factor; the published revision is frozen.
+     */
+    post: operations["publish_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__publish_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/regenerate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Regenerate Field */
+    post: operations["regenerate_field_api_v1_workspaces__workspace__bulletins__bulletin_id__regenerate_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/reject": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject Bulletin */
+    post: operations["reject_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__reject_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/revisions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Edit Bulletin */
+    post: operations["edit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/revisions/{rev_no}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Revision */
+    get: operations["get_revision_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions__rev_no__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/submit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit Bulletin */
+    post: operations["submit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__submit_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/translations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Translate
+     * @description The FR/EN version (Q10), from the validated text, as a new linked draft.
+     */
+    post: operations["translate_api_v1_workspaces__workspace__bulletins__bulletin_id__translations_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/withdraw": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Withdraw Bulletin */
+    post: operations["withdraw_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__withdraw_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/connectors/ai_engine": {
     parameters: {
       query?: never;
@@ -1728,6 +1929,62 @@ export interface paths {
     };
     /** Usage Workspace Source */
     get: operations["usage_workspace_source_api_v1_workspaces__workspace__connectors_source__connector_id__usage_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/draft-requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Drafts */
+    get: operations["list_drafts_api_v1_workspaces__workspace__draft_requests_get"];
+    put?: never;
+    /** Request Draft */
+    post: operations["request_draft_api_v1_workspaces__workspace__draft_requests_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/draft-requests/{request_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Draft */
+    get: operations["get_draft_api_v1_workspaces__workspace__draft_requests__request_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/draft-requests/{request_id}/events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Draft Events
+     * @description Server-sent events: ``progress`` at each step, then ``done`` (polls the
+     *     database, holds no transaction; ten minutes at most).
+     */
+    get: operations["draft_events_api_v1_workspaces__workspace__draft_requests__request_id__events_get"];
     put?: never;
     post?: never;
     delete?: never;
@@ -3144,6 +3401,129 @@ export interface components {
       /** Spent Usd */
       spent_usd: string;
     };
+    /** BulletinDetailOut */
+    BulletinDetailOut: {
+      /** Approved At */
+      approved_at: string | null;
+      /** Audience Org Ids */
+      audience_org_ids: string[];
+      /** Audience Type */
+      audience_type: string;
+      /** Author Id */
+      author_id: string | null;
+      current: components["schemas"]["RevisionOut"] | null;
+      /** Current Rev No */
+      current_rev_no: number | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /** Own */
+      own: boolean;
+      /** Published At */
+      published_at: string | null;
+      /** Published Rev No */
+      published_rev_no: number | null;
+      /** Ref */
+      ref: string;
+      /** Review Required */
+      review_required: boolean;
+      /** Reviewer Id */
+      reviewer_id: string | null;
+      /** Revisions */
+      revisions: components["schemas"]["RevisionSummaryOut"][];
+      /** Severity */
+      severity: string | null;
+      /** Status */
+      status: string;
+      /** Submitted By */
+      submitted_by: string | null;
+      /** Technologies */
+      technologies: components["schemas"]["LinkedTechnologyOut"][];
+      /** Template Id */
+      template_id: string | null;
+      /** Template Name */
+      template_name: string | null;
+      /** Template Spec */
+      template_spec: {
+        [key: string]: unknown;
+      } | null;
+      /** Template Version No */
+      template_version_no: number | null;
+      /** Title */
+      title: string;
+      /** Tlp */
+      tlp: string;
+      translation_of: components["schemas"]["LinkedBulletinOut"] | null;
+      /** Translations */
+      translations: components["schemas"]["LinkedBulletinOut"][];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Vulnerabilities */
+      vulnerabilities: components["schemas"]["LinkedVulnerabilityOut"][];
+      /** Withdrawn Reason */
+      withdrawn_reason: string | null;
+      /** Workspace Slug */
+      workspace_slug: string;
+    };
+    /** BulletinOut */
+    BulletinOut: {
+      /** Author Id */
+      author_id: string | null;
+      /** Current Rev No */
+      current_rev_no: number | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /** Own */
+      own: boolean;
+      /** Published At */
+      published_at: string | null;
+      /** Published Rev No */
+      published_rev_no: number | null;
+      /** Ref */
+      ref: string;
+      /** Severity */
+      severity: string | null;
+      /** Status */
+      status: string;
+      /** Title */
+      title: string;
+      /** Tlp */
+      tlp: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Workspace Slug */
+      workspace_slug: string;
+    };
+    /** BulletinUpdate */
+    BulletinUpdate: {
+      /** Audience Org Ids */
+      audience_org_ids?: string[] | null;
+      /** Audience Type */
+      audience_type?: string | null;
+      /** Tlp */
+      tlp?: string | null;
+      /** Version */
+      version: number;
+    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -3543,6 +3923,69 @@ export interface components {
       /** Updated By */
       updated_by: string | null;
     };
+    /** DraftRequestIn */
+    DraftRequestIn: {
+      /** Cve Id */
+      cve_id?: string | null;
+      /**
+       * Extra Instructions
+       * @default
+       */
+      extra_instructions: string;
+      /** Language */
+      language?: string | null;
+      /**
+       * Template Id
+       * @description Modèle imposé ; sinon choisi par les règles
+       */
+      template_id?: string | null;
+      /**
+       * Text
+       * @default
+       */
+      text: string;
+      /** Urls */
+      urls?: string[];
+      /** Vulnerability Ids */
+      vulnerability_ids?: string[];
+    };
+    /** DraftRequestOut */
+    DraftRequestOut: {
+      /** Agent Run Id */
+      agent_run_id: string | null;
+      /** Bulletin Id */
+      bulletin_id: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Kind */
+      kind: string;
+      /** Progress */
+      progress: {
+        [key: string]: unknown;
+      }[];
+      /** Requested By */
+      requested_by: string | null;
+      /** Selection Reasons */
+      selection_reasons: string[];
+      /** Status */
+      status: string;
+      /** Template Name */
+      template_name: string | null;
+      /** Template Version No */
+      template_version_no: number | null;
+    };
     /** EngineChoiceIn */
     EngineChoiceIn: {
       /**
@@ -3842,6 +4285,44 @@ export interface components {
        */
       email: string;
     };
+    /** LinkedBulletinOut */
+    LinkedBulletinOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /** Ref */
+      ref: string;
+      /** Status */
+      status: string;
+    };
+    /** LinkedTechnologyOut */
+    LinkedTechnologyOut: {
+      /** Display Name */
+      display_name: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+    };
+    /** LinkedVulnerabilityOut */
+    LinkedVulnerabilityOut: {
+      /** Cve Id */
+      cve_id: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Ref */
+      ref: string;
+      /** Title */
+      title: string;
+    };
     /** LoginIn */
     LoginIn: {
       /**
@@ -4125,6 +4606,81 @@ export interface components {
       family: string | null;
       /** Kind */
       kind: string;
+    };
+    /** RegenerateIn */
+    RegenerateIn: {
+      /** Field */
+      field: string;
+      /**
+       * Instructions
+       * @default
+       */
+      instructions: string;
+    };
+    /** RevisionIn */
+    RevisionIn: {
+      /**
+       * Base Rev No
+       * @description Révision éditée ; 409 si une autre a été créée depuis
+       */
+      base_rev_no: number;
+      /**
+       * Change Note
+       * @default
+       */
+      change_note: string;
+      /** Fields */
+      fields: {
+        [key: string]: unknown;
+      };
+    };
+    /** RevisionOut */
+    RevisionOut: {
+      /** Agent Run Id */
+      agent_run_id: string | null;
+      /** Change Note */
+      change_note: string;
+      /** Content Hash */
+      content_hash: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /** Created By Type */
+      created_by_type: string;
+      /** Fields */
+      fields: {
+        [key: string]: unknown;
+      };
+      /** Rendered Html */
+      rendered_html: string;
+      /** Rendered Markdown */
+      rendered_markdown: string;
+      /** Rev No */
+      rev_no: number;
+    };
+    /** RevisionSummaryOut */
+    RevisionSummaryOut: {
+      /** Agent Run Id */
+      agent_run_id: string | null;
+      /** Change Note */
+      change_note: string;
+      /** Content Hash */
+      content_hash: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /** Created By Type */
+      created_by_type: string;
+      /** Rev No */
+      rev_no: number;
     };
     /** RssConfig */
     RssConfig: {
@@ -4796,6 +5352,23 @@ export interface components {
       /** Web Domains */
       web_domains?: string[];
     };
+    /** TransitionIn */
+    TransitionIn: {
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
+      /** Version */
+      version: number;
+    };
+    /** TranslateIn */
+    TranslateIn: {
+      /** Language */
+      language: string;
+      /** Template Id */
+      template_id?: string | null;
+    };
     /** TriggerOut */
     TriggerOut: {
       /** Config */
@@ -5312,6 +5885,13 @@ export interface components {
        * Format: uri
        */
       url: string;
+    };
+    /** WithdrawIn */
+    WithdrawIn: {
+      /** Reason */
+      reason: string;
+      /** Version */
+      version: number;
     };
     /** WorkflowCreate */
     WorkflowCreate: {
@@ -9295,6 +9875,429 @@ export interface operations {
       };
     };
   };
+  list_bulletins_api_v1_workspaces__workspace__bulletins_get: {
+    parameters: {
+      query?: {
+        status?: string | null;
+        scope?: string;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BulletinUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  approve_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__approve_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TransitionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  publish_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__publish_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TransitionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  regenerate_field_api_v1_workspaces__workspace__bulletins__bulletin_id__regenerate_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RegenerateIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  reject_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__reject_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TransitionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  edit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RevisionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_revision_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions__rev_no__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        rev_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RevisionOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  submit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__submit_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TransitionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  translate_api_v1_workspaces__workspace__bulletins__bulletin_id__translations_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TranslateIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  withdraw_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__withdraw_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["WithdrawIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   list_workspace_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine_get: {
     parameters: {
       query?: never;
@@ -9966,6 +10969,136 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["UsageOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_drafts_api_v1_workspaces__workspace__draft_requests_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftRequestOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  request_draft_api_v1_workspaces__workspace__draft_requests_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DraftRequestIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_draft_api_v1_workspaces__workspace__draft_requests__request_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        request_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  draft_events_api_v1_workspaces__workspace__draft_requests__request_id__events_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        request_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */

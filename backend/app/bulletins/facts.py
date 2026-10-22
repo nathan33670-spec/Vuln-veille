@@ -112,13 +112,18 @@ async def vulnerability_facts(
     if severity == "none":
         severity = None
     cve_ids = [i for i in [vuln.cve_id, *vuln.aliases] if i and i.startswith("CVE-")]
-    refs = [{"title": (t or u or "")[:300], "url": u} for t, u, _ in references if u]
+    refs = [
+        {"title": (t or u or "")[:300], "url": u}
+        for t, u, _ in references
+        if u and u.lower().startswith(("https://", "http://"))
+    ]
     if record:
         known = {r["url"] for r in refs}
         refs += [
             {"title": r["url"], "url": r["url"]}
             for r in record.references[: MAX_REFERENCES - len(refs)]
-            if r.get("url") and r["url"] not in known
+            if str(r.get("url") or "").lower().startswith(("https://", "http://"))
+            and r["url"] not in known
         ]
     facts = Facts(
         vulnerability_id=vuln.id,

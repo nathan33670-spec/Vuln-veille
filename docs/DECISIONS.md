@@ -152,7 +152,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 ## ADR-019 — Humain dans la boucle pour toute diffusion
 
 - **Statut** : Proposée
-- **Décision** : aucun contenu produit par l'IA n'atteint un client ou une API distante sans action explicite d'un analyste (approbation de bulletin, nœud `control.approval` obligatoire avant `publish.api`). La double validation est configurable par espace et **désactivée par défaut** (Q4) : un analyste peut approuver et publier son propre bulletin, avec une MFA récente ; un espace qui l'active impose un relecteur différent de l'auteur (`bulletin_settings.review_required`).
+- **Décision** : aucun contenu produit par l'IA n'atteint un client ou une API distante sans action explicite d'un analyste (approbation de bulletin, nœud `control.approval` obligatoire avant `publish.api`). La double validation est configurable par espace et **désactivée par défaut** (Q4) : un analyste peut approuver et publier son propre bulletin, avec une MFA récente ; un espace qui l'active impose un relecteur différent de l'auteur (`bulletin_settings.review_required`). Toute modification d'un bulletin soumis, approuvé ou publié le renvoie en `draft` : ce qui est approuvé puis publié est toujours la révision courante, et la version déjà publiée reste visible des clients jusqu'à la republication.
 
 ## ADR-020 — NVD, vecteur d'entrée n°1 des investigations
 

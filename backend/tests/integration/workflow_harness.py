@@ -14,8 +14,17 @@ from app.core.db import create_engine, create_sessionmaker
 from app.core.rls import init_context, set_context
 from app.core.tasks import MemoryTaskQueue
 from app.workflows.dispatch import dispatch_outbox, fire_schedules
-from app.workflows.engine import ADVANCE_TASK, MAIL_TASK, EngineDeps, Limits, execute_node, sweep
-from app.workflows.models import Workflow
+from app.workflows.engine import (
+    ADVANCE_TASK,
+    MAIL_TASK,
+    EngineDeps,
+    Limits,
+    advance_task,
+    execute_node,
+    start_run,
+    sweep,
+)
+from app.workflows.models import Workflow, WorkflowVersion
 from app.workflows.runner import advance_run
 from app.workflows.service import activate, add_version
 from tests.conftest import make_settings
@@ -58,6 +67,31 @@ class Harness:
                 await activate(db, workflow, version, self.now)
             await db.commit()
             return workflow.id
+
+    async def manual(
+        self, workspace_id: uuid.UUID, workflow_id: uuid.UUID, payload: dict[str, Any]
+    ) -> uuid.UUID:
+        """Starts the active version from its ``start`` manual trigger (queued, not run)."""
+        async with self.app_db(workspace_id) as db:
+            workflow = await db.get(Workflow, workflow_id)
+            assert workflow is not None
+            assert workflow.active_version_id is not None
+            version = await db.get(WorkflowVersion, workflow.active_version_id)
+            assert version is not None
+            run_id = await start_run(
+                db,
+                workflow,
+                version,
+                trigger_node_id="start",
+                trigger_type="manual",
+                payload=payload,
+                idempotency_key=str(uuid.uuid4()),
+                now=self.now,
+            )
+            await db.commit()
+        assert run_id is not None
+        advance_task(self.tasks, run_id, workspace_id)
+        return run_id
 
     async def dispatch(self) -> int:
         async with self.worker_db() as db:

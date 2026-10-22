@@ -146,7 +146,9 @@ def test_selection_by_rule_then_default() -> None:
     english = select_template(
         candidates, _facts(kev=True), default_template_id=default, language="en"
     )
-    assert english is None  # no English rule matches, and the default is French
+    # No English rule matches and the default is French: the generic English template.
+    assert english is not None
+    assert (english.candidate.name, english.rule_index) == ("Generic bulletin (EN)", None)
 
 
 def test_technology_and_combined_conditions() -> None:

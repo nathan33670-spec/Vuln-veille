@@ -2021,6 +2021,478 @@
         "title": "BudgetOut",
         "type": "object"
       },
+      "BulletinDetailOut": {
+        "properties": {
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "audience_org_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Audience Org Ids",
+            "type": "array"
+          },
+          "audience_type": {
+            "title": "Audience Type",
+            "type": "string"
+          },
+          "author_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Id"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_rev_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Rev No"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "own": {
+            "title": "Own",
+            "type": "boolean"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "published_rev_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Rev No"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "review_required": {
+            "title": "Review Required",
+            "type": "boolean"
+          },
+          "reviewer_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Id"
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionSummaryOut"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted By"
+          },
+          "technologies": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedTechnologyOut"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Id"
+          },
+          "template_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Name"
+          },
+          "template_spec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Spec"
+          },
+          "template_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version No"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tlp": {
+            "title": "Tlp",
+            "type": "string"
+          },
+          "translation_of": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedBulletinOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translations": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedBulletinOut"
+            },
+            "title": "Translations",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "vulnerabilities": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedVulnerabilityOut"
+            },
+            "title": "Vulnerabilities",
+            "type": "array"
+          },
+          "withdrawn_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withdrawn Reason"
+          },
+          "workspace_slug": {
+            "title": "Workspace Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "status",
+          "severity",
+          "tlp",
+          "language",
+          "workspace_slug",
+          "own",
+          "author_id",
+          "current_rev_no",
+          "published_rev_no",
+          "published_at",
+          "updated_at",
+          "version",
+          "audience_type",
+          "audience_org_ids",
+          "template_id",
+          "template_name",
+          "template_version_no",
+          "template_spec",
+          "review_required",
+          "submitted_by",
+          "reviewer_id",
+          "approved_at",
+          "withdrawn_reason",
+          "current",
+          "revisions",
+          "vulnerabilities",
+          "technologies",
+          "translation_of",
+          "translations"
+        ],
+        "title": "BulletinDetailOut",
+        "type": "object"
+      },
+      "BulletinOut": {
+        "properties": {
+          "author_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Id"
+          },
+          "current_rev_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Rev No"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "own": {
+            "title": "Own",
+            "type": "boolean"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "published_rev_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Rev No"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tlp": {
+            "title": "Tlp",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "workspace_slug": {
+            "title": "Workspace Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "status",
+          "severity",
+          "tlp",
+          "language",
+          "workspace_slug",
+          "own",
+          "author_id",
+          "current_rev_no",
+          "published_rev_no",
+          "published_at",
+          "updated_at",
+          "version"
+        ],
+        "title": "BulletinOut",
+        "type": "object"
+      },
+      "BulletinUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "audience_org_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 500,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience Org Ids"
+          },
+          "audience_type": {
+            "anyOf": [
+              {
+                "pattern": "^(all_clients|selected)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience Type"
+          },
+          "tlp": {
+            "anyOf": [
+              {
+                "pattern": "^(CLEAR|GREEN|AMBER|AMBER\\+STRICT|RED)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tlp"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "BulletinUpdate",
+        "type": "object"
+      },
       "CheckQueuedOut": {
         "properties": {
           "queued": {
@@ -3167,6 +3639,214 @@
         "title": "DraftOut",
         "type": "object"
       },
+      "DraftRequestIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cve_id": {
+            "anyOf": [
+              {
+                "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cve Id"
+          },
+          "extra_instructions": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Extra Instructions",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "pattern": "^(fr|en)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mod\u00e8le impos\u00e9 ; sinon choisi par les r\u00e8gles",
+            "title": "Template Id"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 20000,
+            "title": "Text",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Urls",
+            "type": "array"
+          },
+          "vulnerability_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Vulnerability Ids",
+            "type": "array"
+          }
+        },
+        "title": "DraftRequestIn",
+        "type": "object"
+      },
+      "DraftRequestOut": {
+        "properties": {
+          "agent_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Run Id"
+          },
+          "bulletin_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bulletin Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "progress": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By"
+          },
+          "selection_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Selection Reasons",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "template_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Name"
+          },
+          "template_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version No"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "progress",
+          "bulletin_id",
+          "agent_run_id",
+          "error",
+          "template_name",
+          "template_version_no",
+          "selection_reasons",
+          "requested_by",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "DraftRequestOut",
+        "type": "object"
+      },
       "EngineChoiceIn": {
         "additionalProperties": false,
         "properties": {
@@ -3846,6 +4526,90 @@
           "display_name"
         ],
         "title": "InternalUserCreate",
+        "type": "object"
+      },
+      "LinkedBulletinOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "language",
+          "status"
+        ],
+        "title": "LinkedBulletinOut",
+        "type": "object"
+      },
+      "LinkedTechnologyOut": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name"
+        ],
+        "title": "LinkedTechnologyOut",
+        "type": "object"
+      },
+      "LinkedVulnerabilityOut": {
+        "properties": {
+          "cve_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cve Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "cve_id",
+          "title"
+        ],
+        "title": "LinkedVulnerabilityOut",
         "type": "object"
       },
       "LoginIn": {
@@ -4643,6 +5407,190 @@
           "connector_kinds"
         ],
         "title": "ReferenceFieldOut",
+        "type": "object"
+      },
+      "RegenerateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Field",
+            "type": "string"
+          },
+          "instructions": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Instructions",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "RegenerateIn",
+        "type": "object"
+      },
+      "RevisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "base_rev_no": {
+            "description": "R\u00e9vision \u00e9dit\u00e9e ; 409 si une autre a \u00e9t\u00e9 cr\u00e9\u00e9e depuis",
+            "title": "Base Rev No",
+            "type": "integer"
+          },
+          "change_note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Change Note",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          }
+        },
+        "required": [
+          "fields",
+          "base_rev_no"
+        ],
+        "title": "RevisionIn",
+        "type": "object"
+      },
+      "RevisionOut": {
+        "properties": {
+          "agent_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Run Id"
+          },
+          "change_note": {
+            "title": "Change Note",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "rendered_html": {
+            "title": "Rendered Html",
+            "type": "string"
+          },
+          "rendered_markdown": {
+            "title": "Rendered Markdown",
+            "type": "string"
+          },
+          "rev_no": {
+            "title": "Rev No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rev_no",
+          "created_by_type",
+          "created_by",
+          "agent_run_id",
+          "change_note",
+          "content_hash",
+          "created_at",
+          "fields",
+          "rendered_markdown",
+          "rendered_html"
+        ],
+        "title": "RevisionOut",
+        "type": "object"
+      },
+      "RevisionSummaryOut": {
+        "properties": {
+          "agent_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Run Id"
+          },
+          "change_note": {
+            "title": "Change Note",
+            "type": "string"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "rev_no": {
+            "title": "Rev No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rev_no",
+          "created_by_type",
+          "created_by",
+          "agent_run_id",
+          "change_note",
+          "content_hash",
+          "created_at"
+        ],
+        "title": "RevisionSummaryOut",
         "type": "object"
       },
       "RssConfig": {
@@ -6466,6 +7414,53 @@
         "title": "ToolConfig",
         "type": "object"
       },
+      "TransitionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Comment",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "TransitionIn",
+        "type": "object"
+      },
+      "TranslateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "language": {
+            "pattern": "^(fr|en)$",
+            "title": "Language",
+            "type": "string"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Id"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "TranslateIn",
+        "type": "object"
+      },
       "TriggerOut": {
         "properties": {
           "config": {
@@ -7966,6 +8961,27 @@
           "url"
         ],
         "title": "WebsiteConfig",
+        "type": "object"
+      },
+      "WithdrawIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reason",
+          "version"
+        ],
+        "title": "WithdrawIn",
         "type": "object"
       },
       "WorkflowCreate": {
@@ -14527,6 +15543,753 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/bulletins": {
+      "get": {
+        "description": "``own``: the workspace's bulletins; ``shared``: those the other team published.",
+        "operationId": "list_bulletins_api_v1_workspaces__workspace__bulletins_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 20,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "own",
+              "pattern": "^(own|shared)$",
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BulletinOut"
+                  },
+                  "title": "Response List Bulletins Api V1 Workspaces  Workspace  Bulletins Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Bulletins",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}": {
+      "get": {
+        "operationId": "get_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      },
+      "patch": {
+        "description": "Marking and audience (spec 04, 6.7): a change is reviewed again; a TLP change\nis a new revision, the marking being part of the rendered bulletin.",
+        "operationId": "update_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulletinUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/approve": {
+      "post": {
+        "operationId": "approve_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/publish": {
+      "post": {
+        "description": "Publication needs a recent second factor; the published revision is frozen.",
+        "operationId": "publish_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/regenerate": {
+      "post": {
+        "operationId": "regenerate_field_api_v1_workspaces__workspace__bulletins__bulletin_id__regenerate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Regenerate Field",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/reject": {
+      "post": {
+        "operationId": "reject_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/revisions": {
+      "post": {
+        "operationId": "edit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/revisions/{rev_no}": {
+      "get": {
+        "operationId": "get_revision_api_v1_workspaces__workspace__bulletins__bulletin_id__revisions__rev_no__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rev_no",
+            "required": true,
+            "schema": {
+              "title": "Rev No",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Revision",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/submit": {
+      "post": {
+        "operationId": "submit_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/translations": {
+      "post": {
+        "description": "The FR/EN version (Q10), from the validated text, as a new linked draft.",
+        "operationId": "translate_api_v1_workspaces__workspace__bulletins__bulletin_id__translations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Translate",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/withdraw": {
+      "post": {
+        "operationId": "withdraw_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Withdraw Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/connectors/ai_engine": {
       "get": {
         "operationId": "list_workspace_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine_get",
@@ -15589,6 +17352,205 @@
         "summary": "Usage Workspace Source",
         "tags": [
           "connectors"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/draft-requests": {
+      "get": {
+        "operationId": "list_drafts_api_v1_workspaces__workspace__draft_requests_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DraftRequestOut"
+                  },
+                  "title": "Response List Drafts Api V1 Workspaces  Workspace  Draft Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Drafts",
+        "tags": [
+          "bulletins"
+        ]
+      },
+      "post": {
+        "operationId": "request_draft_api_v1_workspaces__workspace__draft_requests_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Draft",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/draft-requests/{request_id}": {
+      "get": {
+        "operationId": "get_draft_api_v1_workspaces__workspace__draft_requests__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Draft",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/draft-requests/{request_id}/events": {
+      "get": {
+        "description": "Server-sent events: ``progress`` at each step, then ``done`` (polls the\ndatabase, holds no transaction; ten minutes at most).",
+        "operationId": "draft_events_api_v1_workspaces__workspace__draft_requests__request_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft Events",
+        "tags": [
+          "bulletins"
         ]
       }
     },

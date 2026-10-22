@@ -160,6 +160,14 @@ def evaluation_run(run_id: str, workspace_id: str) -> None:
     asyncio.run(evaluation_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
 
 
+@app.task(name="ai.bulletin_draft")
+def bulletin_draft(request_id: str, workspace_id: str) -> None:
+    """A bulletin draft, a regenerated field or a translation (spec 04 §3)."""
+    from app.bulletins.runner import draft_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(draft_entry(get_settings(), uuid.UUID(request_id), uuid.UUID(workspace_id)))
+
+
 @app.task(name="publish.workflow_node")
 def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)

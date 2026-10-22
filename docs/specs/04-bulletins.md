@@ -117,6 +117,17 @@ Visibilité inter-équipes : un bulletin publié est lisible par l'autre équipe
 
 Markdown et HTML, **PDF** (WeasyPrint dans un worker isolé, gabarit sobre avec logo configurable) et **e-mail** aux clients (Q11) dès le MVP ; JSON (champs), CSAF 2.0 (phase 7).
 
+## 5 bis. État de la merge request 6B
+
+- **Demandes de draft** (`draft_requests`, `POST /workspaces/{ws}/draft-requests`, 30 par heure et par analyste) : vulnérabilités, CVE (vulnérabilité créée à la volée), URL (transmises au modèle comme références, jamais téléchargées) ou texte libre ; modèle choisi par les règles quand l'analyste n'en impose pas (raisons renvoyées). Exécution par la tâche `ai.bulletin_draft` (file `ai`), progression (`context`, `done`, `failed`) dans la demande et sur `GET …/draft-requests/{id}/events` (SSE). Le bulletin n'est créé qu'en cas de succès : l'échec reste sur la demande, avec un code stable.
+- **Génération** : un appel au runtime d'agent (tâche `bulletin.draft` ou `bulletin.translate`, budgets, traces et garde-fous de la phase 4, `agent_runs.context_type = 'draft_request'`), avec le JSON Schema des seuls champs `ai` ; la relance ciblée en cas de sortie invalide est celle du runtime. Les valeurs sont ensuite nettoyées par le type du champ (`clean_fields` : longueurs, énumérations, références en `http(s)` seulement), les champs `computed` copiés depuis les faits, puis le rendu de l'ADR-029 s'applique. Les références du catalogue en dehors de `http(s)` sont écartées dès la construction des faits.
+- **Révisions** immuables (`bulletin_revisions`) ; un enregistrement donne `base_rev_no` (409 si une autre révision est arrivée entre-temps, 422 avec les erreurs par champ). Changer le TLP crée une révision (le marquage est dans le rendu). « Régénérer un champ » crée une révision `ai` en gardant les autres champs.
+- **Cycle de vie** (`app/bulletins/lifecycle.py`) : toute modification d'un bulletin soumis, approuvé ou publié le ramène en `draft` ; la version publiée reste visible (`published_revision_id`) jusqu'à la republication. Avec la double validation, le relecteur ne peut être ni l'auteur ni celui qui a soumis (403 `reviewer_must_differ`). Publication et retrait : permission de publication et MFA récente (`step_up_required`).
+- **Traductions** : uniquement depuis un bulletin approuvé ou publié ; nouveau bulletin lié (`translation_of`), dans un modèle de l'autre langue (le modèle par défaut s'il est dans cette langue, sinon un modèle générique sans règles), avec le TLP et l'audience de la source, à relire avant publication.
+- **Audience** : `all_clients` ou `selected` (organisations clientes) ; technos liées depuis les vulnérabilités.
+- **Lecture par l'autre équipe** (ADR-024) : `GET /workspaces/{autre}/bulletins?scope=shared` et le détail ne montrent que la révision publiée, sans historique, modèle, relecteurs ni motif ; un bulletin retiré disparaît (RLS `bulletins_published`, `bulletin_revisions_published`).
+- **Nœud** `bulletin.generate_draft` (file `ai`) : un draft par élément (`max_items`), modèle imposé ou choisi par les règles ; sortie `bulletin` (`status`, `id`, `ref`, `title`) ; un échec n'arrête pas le workflow.
+
 ## 6. Sécurité spécifique
 
 - Le gabarit est écrit par un analyste, les valeurs viennent du LLM ou des données : le rendu Liquid ne réinterprète jamais une valeur comme gabarit.

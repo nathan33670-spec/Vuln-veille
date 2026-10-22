@@ -191,10 +191,10 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 5.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
 - [x] 5.4 Exécution d'un nœud en test avec données épinglées (par exemple, une CVE NVD réelle), mode dry-run pour les nœuds de sortie
 - [x] 5.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
-- [ ] 5.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
+- [x] 5.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
 - [x] 5.7 Verrou d'édition optimiste (détection d'édition concurrente)
 
-**Critère de sortie** : un analyste modifie le workflow « Nouvelle CVE NVD → investigation » (ajout d'un agent, changement de filtre), le teste sur une CVE et publie la nouvelle version entièrement depuis l'interface.
+**Critère de sortie** : un analyste modifie le workflow « Nouvelle CVE NVD → investigation » (ajout d'un agent, changement de filtre), le teste sur une CVE et publie la nouvelle version entièrement depuis l'interface. **Atteint** (2026-10-22) : `tests/integration/test_phase5_exit.py` pilote Chromium contre la vraie API (CSP de production, moteur de workflows réel) ; il demande un navigateur (`VV_E2E_CHROMIUM`, `VV_E2E_PLAYWRIGHT`) et n'est pas encore exécuté en CI.
 
 ### Phase 6 — Modèles de bulletins et drafts
 

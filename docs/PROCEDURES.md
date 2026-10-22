@@ -72,6 +72,7 @@ Une étape est terminée quand :
 
 - Backend : `tests/unit` (pur), `tests/integration` (PostgreSQL et Redis via testcontainers), `tests/security` (permissions, matrice, SSRF, XSS, injection de prompt).
 - Fabriques de données (factory_boy ou équivalent) ; jamais de données réelles de clients.
+- Test navigateur du critère de sortie de la phase 5 (`tests/integration/test_phase5_exit.py`, script `phase5_exit.cjs`) : construire le back-office (`pnpm --filter @vv/backoffice build`), puis lancer `pytest tests/integration/test_phase5_exit.py` avec `VV_E2E_CHROMIUM` (exécutable Chromium) et `VV_E2E_PLAYWRIGHT` (dossier du paquet Node `playwright`). Sans ces variables, le test est ignoré. Dans l'environnement cloud : `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` et `/opt/node22/lib/node_modules/playwright`.
 - Les appels LLM sont simulés dans les tests (fixtures de réponses enregistrées), sauf dans une suite d'évaluation optionnelle, lancée manuellement et budgétée.
 
 ## 5. Ajouter un type de nœud de workflow

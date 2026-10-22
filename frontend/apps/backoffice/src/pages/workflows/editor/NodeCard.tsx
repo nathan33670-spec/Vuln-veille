@@ -2,6 +2,7 @@ import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { DiffKind } from "./diff";
 import type { GraphNode, NodeType } from "./model";
 
 export interface NodeData extends Record<string, unknown> {
@@ -12,6 +13,8 @@ export interface NodeData extends Record<string, unknown> {
   status?: string | undefined;
   /** Counters of a run (items in → out, duration, AI cost). */
   summary?: string | undefined;
+  /** How the node changed between two versions (comparison view). */
+  diff?: DiffKind | undefined;
 }
 
 export type EditorNode = Node<NodeData, "vv">;
@@ -23,7 +26,7 @@ function offset(index: number, count: number): string {
 /** A node on the canvas: its ports are handles, its texts are inert. */
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<EditorNode>) {
   const { t } = useTranslation();
-  const { node, type, errorCount, status, summary } = data;
+  const { node, type, errorCount, status, summary, diff } = data;
   const inputs = type?.inputs ?? [];
   const outputs = type?.outputs ?? [];
   const classes = [
@@ -32,6 +35,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Edi
     selected ? "vv-flow-node-selected" : "",
     errorCount || !type ? "vv-flow-node-invalid" : "",
     status ? `vv-flow-node-status-${status}` : "",
+    diff ? `vv-flow-node-diff-${diff}` : "",
   ];
   return (
     <div className={classes.filter(Boolean).join(" ")} data-testid={`node-${node.id}`}>
@@ -59,6 +63,9 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Edi
         <div className="vv-flow-node-status">{t(`workflows.status.${status}`, status)}</div>
       ) : null}
       {summary ? <div className="vv-flow-node-summary">{summary}</div> : null}
+      {diff && diff !== "same" ? (
+        <div className="vv-flow-node-diff">{t(`workflows.compare.kinds.${diff}`)}</div>
+      ) : null}
       {outputs.map((port, i) => (
         <Handle
           key={port}

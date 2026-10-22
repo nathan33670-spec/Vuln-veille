@@ -80,6 +80,7 @@ from app.workflows.schemas import (
     VersionCreate,
     VersionDetailOut,
     VersionOut,
+    VersionRestore,
     WebhookSecretOut,
     WorkflowCreate,
     WorkflowDetailOut,
@@ -420,17 +421,60 @@ def _routes_workflows(router: APIRouter) -> None:
         return await _detail(db, workflow)
 
     @router.get("/workflows/{workflow_id}/export", response_model=WorkflowExport)
-    async def export_workflow(workflow_id: uuid.UUID, access: Reader, db: DB) -> WorkflowExport:
+    async def export_workflow(
+        workflow_id: uuid.UUID,
+        access: Reader,
+        db: DB,
+        version_no: Annotated[int | None, Query(ge=1)] = None,
+    ) -> WorkflowExport:
+        """The latest version, or the one asked for, in the portable import format."""
         workflow = await _workflow(db, access, workflow_id)
-        detail = await _detail(db, workflow)
-        if detail.latest_graph is None:
-            raise HTTPException(status_code=422, detail="no_version")
+        if version_no is not None:
+            graph = (await _version(db, workflow, version_no)).graph
+        else:
+            latest = (await _detail(db, workflow)).latest_graph
+            if latest is None:
+                raise HTTPException(status_code=422, detail="no_version")
+            graph = latest
         return WorkflowExport(
             name=workflow.name,
             description=workflow.description,
             tags=workflow.tags,
-            graph=detail.latest_graph,
+            graph=graph,
         )
+
+
+async def _publish(
+    db: AsyncSession,
+    request: Request,
+    access: WorkspaceAccess,
+    workflow: Workflow,
+    graph: dict[str, Any],
+    comment: str,
+    base_version_no: int | None,
+    **audit: Any,
+) -> WorkflowVersion:
+    """A new version, validated, if no other one was published since ``base_version_no``."""
+    await db.refresh(workflow, with_for_update=True)
+    latest = (
+        await db.execute(
+            select(func.max(WorkflowVersion.version_no)).where(
+                WorkflowVersion.workflow_id == workflow.id
+            )
+        )
+    ).scalar_one()
+    if base_version_no is not None and base_version_no != (latest or 0):
+        raise HTTPException(status_code=409, detail="version_conflict")
+    await _validated(db, access, graph)
+    version = await add_version(
+        db, workflow, graph, comment=comment, actor=access.principal.user_id, now=now()
+    )
+    action = "workflow.version_restored" if audit else "workflow.version_created"
+    await _audit(
+        db, request, access, action, str(workflow.id), version_no=version.version_no, **audit
+    )
+    await db.commit()
+    return version
 
 
 def _routes_versions(router: APIRouter) -> None:
@@ -441,34 +485,38 @@ def _routes_versions(router: APIRouter) -> None:
         workflow_id: uuid.UUID, body: VersionCreate, request: Request, access: Editor, db: DB
     ) -> VersionDetailOut:
         workflow = await _workflow(db, access, workflow_id)
-        await db.refresh(workflow, with_for_update=True)
-        latest = (
-            await db.execute(
-                select(func.max(WorkflowVersion.version_no)).where(
-                    WorkflowVersion.workflow_id == workflow.id
-                )
-            )
-        ).scalar_one()
-        if body.base_version_no is not None and body.base_version_no != (latest or 0):
-            raise HTTPException(status_code=409, detail="version_conflict")
-        await _validated(db, access, body.graph)
-        version = await add_version(
-            db,
-            workflow,
-            body.graph,
-            comment=body.comment,
-            actor=access.principal.user_id,
-            now=now(),
+        version = await _publish(
+            db, request, access, workflow, body.graph, body.comment, body.base_version_no
         )
-        await _audit(
+        return VersionDetailOut(**version_out(version).model_dump(), graph=version.graph)
+
+    @router.post(
+        "/workflows/{workflow_id}/versions/{version_no}/restore",
+        response_model=VersionDetailOut,
+        status_code=201,
+    )
+    async def restore_version(
+        workflow_id: uuid.UUID,
+        version_no: int,
+        body: VersionRestore,
+        request: Request,
+        access: Editor,
+        db: DB,
+    ) -> VersionDetailOut:
+        """A new version with an older one's graph: history is never rewritten. The graph is
+        validated again, with the restoring analyst's permissions and today's references."""
+        workflow = await _workflow(db, access, workflow_id)
+        old = await _version(db, workflow, version_no)
+        version = await _publish(
             db,
             request,
             access,
-            "workflow.version_created",
-            str(workflow.id),
-            version_no=version.version_no,
+            workflow,
+            old.graph,
+            body.comment or f"Restauration de la v{version_no}",
+            body.base_version_no,
+            restored_from=version_no,
         )
-        await db.commit()
         return VersionDetailOut(**version_out(version).model_dump(), graph=version.graph)
 
     @router.get("/workflows/{workflow_id}/versions/{version_no}", response_model=VersionDetailOut)

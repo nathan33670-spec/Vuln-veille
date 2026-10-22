@@ -246,3 +246,49 @@ async def test_expression_preview_and_samples(make_api: ApiFactory, database: Da
     assert denied.status_code == 403
     sample_denied = await api.client.get(api.url(f"/workspaces/voc/workflow-samples/cve/{CVE}"))
     assert sample_denied.status_code == 403
+
+
+async def test_restore_and_export_a_version(make_api: ApiFactory, database: Database) -> None:
+    user = await create_user(
+        database.admin_dsn, "voc@voc.example.com", workspaces={"voc": "analyst"}, with_totp=True
+    )
+    api: Api = await make_api("backoffice")
+    h = {"x-csrf-token": await sign_in(api, user)}
+    first = _graph()
+    created = await api.client.post(
+        api.url("/workspaces/voc/workflows"), json={"name": "Versions", "graph": first}, headers=h
+    )
+    base = f"/workspaces/voc/workflows/{created.json()['id']}"
+    second = _graph({"id": "cap", "type": "transform.limit", "params": {"count": 3}})
+    second["edges"].append(
+        {"id": "e4", "from": {"node": "notify", "port": "out"}, "to": {"node": "cap", "port": "in"}}
+    )
+    v2 = await api.client.post(
+        api.url(f"{base}/versions"), json={"graph": second, "base_version_no": 1}, headers=h
+    )
+    assert v2.status_code == 201, v2.text
+
+    # Restoring creates a new version from the old graph; history is kept.
+    stale = await api.client.post(
+        api.url(f"{base}/versions/1/restore"), json={"base_version_no": 1}, headers=h
+    )
+    assert stale.status_code == 409
+    restored = await api.client.post(
+        api.url(f"{base}/versions/1/restore"), json={"base_version_no": 2}, headers=h
+    )
+    assert restored.status_code == 201, restored.text
+    assert restored.json()["version_no"] == 3
+    assert restored.json()["comment"] == "Restauration de la v1"
+    assert [n["id"] for n in restored.json()["graph"]["nodes"]] == [n["id"] for n in first["nodes"]]
+    audit = await _sql(
+        database,
+        "SELECT details FROM audit_events WHERE action = 'workflow.version_restored'",
+    )
+    assert json.loads(audit[0]["details"])["restored_from"] == 1
+
+    # Any version exports in the import format.
+    exported = (await api.client.get(api.url(f"{base}/export?version_no=2"))).json()
+    assert exported["format"] == "vuln-veille.workflow/1"
+    assert "cap" in {n["id"] for n in exported["graph"]["nodes"]}
+    missing = await api.client.get(api.url(f"{base}/export?version_no=9"))
+    assert missing.status_code == 404

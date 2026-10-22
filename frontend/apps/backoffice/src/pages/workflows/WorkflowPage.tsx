@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { client } from "../../api";
-import { formatDate } from "../../lib";
+import { downloadJson, formatDate, slugify } from "../../lib";
 import { useWorkspace } from "../../workspace";
 import { duration, GraphErrors, JsonBlock, StatusBadge } from "./shared";
 
@@ -68,10 +68,13 @@ export function WorkflowPage() {
       unwrap(await client.GET("/api/v1/workspaces/{workspace}/workflows/{workflow_id}/runs", path)),
   });
 
-  async function act(action: () => Promise<unknown>, success: string) {
+  async function act<T>(action: () => Promise<T>, success: string | ((result: T) => string)) {
     try {
-      await action();
-      setMessage({ tone: "success", text: success });
+      const result = await action();
+      setMessage({
+        tone: "success",
+        text: typeof success === "function" ? success(result) : success,
+      });
       await queryClient.invalidateQueries({ queryKey: key });
       await queryClient.invalidateQueries({ queryKey: ["workflows", workspace] });
     } catch (err) {
@@ -205,12 +208,77 @@ export function WorkflowPage() {
             {
               key: "actions",
               header: "",
-              render: (v) =>
-                editable && v.version_no !== w.active_version_no ? (
-                  <Button variant="secondary" onClick={() => activate(v.version_no)}>
-                    {t("workflows.activate")}
+              render: (v) => (
+                <span className="vv-actions">
+                  {editable && v.version_no !== w.active_version_no ? (
+                    <Button variant="secondary" onClick={() => activate(v.version_no)}>
+                      {t("workflows.activate")}
+                    </Button>
+                  ) : null}
+                  {v.version_no > 1 ? (
+                    <Link
+                      to={`/workflows/${id}/compare?from=${v.version_no - 1}&to=${v.version_no}`}
+                    >
+                      {t("workflows.compare.withPrevious")}
+                    </Link>
+                  ) : null}
+                  {editable && v.version_no !== w.latest_version_no ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        act(
+                          async () =>
+                            unwrap(
+                              await client.POST(
+                                "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions/{version_no}/restore",
+                                {
+                                  params: {
+                                    path: { workspace, workflow_id: id, version_no: v.version_no },
+                                  },
+                                  body: {
+                                    comment: "",
+                                    base_version_no: w.latest_version_no ?? null,
+                                  },
+                                },
+                              ),
+                            ),
+                          (restored) =>
+                            t("workflows.restored", {
+                              from: v.version_no,
+                              version: restored.version_no,
+                            }),
+                        )
+                      }
+                    >
+                      {t("workflows.restore")}
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      act(
+                        async () => {
+                          const exported = unwrap(
+                            await client.GET(
+                              "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/export",
+                              {
+                                params: {
+                                  path: { workspace, workflow_id: id },
+                                  query: { version_no: v.version_no },
+                                },
+                              },
+                            ),
+                          );
+                          downloadJson(`${slugify(w.name)}-v${v.version_no}.json`, exported);
+                        },
+                        t("workflows.exported", { version: v.version_no }),
+                      )
+                    }
+                  >
+                    {t("workflows.export")}
                   </Button>
-                ) : null,
+                </span>
+              ),
             },
           ]}
         />

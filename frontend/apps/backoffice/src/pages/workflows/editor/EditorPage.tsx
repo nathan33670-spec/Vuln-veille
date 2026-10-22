@@ -20,6 +20,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import {
+  type ChangeEvent,
   type DragEvent,
   type FormEvent,
   type KeyboardEvent,
@@ -32,9 +33,12 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { client } from "../../../api";
-import { formatDate } from "../../../lib";
+import { downloadJson, formatDate, slugify } from "../../../lib";
 import { useWorkspace } from "../../../workspace";
 import { GraphErrors } from "../shared";
+import { readWorkflowFile, WORKFLOW_FORMAT, WorkflowFileError } from "../workflowFile";
+import { ChangeList } from "./ComparePage";
+import { diffGraphs } from "./diff";
 import {
   asFieldErrors,
   connectionError,
@@ -381,6 +385,39 @@ function Editor({
     }
   }
 
+  function exportGraph() {
+    downloadJson(`${slugify(detail.name)}-brouillon.json`, {
+      format: WORKFLOW_FORMAT,
+      name: detail.name,
+      description: detail.description,
+      tags: detail.tags,
+      graph,
+    });
+  }
+
+  async function importGraph(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const parsed = await readWorkflowFile(file);
+      const loaded = toFlow(parseGraph(parsed.graph), typeMap);
+      record();
+      setNodes(loaded.nodes);
+      setEdges(loaded.edges);
+      setRevision((r) => r + 1);
+      setMessage({ tone: "info", text: t("workflows.editor.imported", { name: file.name }) });
+    } catch (err) {
+      setMessage({
+        tone: "error",
+        text:
+          err instanceof WorkflowFileError
+            ? t(`workflows.file.${err.message}`)
+            : errorMessage(t, err),
+      });
+    }
+  }
+
   async function keepMine() {
     const latest = unwrap(
       await client.GET("/api/v1/workspaces/{workspace}/workflows/{workflow_id}", draftPath),
@@ -455,9 +492,23 @@ function Editor({
                 >
                   {t("workflows.editor.redo")}
                 </Button>
+                <label className="vv-button vv-button-secondary vv-file-button">
+                  {t("workflows.editor.import")}
+                  <input type="file" accept="application/json,.json" onChange={importGraph} />
+                </label>
                 <Button onClick={() => setPublishing(true)}>{t("workflows.editor.publish")}</Button>
               </>
             )}
+            <Button variant="secondary" onClick={exportGraph}>
+              {t("workflows.export")}
+            </Button>
+            {detail.latest_version_no && !readOnly ? (
+              <Link
+                to={`/workflows/${detail.id}/compare?from=${detail.latest_version_no}&to=draft`}
+              >
+                {t("workflows.editor.compareDraft")}
+              </Link>
+            ) : null}
             <Link to={`/workflows/${detail.id}`}>{t("workflows.editor.back")}</Link>
           </span>
         }
@@ -570,6 +621,11 @@ function Editor({
       >
         <form className="vv-form" onSubmit={publish}>
           <p className="vv-muted">{t("workflows.editor.publishHint")}</p>
+          {publishing ? (
+            <ChangeList
+              diff={diffGraphs(parseGraph(detail.latest_graph ?? { nodes: [] }), graph)}
+            />
+          ) : null}
           <TextField label={t("workflows.comment")} name="comment" maxLength={500} />
           <div className="vv-actions">
             <Button type="submit">{t("workflows.editor.publish")}</Button>

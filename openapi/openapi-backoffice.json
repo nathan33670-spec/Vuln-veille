@@ -6417,6 +6417,31 @@
         "title": "VersionOut",
         "type": "object"
       },
+      "VersionRestore": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Derni\u00e8re version connue ; 409 si une autre a \u00e9t\u00e9 publi\u00e9e",
+            "title": "Base Version No"
+          },
+          "comment": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Comment",
+            "type": "string"
+          }
+        },
+        "title": "VersionRestore",
+        "type": "object"
+      },
       "VulnerabilityCreate": {
         "additionalProperties": false,
         "properties": {
@@ -16249,6 +16274,7 @@
     },
     "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/export": {
       "get": {
+        "description": "The latest version, or the one asked for, in the portable import format.",
         "operationId": "export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get",
         "parameters": [
           {
@@ -16268,6 +16294,23 @@
             "schema": {
               "title": "Workspace",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version_no",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version No"
             }
           }
         ],
@@ -16810,6 +16853,78 @@
           }
         },
         "summary": "Activate Version",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions/{version_no}/restore": {
+      "post": {
+        "description": "A new version with an older one's graph: history is never rewritten. The graph is\nvalidated again, with the restoring analyst's permissions and today's references.",
+        "operationId": "restore_version_api_v1_workspaces__workspace__workflows__workflow_id__versions__version_no__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_no",
+            "required": true,
+            "schema": {
+              "title": "Version No",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRestore"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Version",
         "tags": [
           "workflows"
         ]

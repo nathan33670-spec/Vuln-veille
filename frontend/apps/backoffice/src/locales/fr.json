@@ -660,6 +660,37 @@
         "aiCalls_one": "{{count}} appel, {{cost}} $ estimés",
         "aiCalls_other": "{{count}} appels, {{cost}} $ estimés",
         "runId": "Exécution de test"
+      },
+      "import": "Importer (JSON)",
+      "imported": "Graphe importé depuis {{name}} : vérifiez-le, puis publiez-le. Annuler revient au graphe précédent.",
+      "compareDraft": "Comparer avec la dernière version",
+      "cronInvalid": "Expression cron invalide (5 champs : minute heure jour mois jour-de-semaine)."
+    },
+    "restore": "Restaurer",
+    "restored": "La v{{from}} est republiée comme v{{version}}. Activez-la pour l'utiliser.",
+    "export": "Exporter (JSON)",
+    "exported": "Version {{version}} exportée.",
+    "importFile": "Importer un workflow (JSON)",
+    "file": {
+      "too_large": "Fichier trop volumineux (1 Mio au maximum).",
+      "invalid_json": "Le fichier n'est pas du JSON valide.",
+      "not_a_workflow": "Le fichier ne contient pas de workflow (format vuln-veille.workflow/1 ou graphe)."
+    },
+    "compare": {
+      "title": "Comparaison — {{name}}",
+      "from": "Version de départ",
+      "to": "Version comparée",
+      "draft": "Brouillon en cours",
+      "views": "Vue de la comparaison",
+      "withPrevious": "Comparer avec la précédente",
+      "changes": "Changements",
+      "none": "Aucun changement (hors positions sur le canvas).",
+      "edges": "Liaisons : {{added}} ajoutée(s), {{removed}} supprimée(s).",
+      "kinds": {
+        "added": "Ajouté",
+        "removed": "Supprimé",
+        "modified": "Modifié",
+        "same": "Inchangé"
       }
     }
   },

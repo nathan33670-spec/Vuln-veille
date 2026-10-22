@@ -72,6 +72,7 @@ Une étape est terminée quand :
 
 - Backend : `tests/unit` (pur), `tests/integration` (PostgreSQL et Redis via testcontainers), `tests/security` (permissions, matrice, SSRF, XSS, injection de prompt).
 - Fabriques de données (factory_boy ou équivalent) ; jamais de données réelles de clients.
+- Test navigateur du critère de sortie de la phase 5 (`tests/integration/test_phase5_exit.py`, script `phase5_exit.cjs`) : construire le back-office (`pnpm --filter @vv/backoffice build`), puis lancer `pytest tests/integration/test_phase5_exit.py` avec `VV_E2E_CHROMIUM` (exécutable Chromium) et `VV_E2E_PLAYWRIGHT` (dossier du paquet Node `playwright`). Sans ces variables, le test est ignoré. Dans l'environnement cloud : `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` et `/opt/node22/lib/node_modules/playwright`.
 - Les appels LLM sont simulés dans les tests (fixtures de réponses enregistrées), sauf dans une suite d'évaluation optionnelle, lancée manuellement et budgétée.
 
 ## 5. Ajouter un type de nœud de workflow
@@ -112,7 +113,7 @@ Un nouveau modèle sur un serveur compatible OpenAI (OpenLLM, vLLM, Ollama…) *
 
 - Ajouter une dépendance uniquement si elle est maintenue (version récente, mainteneurs actifs), avec une licence compatible et sans vulnérabilité connue.
 - Épingler la version dans `uv.lock` ou `pnpm-lock.yaml` ; prendre une version publiée depuis au moins deux semaines. C'est automatique : `exclude-newer` dans `backend/pyproject.toml` (date à avancer délibérément) et `minimumReleaseAge` dans `frontend/pnpm-workspace.yaml`.
-- **Exception : correctif de sécurité.** Un correctif d'une vulnérabilité connue s'applique tout de suite, paquet par paquet (`exclude-newer-package` côté Python), avec la référence de l'avis en commentaire.
+- **Exception : correctif de sécurité.** Un correctif d'une vulnérabilité connue s'applique tout de suite, paquet par paquet (`exclude-newer-package` côté Python, `minimumReleaseAgeExclude` côté pnpm), avec la référence de l'avis en commentaire. Retirer l'exception pnpm une fois la version sortie du délai.
 - Images Docker et GitHub Actions : épinglées par digest ou SHA de commit, avec la version en commentaire.
 - **Caddy et smokescreen** sont compilés depuis les sources avec une chaîne Go corrigée. Leurs dépendances sont figées dans `deploy/caddy/build/` et `deploy/smokescreen/build/` (`go.mod`, `go.sum`) : la compilation vérifie chaque module contre `go.sum` sans jamais résoudre de version. Pour monter une version (avis Go, `x/net`…), dans le dossier `build/` concerné, avec l'image Go du Dockerfile : supprimer `go.mod` et `go.sum`, puis `go mod init <module>`, `go get <paquet>@<version> golang.org/x/net@<version> …`, `go mod tidy`, et commiter les deux fichiers (dans l'environnement cloud : `docker run --network host` avec `HTTPS_PROXY` et `SSL_CERT_FILE` pointant sur l'autorité du proxy).
 - TypeScript est figé en 6.x (`overrides` pnpm) tant que l'outillage ne prend pas en charge TypeScript 7.

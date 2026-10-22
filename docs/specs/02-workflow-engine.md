@@ -203,3 +203,5 @@ POST   /hooks/{trigger_id}                             # webhook entrant (signé
 - Vue d'exécution : couleur par statut, compteurs d'éléments, entrées et sorties (tableau et JSON), erreurs, durées, coût IA.
 - Versions : brouillon local enregistré côté serveur, publication avec commentaire, historique, diff visuel et JSON, restauration.
 - Concurrence : `If-Match` sur la version ; en cas de conflit, la fusion est proposée ou l'édition est rechargée.
+
+État en phase 5 (merge request 5B) : canvas, palette, connexions validées, annuler/rétablir, panneau de paramètres (sélecteurs de connecteur et d'agent d'après `reference_fields` du registre), brouillon côté serveur et publication sont livrés. La concurrence porte sur `base_version_no` : un brouillon périmé ou une publication refusée (409) propose de recharger la dernière version ou de garder ses modifications par-dessus ; la fusion assistée viendra avec le diff de versions. Restent pour 5C : éditeur JMESPath/Liquid avec aperçu, « Tester ce nœud », vue d'exécution, historique, diff, restauration, import/export et cron expliqué.

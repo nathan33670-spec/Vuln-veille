@@ -32,6 +32,7 @@ class AgentResult:
     injection_flags: tuple[dict[str, Any], ...] = ()
     cost_usd: Decimal = Decimal(0)
     error: str | None = None
+    latency_seconds: float | None = None
 
     @property
     def succeeded(self) -> bool:
@@ -93,18 +94,35 @@ class WorkerAgents:
         )
 
     async def run_task(
-        self, task: str, spec: AgentSpec, payload: dict[str, Any], context_id: str
+        self,
+        task: str,
+        spec: AgentSpec,
+        payload: dict[str, Any],
+        context_id: str,
+        context_type: str = "node_run",
     ) -> AgentResult:
-        return await self._run(payload, context_id, task=task, spec=spec.model_dump(mode="json"))
+        return await self._run(
+            payload,
+            context_id,
+            context_type=context_type,
+            task=task,
+            spec=spec.model_dump(mode="json"),
+        )
 
-    async def _run(self, payload: dict[str, Any], context_id: str, **target: Any) -> AgentResult:
+    async def _run(
+        self,
+        payload: dict[str, Any],
+        context_id: str,
+        context_type: str = "node_run",
+        **target: Any,
+    ) -> AgentResult:
         run_id = uuid7()
         async with await self._session() as db:
             db.add(
                 AgentRun(
                     id=run_id,
                     workspace_id=self.workspace_id,
-                    context_type="node_run",
+                    context_type=context_type,
                     context_id=context_id,
                     input=payload,
                     status="queued",
@@ -116,6 +134,11 @@ class WorkerAgents:
             await execute_run(db, self.deps, run_id)
             run = await db.get(AgentRun, run_id, populate_existing=True)
             assert run is not None  # noqa: S101 - created above
+            latency = (
+                (run.finished_at - run.started_at).total_seconds()
+                if run.started_at and run.finished_at
+                else None
+            )
             return AgentResult(
                 status=run.status,
                 run_id=run.id,
@@ -123,4 +146,5 @@ class WorkerAgents:
                 injection_flags=tuple(run.injection_flags),
                 cost_usd=run.cost_estimate_usd,
                 error=run.error,
+                latency_seconds=latency,
             )

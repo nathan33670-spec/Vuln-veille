@@ -152,6 +152,14 @@ def agent_run(run_id: str, workspace_id: str) -> None:
     asyncio.run(run_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
 
 
+@app.task(name="ai.evaluation_run")
+def evaluation_run(run_id: str, workspace_id: str) -> None:
+    """Engine evaluation bench: an agent version on the reference cases (spec 07 §4.6)."""
+    from app.ai.evaluation.runner import evaluation_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(evaluation_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
+
+
 @app.task(name="publish.workflow_node")
 def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)

@@ -93,11 +93,12 @@ class EngineDeps:
     redis: Redis | None = None
     http: SafeHttpClient | None = None  # tests: replaces every connector's client
     agent_engine: EngineFactory | None = None  # tests: a simulated AI engine
+    vault: Vault | None = None  # tests: keyrings given directly
 
     def agents(self, workspace_id: uuid.UUID) -> WorkerAgents:
         deps = AgentDeps(
             self.settings,
-            Vault.from_settings(self.settings),
+            self.vault or Vault.from_settings(self.settings),
             clock=self.clock,
             redis=self.redis,
             tasks=self.tasks,
@@ -681,7 +682,7 @@ async def _run_node(
         node_id=node_id,
         now=now,
         repo=WorkspaceRepo(db, run.workspace_id, now, run_id, node_id),
-        connectors=WorkerConnectors(db, deps, run.workspace_id),
+        connectors=WorkerConnectors(db, deps, run.workspace_id, deps.vault),
         upstream=upstream,
         dry_run=dry_run,
         agents=deps.agents(run.workspace_id),

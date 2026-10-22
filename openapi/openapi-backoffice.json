@@ -3046,6 +3046,27 @@
         "title": "CvePage",
         "type": "object"
       },
+      "CveSampleOut": {
+        "description": "A catalogue CVE as a workflow sees it: the NVD event, or the CVE record.",
+        "properties": {
+          "event": {
+            "additionalProperties": true,
+            "title": "Event",
+            "type": "object"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "event",
+          "summary"
+        ],
+        "title": "CveSampleOut",
+        "type": "object"
+      },
       "DraftIn": {
         "additionalProperties": false,
         "properties": {
@@ -4013,8 +4034,80 @@
         "title": "NeedOut",
         "type": "object"
       },
+      "NodeOutputOut": {
+        "description": "A past output of a node, reusable as pinned data.",
+        "properties": {
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "output_count": {
+            "title": "Output Count",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version No"
+          }
+        },
+        "required": [
+          "run_id",
+          "mode",
+          "status",
+          "finished_at",
+          "output_count",
+          "version_no"
+        ],
+        "title": "NodeOutputOut",
+        "type": "object"
+      },
       "NodeRunDetailOut": {
         "properties": {
+          "ai_calls": {
+            "default": 0,
+            "title": "Ai Calls",
+            "type": "integer"
+          },
+          "ai_cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Cost Usd"
+          },
           "attempt": {
             "title": "Attempt",
             "type": "integer"
@@ -4120,6 +4213,23 @@
       },
       "NodeRunOut": {
         "properties": {
+          "ai_calls": {
+            "default": 0,
+            "title": "Ai Calls",
+            "type": "integer"
+          },
+          "ai_cost_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Cost Usd"
+          },
           "attempt": {
             "title": "Attempt",
             "type": "integer"
@@ -4331,6 +4441,70 @@
           "new_password"
         ],
         "title": "PasswordChangeIn",
+        "type": "object"
+      },
+      "PreviewIn": {
+        "additionalProperties": false,
+        "description": "An expression or a template evaluated on a sample item, as a node would.",
+        "properties": {
+          "expr": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expr"
+          },
+          "item": {
+            "additionalProperties": true,
+            "description": "\u00c9l\u00e9ment d'exemple : {json, meta}",
+            "title": "Item",
+            "type": "object"
+          },
+          "tpl": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tpl"
+          }
+        },
+        "title": "PreviewIn",
+        "type": "object"
+      },
+      "PreviewOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "title": "PreviewOut",
         "type": "object"
       },
       "Quotas": {
@@ -4585,6 +4759,10 @@
             "title": "Id",
             "type": "string"
           },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
           "node_runs": {
             "items": {
               "$ref": "#/components/schemas/NodeRunOut"
@@ -4617,6 +4795,17 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "test_node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Node Id"
           },
           "trigger_node_id": {
             "title": "Trigger Node Id",
@@ -4671,6 +4860,8 @@
           "finished_at",
           "error",
           "stats",
+          "mode",
+          "test_node_id",
           "trigger_node_id",
           "triggered_by",
           "trigger_payload",
@@ -15534,6 +15725,59 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/workflow-samples/cve/{cve_id}": {
+      "get": {
+        "description": "A real catalogue CVE as pinned data: the NVD event that starts a run, or the\nCVE record that catalogue nodes produce.",
+        "operationId": "cve_sample_api_v1_workspaces__workspace__workflow_samples_cve__cve_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cve_id",
+            "required": true,
+            "schema": {
+              "pattern": "^(?i:CVE)-\\d{4}-\\d{4,19}$",
+              "title": "Cve Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CveSampleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cve Sample",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/workflows": {
       "get": {
         "operationId": "list_workflows_api_v1_workspaces__workspace__workflows_get",
@@ -15677,6 +15921,59 @@
           }
         },
         "summary": "Import Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/workflows/preview-expression": {
+      "post": {
+        "description": "Evaluates an expression or a template on a sample item, with the engine's own\nevaluator and limits. The item is data: it is never compiled.",
+        "operationId": "preview_expression_api_v1_workspaces__workspace__workflows_preview_expression_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Expression",
         "tags": [
           "workflows"
         ]
@@ -15997,6 +16294,73 @@
           }
         },
         "summary": "Export Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/nodes/{node_id}/outputs": {
+      "get": {
+        "description": "Recent successful outputs of a node (test and real runs), to pin downstream.",
+        "operationId": "node_outputs_api_v1_workspaces__workspace__workflows__workflow_id__nodes__node_id__outputs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "title": "Node Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NodeOutputOut"
+                  },
+                  "title": "Response Node Outputs Api V1 Workspaces  Workspace  Workflows  Workflow Id  Nodes  Node Id  Outputs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Node Outputs",
         "tags": [
           "workflows"
         ]

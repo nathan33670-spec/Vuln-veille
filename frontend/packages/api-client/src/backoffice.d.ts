@@ -1947,6 +1947,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/workflow-samples/cve/{cve_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Cve Sample
+     * @description A real catalogue CVE as pinned data: the NVD event that starts a run, or the
+     *     CVE record that catalogue nodes produce.
+     */
+    get: operations["cve_sample_api_v1_workspaces__workspace__workflow_samples_cve__cve_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/workflows": {
     parameters: {
       query?: never;
@@ -1976,6 +1997,27 @@ export interface paths {
     put?: never;
     /** Import Workflow */
     post: operations["import_workflow_api_v1_workspaces__workspace__workflows_import_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/workflows/preview-expression": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Preview Expression
+     * @description Evaluates an expression or a template on a sample item, with the engine's own
+     *     evaluator and limits. The item is data: it is never compiled.
+     */
+    post: operations["preview_expression_api_v1_workspaces__workspace__workflows_preview_expression_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2031,6 +2073,26 @@ export interface paths {
     };
     /** Export Workflow */
     get: operations["export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/nodes/{node_id}/outputs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Node Outputs
+     * @description Recent successful outputs of a node (test and real runs), to pin downstream.
+     */
+    get: operations["node_outputs_api_v1_workspaces__workspace__workflows__workflow_id__nodes__node_id__outputs_get"];
     put?: never;
     post?: never;
     delete?: never;
@@ -3255,6 +3317,20 @@ export interface components {
       /** Total */
       total: number;
     };
+    /**
+     * CveSampleOut
+     * @description A catalogue CVE as a workflow sees it: the NVD event, or the CVE record.
+     */
+    CveSampleOut: {
+      /** Event */
+      event: {
+        [key: string]: unknown;
+      };
+      /** Summary */
+      summary: {
+        [key: string]: unknown;
+      };
+    };
     /** DraftIn */
     DraftIn: {
       /**
@@ -3670,8 +3746,36 @@ export interface components {
       /** Name */
       name: string;
     };
+    /**
+     * NodeOutputOut
+     * @description A past output of a node, reusable as pinned data.
+     */
+    NodeOutputOut: {
+      /** Finished At */
+      finished_at: string | null;
+      /** Mode */
+      mode: string;
+      /** Output Count */
+      output_count: number;
+      /**
+       * Run Id
+       * Format: uuid
+       */
+      run_id: string;
+      /** Status */
+      status: string;
+      /** Version No */
+      version_no: number | null;
+    };
     /** NodeRunDetailOut */
     NodeRunDetailOut: {
+      /**
+       * Ai Calls
+       * @default 0
+       */
+      ai_calls: number;
+      /** Ai Cost Usd */
+      ai_cost_usd?: string | null;
       /** Attempt */
       attempt: number;
       /** Error */
@@ -3710,6 +3814,13 @@ export interface components {
     };
     /** NodeRunOut */
     NodeRunOut: {
+      /**
+       * Ai Calls
+       * @default 0
+       */
+      ai_calls: number;
+      /** Ai Cost Usd */
+      ai_cost_usd?: string | null;
       /** Attempt */
       attempt: number;
       /** Error */
@@ -3781,6 +3892,35 @@ export interface components {
       current_password: string;
       /** New Password */
       new_password: string;
+    };
+    /**
+     * PreviewIn
+     * @description An expression or a template evaluated on a sample item, as a node would.
+     */
+    PreviewIn: {
+      /** Expr */
+      expr?: string | null;
+      /**
+       * Item
+       * @description Élément d'exemple : {json, meta}
+       */
+      item?: {
+        [key: string]: unknown;
+      };
+      /** Tpl */
+      tpl?: string | null;
+    };
+    /** PreviewOut */
+    PreviewOut: {
+      /** Error */
+      error?: string | null;
+      /**
+       * Truncated
+       * @default false
+       */
+      truncated: boolean;
+      /** Value */
+      value?: unknown;
     };
     /** Quotas */
     Quotas: {
@@ -3863,6 +4003,8 @@ export interface components {
        * Format: uuid
        */
       id: string;
+      /** Mode */
+      mode: string;
       /** Node Runs */
       node_runs: components["schemas"]["NodeRunOut"][];
       /**
@@ -3878,6 +4020,8 @@ export interface components {
       };
       /** Status */
       status: string;
+      /** Test Node Id */
+      test_node_id: string | null;
       /** Trigger Node Id */
       trigger_node_id: string;
       /** Trigger Payload */
@@ -9920,6 +10064,38 @@ export interface operations {
       };
     };
   };
+  cve_sample_api_v1_workspaces__workspace__workflow_samples_cve__cve_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        cve_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CveSampleOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   list_workflows_api_v1_workspaces__workspace__workflows_get: {
     parameters: {
       query?: never;
@@ -10008,6 +10184,41 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["WorkflowDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  preview_expression_api_v1_workspaces__workspace__workflows_preview_expression_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PreviewIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PreviewOut"];
         };
       };
       /** @description Validation Error */
@@ -10206,6 +10417,39 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["WorkflowExport"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  node_outputs_api_v1_workspaces__workspace__workflows__workflow_id__nodes__node_id__outputs_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        node_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NodeOutputOut"][];
         };
       };
       /** @description Validation Error */

@@ -517,7 +517,10 @@ async def test_local_tools_read_the_catalogue_and_only_the_workspace_data(
             assert tech.documents[0]["technology"]["display_name"] == "Acme Gateway"
             posts = await TOOLS["x_discover"].run(ctx, {"cve_id": CVE})
             assert posts.documents == [
-                {"x_post_urls": ["https://x.com/cert_fr/status/1850000000001"]}
+                {
+                    "x_post_urls": ["https://x.com/cert_fr/status/1850000000001"],
+                    "layers": {"collected": 1, "web_search": 0},  # no engine search here
+                }
             ]
             no_x = ToolContext(db, CERT, spec, replace(connectors, allowed=()), datetime.now(UTC))
             with pytest.raises(ToolError, match="no_allowed_connector"):

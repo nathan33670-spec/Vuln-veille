@@ -277,3 +277,16 @@ async def test_x_source_reads_the_posts_cited_by_items() -> None:
     assert [i["json"]["url"] for i in out["out"]] == ["https://x.com/r/status/100001"]
     assert out["out"][0]["json"]["content"] == "exploited in the wild"
     assert ctx.logs[-1]["withdrawn"] == 1
+
+
+async def test_agent_node_condition_lets_other_items_pass_without_a_run() -> None:
+    agents = _Agents()
+    params = AgentParams.model_validate(
+        {"preset": "social", "output_key": "social", "run_if": {"$expr": "json.kev"}}
+    )
+    kev = item({"cve_id": "CVE-2026-1", "kev": True}, source="t")
+    other = item({"cve_id": "CVE-2026-2", "kev": False}, source="t")
+    out = await AgentNode().execute(_ctx(agents), params, {"in": [kev, other]})
+    assert [i["json"]["social"]["status"] for i in out["out"]] == ["succeeded", "skipped"]
+    assert out["out"][1]["json"]["social"]["error"] == "condition_not_met"
+    assert len(agents.calls) == 1  # no engine call for the second item

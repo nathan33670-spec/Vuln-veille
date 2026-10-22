@@ -285,7 +285,7 @@ def _routes_templates(router: APIRouter) -> None:
         try:
             markdown = render_markdown(
                 spec.render_template,
-                {"fields": fields, "tlp": spec.tlp, "language": spec.language},
+                {"fields": fields, "tlp": body.tlp or spec.tlp, "language": spec.language},
             )
         except RenderError as exc:
             raise ApiError(

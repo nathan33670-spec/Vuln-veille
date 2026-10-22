@@ -2,25 +2,12 @@
 // Usage: node phase5_exit.cjs '<json config>'; exits non-zero on the first failed step.
 "use strict";
 
-const crypto = require("node:crypto");
 const path = require("node:path");
+
+const { signIn, step, watchProblems } = require("./browser_lib.cjs");
 
 const config = JSON.parse(process.argv[2]);
 const { chromium } = require(config.playwright);
-
-function totp(secret) {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-  let bits = "";
-  for (const c of secret.replace(/=+$/, "").toUpperCase()) {
-    bits += alphabet.indexOf(c).toString(2).padStart(5, "0");
-  }
-  const key = Buffer.from(bits.match(/.{8}/g).map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
-  const mac = crypto.createHmac("sha1", key).update(counter).digest();
-  const offset = mac[mac.length - 1] & 0xf;
-  return String((mac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, "0");
-}
 
 async function dragHandle(page, from, to) {
   const a = await from.boundingBox();
@@ -33,28 +20,14 @@ async function dragHandle(page, from, to) {
   await page.mouse.up();
 }
 
-async function step(name, action) {
-  process.stdout.write(`- ${name}\n`);
-  await action();
-}
-
 (async () => {
   const browser = await chromium.launch({ executablePath: config.chromium });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   const problems = [];
-  page.on("console", (m) => {
-    // Expected 404s: no draft yet, no output yet for a node.
-    if (m.type() === "error" && !m.text().includes("404")) problems.push(m.text());
-  });
-  page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  watchProblems(page, problems);
   try {
     await step("sign in with the second factor", async () => {
-      await page.goto(`${config.base}/login`);
-      await page.getByLabel("Adresse e-mail").fill(config.email);
-      await page.getByLabel("Mot de passe").fill(config.password);
-      await page.getByRole("button", { name: "Se connecter" }).click();
-      await page.getByLabel("Code").fill(totp(config.totpSecret));
-      await page.getByRole("button", { name: "Vérifier" }).click();
+      await signIn(page, config.base, config);
       await page.getByRole("link", { name: "Workflows" }).click();
     });
 

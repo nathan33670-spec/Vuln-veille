@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.bulletins.spec import Tlp
+
 
 class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -78,6 +80,7 @@ class PreviewIn(_In):
     fields: dict[str, Any] | None = Field(
         default=None, description="Valeurs de champs à rendre, à la place des exemples"
     )
+    tlp: Tlp | None = Field(default=None, description="Marquage du bulletin, sinon celui du modèle")
 
 
 class PreviewOut(BaseModel):
@@ -206,6 +209,11 @@ class LinkedBulletinOut(BaseModel):
     ref: str
     language: str
     status: str
+
+
+class AudienceOut(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
 class BulletinOut(BaseModel):

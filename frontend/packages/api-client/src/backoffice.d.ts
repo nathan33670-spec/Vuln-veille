@@ -1377,6 +1377,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/bulletin-audiences": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Audiences
+     * @description The client organisations a bulletin can be addressed to (name only).
+     */
+    get: operations["list_audiences_api_v1_workspaces__workspace__bulletin_audiences_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/bulletin-settings": {
     parameters: {
       query?: never;
@@ -3310,6 +3330,16 @@ export interface components {
       version: number;
       /** Workspace */
       workspace: string;
+    };
+    /** AudienceOut */
+    AudienceOut: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Name */
+      name: string;
     };
     /** AuditEventOut */
     AuditEventOut: {
@@ -6141,6 +6171,11 @@ export interface components {
       spec: {
         [key: string]: unknown;
       };
+      /**
+       * Tlp
+       * @description Marquage du bulletin, sinon celui du modèle
+       */
+      tlp?: ("CLEAR" | "GREEN" | "AMBER" | "AMBER+STRICT" | "RED") | null;
       /**
        * Vulnerability Id
        * @description Vulnérabilité réelle pour les champs calculés
@@ -9491,6 +9526,37 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditPage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_audiences_api_v1_workspaces__workspace__bulletin_audiences_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AudienceOut"][];
         };
       };
       /** @description Validation Error */

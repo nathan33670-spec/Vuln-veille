@@ -46,6 +46,7 @@ from app.bulletins.models import (
 )
 from app.bulletins.runner import DRAFT_TASK
 from app.bulletins.schemas import (
+    AudienceOut,
     BulletinDetailOut,
     BulletinOut,
     BulletinUpdate,
@@ -493,6 +494,17 @@ def _routes_bulletins(router: APIRouter) -> None:
         if status:
             query = query.where(Bulletin.status == status)
         return [await _bulletin_out(db, b, access) for b in (await db.execute(query)).scalars()]
+
+    @router.get("/bulletin-audiences", response_model=list[AudienceOut])
+    async def list_audiences(access: Drafter, db: DB) -> list[AudienceOut]:
+        """The client organisations a bulletin can be addressed to (name only)."""
+        del access  # the permission is the check
+        rows = await db.execute(
+            select(ClientOrganization)
+            .where(ClientOrganization.status == "active")
+            .order_by(ClientOrganization.name)
+        )
+        return [AudienceOut(id=o.id, name=o.name) for o in rows.scalars()]
 
     @router.get("/bulletins/{bulletin_id}", response_model=BulletinDetailOut)
     async def get_bulletin(bulletin_id: uuid.UUID, access: Drafter, db: DB) -> BulletinDetailOut:

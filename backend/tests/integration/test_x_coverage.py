@@ -136,7 +136,7 @@ async def test_x_layer_two_and_coverage_indicator(
         api,
         h,
         "/workspaces/cert/connectors/source",
-        {"kind": "x_reader", "name": "X", "config": {"engine_web_search": True}},
+        {"kind": "x_reader", "name": "X"},  # layer 2 on by default (ADR-028)
         201,
     )
 

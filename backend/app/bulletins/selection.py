@@ -86,8 +86,21 @@ def select_template(
             reasons = block_reasons(block, facts)
             if reasons is not None:
                 return Selection(candidate, index, reasons)
-    default = next((c for c in pool if c.template_id == default_template_id), None)
+    default = fallback_template(pool, default_template_id)
     return Selection(default, None) if default else None
+
+
+def fallback_template(
+    pool: list[Candidate], default_template_id: uuid.UUID | None
+) -> Candidate | None:
+    """The workspace default, or, in another language, a generic template (no rules)."""
+    default = next((c for c in pool if c.template_id == default_template_id), None)
+    if default is not None:
+        return default
+    generic = sorted(
+        (c for c in pool if not c.spec.match_rules), key=lambda c: (c.spec.priority, c.name)
+    )
+    return generic[0] if generic else None
 
 
 def computed_fields(spec: TemplateSpec, facts: Facts) -> dict[str, Any]:

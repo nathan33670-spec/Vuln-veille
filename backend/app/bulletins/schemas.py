@@ -110,3 +110,138 @@ class SettingsIn(_In):
     review_required: bool
     default_template_id: uuid.UUID | None
     version: int
+
+
+class DraftRequestIn(_In):
+    vulnerability_ids: list[uuid.UUID] = Field(default_factory=list, max_length=20)
+    cve_id: str | None = Field(default=None, pattern=r"^CVE-\d{4}-\d{4,19}$")
+    urls: list[str] = Field(default_factory=list, max_length=20)
+    text: str = Field(default="", max_length=20000)
+    template_id: uuid.UUID | None = Field(
+        default=None, description="Modèle imposé ; sinon choisi par les règles"
+    )
+    language: str | None = Field(default=None, pattern=r"^(fr|en)$")
+    extra_instructions: str = Field(default="", max_length=2000)
+
+
+class DraftRequestOut(BaseModel):
+    id: uuid.UUID
+    kind: str
+    status: str
+    progress: list[dict[str, Any]]
+    bulletin_id: uuid.UUID | None
+    agent_run_id: uuid.UUID | None
+    error: str | None
+    template_name: str | None
+    template_version_no: int | None
+    selection_reasons: list[str]
+    requested_by: uuid.UUID | None
+    created_at: datetime
+    finished_at: datetime | None
+
+
+class RegenerateIn(_In):
+    field: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
+    instructions: str = Field(default="", max_length=2000)
+
+
+class TranslateIn(_In):
+    language: str = Field(pattern=r"^(fr|en)$")
+    template_id: uuid.UUID | None = None
+
+
+class RevisionIn(_In):
+    fields: dict[str, Any]
+    change_note: str = Field(default="", max_length=500)
+    base_rev_no: int = Field(description="Révision éditée ; 409 si une autre a été créée depuis")
+
+
+class BulletinUpdate(_In):
+    tlp: str | None = Field(default=None, pattern=r"^(CLEAR|GREEN|AMBER|AMBER\+STRICT|RED)$")
+    audience_type: str | None = Field(default=None, pattern=r"^(all_clients|selected)$")
+    audience_org_ids: list[uuid.UUID] | None = Field(default=None, max_length=500)
+    version: int
+
+
+class TransitionIn(_In):
+    comment: str = Field(default="", max_length=1000)
+    version: int
+
+
+class WithdrawIn(_In):
+    reason: str = Field(min_length=1, max_length=1000)
+    version: int
+
+
+class RevisionSummaryOut(BaseModel):
+    rev_no: int
+    created_by_type: str
+    created_by: uuid.UUID | None
+    agent_run_id: uuid.UUID | None
+    change_note: str
+    content_hash: str
+    created_at: datetime
+
+
+class RevisionOut(RevisionSummaryOut):
+    fields: dict[str, Any]
+    rendered_markdown: str
+    rendered_html: str
+
+
+class LinkedVulnerabilityOut(BaseModel):
+    id: uuid.UUID
+    ref: str
+    cve_id: str | None
+    title: str
+
+
+class LinkedTechnologyOut(BaseModel):
+    id: uuid.UUID
+    display_name: str
+
+
+class LinkedBulletinOut(BaseModel):
+    id: uuid.UUID
+    ref: str
+    language: str
+    status: str
+
+
+class BulletinOut(BaseModel):
+    id: uuid.UUID
+    ref: str
+    title: str
+    status: str
+    severity: str | None
+    tlp: str
+    language: str
+    workspace_slug: str
+    own: bool
+    author_id: uuid.UUID | None
+    current_rev_no: int | None
+    published_rev_no: int | None
+    published_at: datetime | None
+    updated_at: datetime
+    version: int
+
+
+class BulletinDetailOut(BulletinOut):
+    audience_type: str
+    audience_org_ids: list[uuid.UUID]
+    # Unset for the other team: templates are workspace data.
+    template_id: uuid.UUID | None
+    template_name: str | None
+    template_version_no: int | None
+    template_spec: dict[str, Any] | None
+    review_required: bool
+    submitted_by: uuid.UUID | None
+    reviewer_id: uuid.UUID | None
+    approved_at: datetime | None
+    withdrawn_reason: str | None
+    current: RevisionOut | None
+    revisions: list[RevisionSummaryOut]
+    vulnerabilities: list[LinkedVulnerabilityOut]
+    technologies: list[LinkedTechnologyOut]
+    translation_of: LinkedBulletinOut | None
+    translations: list[LinkedBulletinOut]

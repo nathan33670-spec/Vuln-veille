@@ -2,6 +2,7 @@
 
 from app.workflows.nodes import (  # noqa: F401
     ai,
+    bulletins,
     control,
     sources,
     transforms,

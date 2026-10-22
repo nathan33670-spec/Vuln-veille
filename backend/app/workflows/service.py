@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.agents.models import AIAgent
+from app.bulletins.models import BulletinTemplate
 from app.connectors.models import Connector
 from app.core.ids import uuid7
 from app.iam.permissions import Permission
@@ -34,6 +35,9 @@ def reference_checker(db: AsyncSession, workspace_id: uuid.UUID) -> ReferenceChe
         if reference.kind == "agent":
             agent = await db.get(AIAgent, reference.id)
             return agent is not None and agent.workspace_id == workspace_id
+        if reference.kind == "bulletin_template":
+            template = await db.get(BulletinTemplate, reference.id)
+            return template is not None and template.workspace_id == workspace_id
         if reference.kind != "connector":
             return False
         connector = await db.get(Connector, reference.id)

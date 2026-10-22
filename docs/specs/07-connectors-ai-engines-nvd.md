@@ -199,6 +199,8 @@ Avant de changer le moteur préféré (plateforme ou espace), l'interface affich
 - Rapport comparatif entre moteur actuel et moteur candidat, conservé avec la décision de bascule (audit).
 - Lancement manuel et budgété (jamais en CI, sauf avec un moteur simulé).
 
+Mise en œuvre (phase 4, `app/ai/evaluation/`) : `/workspaces/{espace}/ai-evaluation/cases` (cas de référence : CVE, entrée complémentaire, champs attendus validés par un analyste), `…/runs` (la version active d'un agent, épinglée sur le modèle candidat, jouée sur les cas par le worker `ai`, avec un budget propre), `…/compare?baseline=&candidate=` (métriques et cas côte à côte). Exactitude : égalité des champs scalaires, rappel sur les listes (objets comparés sur les champs attendus). `PUT …/ai-engine` accepte un `evaluation_id` du modèle choisi, cité dans l'audit. La notation par grille (analyste ou LLM juge) viendra avec l'interface du banc.
+
 ### 4.7 Sécurité d'un moteur auto-hébergé
 
 - Accès en TLS avec jeton, sur un réseau privé ; l'exception réseau privé est autorisée par un admin et auditée.

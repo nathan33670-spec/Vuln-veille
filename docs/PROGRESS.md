@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
-- **Dernière étape terminée** : 4.14 workflows seed d'investigation et de re-veille (merge request 4D : agents prédéfinis, nœuds `ai.*` et sources de veille). Les merge requests 4A, 4B et 4C sont fusionnées.
-- **Étape en cours** : merge request 4D en revue (branche `claude/phase-4-ai-nodes`).
-- **Prochaine étape** : merge request 4E : interfaces (4.15), banc d'évaluation des moteurs (4.16), corpus d'injection en CI (4.17), indicateur de couverture de X (4.18) ; puis critère de sortie du jalon 1.
+- **Dernière étape terminée** : 4.17 corpus d'injection en CI et 4.16 banc d'évaluation des moteurs (merge request 4E). Les merge requests 4A à 4D sont fusionnées.
+- **Étape en cours** : merge request 4E en revue (branche `claude/phase-4-eval-bench`).
+- **Prochaine étape** : merge request 4F : couche 2 de la découverte de X (recherche web du moteur IA restreinte à x.com) et indicateur de couverture de X (4.18) ; puis merge request 4G : interfaces de la phase 4 (4.15) et critère de sortie du jalon 1.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -44,9 +44,18 @@
   - Agents prédéfinis (`app/ai/agents/presets.py`) : créés par `seed-workflows` dans chaque espace, avant les workflows. Un agent dont les outils demandent un connecteur absent de l'espace est créé désactivé. Le « Rédacteur de bulletin » arrivera avec les bulletins (phase 6).
   - Seeds : une nouvelle livraison d'un seed ajoute une version non activée seulement si aucune version n'a été créée par un analyste. « Nouvelle CVE NVD » devient « Nouvelle CVE NVD → investigation » ; le test de sortie de la phase 3 garde sa propre copie du graphe sans IA.
   - Écarts assumés de 4D : la re-veille enregistre une nouvelle synthèse à chaque passage, au lieu de ne mettre à jour qu'en cas de nouveauté (historique conservé, alerte dédupliquée sur 30 jours) ; la comparaison avec la synthèse précédente viendra avec les interfaces (4.15). Les fusions parallèles passent par trois `transform.merge` en jointure sur `vulnerability_id`, le nœud n'ayant que deux entrées.
+  - Corpus d'injection (`tests/security/injection_corpus.py`, joué par `tests/integration/test_injection_corpus.py`) : chaque charge piégée est placée dans chaque lieu de lecture d'un agent, puis un modèle entièrement compromis lui obéit, derrière les vrais adaptateurs (Claude par le SDK, compatible OpenAI natif et émulé). Ajouter une charge : un `Payload` avec le signal attendu ; le test vérifie l'absence de requête hors domaine, d'outil hors liste et d'écriture hors de la trace de l'agent. Les charges invisibles se construisent avec `chr` (test d'hygiène des sources).
+  - Banc d'évaluation (`app/ai/evaluation/`) : cas de référence par espace (`expected` : champs clés validés par un analyste), exécution de la version active d'un agent épinglée sur le modèle candidat (`ai.evaluation_run`, budget propre et budget mensuel), notation déterministe (schéma, citations, refus, exactitude des champs, coût, latence), comparaison de deux exécutions. Le changement de moteur préféré accepte un `evaluation_id` facultatif, cité dans l'audit (Q26). La grille de relecture par un analyste ou un LLM juge n'est pas encore proposée.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 12 : corpus d'injection en CI et banc d'évaluation (merge request 4E)
+
+- Corpus de 8 charges piégées (consignes en anglais et en français, faux conteneur, marqueurs de rôle, exfiltration, caractères invisibles, faux PoC) dans 6 lieux de lecture (recherche et README GitHub, page éditeur, post X, description NVD, entrée), joué par un modèle compromis derrière les trois adaptateurs simulés : aucune requête hors domaine, aucun outil hors liste, aucune écriture, signaux enregistrés.
+- Corrections trouvées par le corpus : l'entrée d'un agent est analysée chaîne par chaîne (l'échappement JSON masquait un `system:` en début de ligne) ; un marqueur de rôle est signalé aussi en début de phrase (le lecteur X met le post sur une seule ligne).
+- Banc d'évaluation (migration 0012) : cas de référence, exécutions budgétées sur un modèle candidat, métriques et rapport comparatif, évaluation citée lors d'un changement de moteur préféré.
+- Tests : 343 tests backend (dont le corpus sur les trois moteurs et le banc de bout en bout).
 
 ### 2026-10-21 — Session 11 (suite) : agents prédéfinis, nœuds IA et workflows d'investigation (merge request 4D)
 

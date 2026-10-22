@@ -104,7 +104,7 @@ Aucun outil n'écrit en base, n'envoie de message ou n'appelle un connecteur de 
 5. **Détection** : heuristiques sur le contenu entrant (motifs d'instructions, caractères invisibles, texte caché) ; les signaux sont stockés dans `injection_flags` et affichés à l'analyste, sans blocage silencieux.
 6. **Faux PoC** : des dépôts « PoC » contenant un malware ciblent régulièrement les chercheurs. Aucun code n'est exécuté ni téléchargé en binaire ; l'agent PoC évalue la crédibilité et signale les indices de piège ; l'interface affiche un avertissement sur les liens de PoC.
 7. **Humain dans la boucle** : rien n'est publié sans validation.
-8. **Tests** : un corpus de contenus piégés en CI vérifie qu'aucun appel d'outil hors liste, aucune URL hors domaine et aucune écriture ne se produisent, avec le moteur Claude simulé **et** le moteur compatible OpenAI simulé.
+8. **Tests** : un corpus de contenus piégés en CI vérifie qu'aucun appel d'outil hors liste, aucune URL hors domaine et aucune écriture ne se produisent, avec le moteur Claude simulé **et** le moteur compatible OpenAI simulé. Mise en œuvre : `tests/security/injection_corpus.py` (charges) et `tests/integration/test_injection_corpus.py` ; le modèle simulé est supposé entièrement compromis (il obéit à la charge), et le moteur compatible OpenAI est joué en outils natifs et émulés.
 
 ## 7. Schéma de la synthèse d'investigation (exemple v1)
 

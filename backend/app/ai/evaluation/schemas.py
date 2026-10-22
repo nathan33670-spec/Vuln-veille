@@ -12,7 +12,7 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class CaseIn(_In):
+class EvalCaseIn(_In):
     cve_id: str = Field(pattern=r"^CVE-\d{4}-\d{4,19}$")
     input: dict[str, Any] = Field(
         default_factory=dict, description="Données ajoutées à l'entrée de l'agent"
@@ -24,7 +24,7 @@ class CaseIn(_In):
     notes: str = Field(default="", max_length=2000)
 
 
-class CaseOut(BaseModel):
+class EvalCaseOut(BaseModel):
     id: uuid.UUID
     cve_id: str
     input: dict[str, Any]
@@ -34,7 +34,7 @@ class CaseOut(BaseModel):
     updated_at: datetime
 
 
-class RunIn(_In):
+class EvalRunIn(_In):
     agent_id: uuid.UUID
     model_row_id: uuid.UUID = Field(description="Modèle candidat")
     max_cost_usd: Decimal = Field(default=Decimal(5), gt=0, le=100, decimal_places=4)
@@ -43,7 +43,7 @@ class RunIn(_In):
     )
 
 
-class RunOut(BaseModel):
+class EvalRunOut(BaseModel):
     id: uuid.UUID
     agent_id: uuid.UUID
     model_row_id: uuid.UUID
@@ -58,12 +58,12 @@ class RunOut(BaseModel):
     finished_at: datetime | None
 
 
-class RunDetailOut(RunOut):
+class EvalRunDetailOut(EvalRunOut):
     results: list[dict[str, Any]]
 
 
-class ComparisonOut(BaseModel):
-    baseline: RunOut
-    candidate: RunOut
+class EvalComparisonOut(BaseModel):
+    baseline: EvalRunOut
+    candidate: EvalRunOut
     metrics: dict[str, Any]
     cases: list[dict[str, Any]]

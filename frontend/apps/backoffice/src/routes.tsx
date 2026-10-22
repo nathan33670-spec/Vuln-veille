@@ -17,6 +17,12 @@ import { ClientDetailPage, ClientsPage } from "./pages/admin/ClientsPage";
 import { UserDetailPage } from "./pages/admin/UserDetailPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { WorkspacesPage } from "./pages/admin/WorkspacesPage";
+import { AgentPage } from "./pages/ai/AgentPage";
+import { AgentRunPage } from "./pages/ai/AgentRunPage";
+import { AgentsPage } from "./pages/ai/AgentsPage";
+import { AiEnginePage } from "./pages/ai/AiEnginePage";
+import { EvaluationPage } from "./pages/ai/EvaluationPage";
+import { XCoveragePage } from "./pages/ai/XCoveragePage";
 import { CvesPage } from "./pages/catalog/CvesPage";
 import { ConnectorsPage } from "./pages/connectors/ConnectorsPage";
 import { HomePage } from "./pages/HomePage";
@@ -60,7 +66,16 @@ const pages: RouteObject[] = [
               { path: "/workflows", element: <WorkflowsPage /> },
               { path: "/workflows/:id", element: <WorkflowPage /> },
               { path: "/runs/:id", element: <RunPage /> },
+              { path: "/agents", element: <AgentsPage /> },
+              { path: "/agents/:id", element: <AgentPage /> },
+              { path: "/agent-runs/:id", element: <AgentRunPage /> },
+              { path: "/ai-evaluation", element: <EvaluationPage /> },
+              { path: "/x-coverage", element: <XCoveragePage /> },
             ],
+          },
+          {
+            element: <RequireWorkspacePermission permission="ai.engine.manage" />,
+            children: [{ path: "/ai-engine", element: <AiEnginePage /> }],
           },
           {
             element: <RequireWorkspacePermission permission="watch_scope.manage" />,

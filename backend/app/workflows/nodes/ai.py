@@ -14,7 +14,7 @@ from typing import Any, ClassVar, Literal
 from pydantic import Field, field_validator, model_validator
 
 from app.ai.agents.guards import bounded
-from app.ai.agents.invoke import AgentNotFoundError
+from app.ai.agents.invoke import AgentNotFoundError, AgentResult
 from app.ai.agents.spec import AgentSpec
 from app.iam.permissions import Permission
 from app.workflows.base import (
@@ -50,6 +50,10 @@ class _Common(NodeParams):
     )
     output_key: str = Field(default="ai", pattern=OUTPUT_KEY)
     max_items: int = Field(default=10, ge=1, le=50, description="Éléments traités au maximum")
+    run_if: Expr | None = Field(
+        default=None,
+        description="Condition par élément ; sinon l'élément passe sans appel au moteur",
+    )
 
 
 def _access(ctx: NodeContext) -> AgentAccess:
@@ -78,7 +82,10 @@ async def _each(ctx: NodeContext, params: _Common, inputs: Outputs, call: Any) -
         ctx.log("items_capped", received=len(entries), processed=params.max_items)
     out = []
     for entry in entries[: params.max_items]:
-        result = await call(_payload(ctx, params, entry))
+        if params.run_if is not None and not params.run_if.truthy(ctx.expression_context(entry)):
+            result = AgentResult(status="skipped", error="condition_not_met")
+        else:
+            result = await call(_payload(ctx, params, entry))
         ctx.log("ai_run", status=result.status, run_id=str(result.run_id or ""))
         out.append(
             {

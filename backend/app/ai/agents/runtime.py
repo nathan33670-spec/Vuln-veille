@@ -402,7 +402,7 @@ async def _prepare(db: AsyncSession, deps: AgentDeps, run: AgentRun) -> _Loop:
         if deps.engine_for is not None:
             engine = await deps.engine_for(db, model)
         else:
-            engine = await open_engine(db, deps.settings, deps.vault, model, deps.redis)
+            engine = await open_engine(db, deps.settings, deps.vault, model, deps.redis, deps.http)
     except AIConfigurationError as exc:
         raise _Stop("failed", f"engine: {exc.code}") from None
     connectors = ToolConnectors(

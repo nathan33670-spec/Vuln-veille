@@ -144,7 +144,7 @@ def indicator(found: dict[str, bool], checks: list[XCoverageCheck]) -> dict[str,
 # API ---------------------------------------------------------------------------
 
 
-class CheckIn(BaseModel):
+class XCoverageCheckIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     has_discussion: bool
@@ -152,7 +152,7 @@ class CheckIn(BaseModel):
     notes: str = Field(default="", max_length=1000)
 
 
-class CheckOut(BaseModel):
+class XCoverageCheckOut(BaseModel):
     cve_id: str
     has_discussion: bool
     urls: list[str]
@@ -161,7 +161,7 @@ class CheckOut(BaseModel):
     checked_at: datetime
 
 
-class CoverageOut(BaseModel):
+class XCoverageOut(BaseModel):
     days: int
     investigated: int
     with_x_discussion: int
@@ -169,8 +169,8 @@ class CoverageOut(BaseModel):
     sample: dict[str, Any]
 
 
-def _check_out(check: XCoverageCheck) -> CheckOut:
-    return CheckOut(
+def _check_out(check: XCoverageCheck) -> XCoverageCheckOut:
+    return XCoverageCheckOut(
         cve_id=check.cve_id,
         has_discussion=check.has_discussion,
         urls=check.urls,
@@ -192,22 +192,22 @@ async def _checks(db: AsyncSession, workspace_id: uuid.UUID) -> list[XCoverageCh
 def build_coverage_router() -> APIRouter:
     router = APIRouter(prefix="/workspaces/{workspace}", tags=["x-coverage"])
 
-    @router.get("/x-coverage", response_model=CoverageOut)
+    @router.get("/x-coverage", response_model=XCoverageOut)
     async def get_coverage(
         access: Reader, db: DB, days: int = Query(default=30, ge=1, le=365)
-    ) -> CoverageOut:
+    ) -> XCoverageOut:
         since = datetime.now(UTC) - timedelta(days=days)
         found = await found_by_agent(db, access.workspace.id, since)
-        return CoverageOut(days=days, **indicator(found, await _checks(db, access.workspace.id)))
+        return XCoverageOut(days=days, **indicator(found, await _checks(db, access.workspace.id)))
 
-    @router.get("/x-coverage/checks", response_model=list[CheckOut])
-    async def list_checks(access: Reader, db: DB) -> list[CheckOut]:
+    @router.get("/x-coverage/checks", response_model=list[XCoverageCheckOut])
+    async def list_checks(access: Reader, db: DB) -> list[XCoverageCheckOut]:
         return [_check_out(c) for c in await _checks(db, access.workspace.id)]
 
-    @router.put("/x-coverage/checks/{cve_id}", response_model=CheckOut)
+    @router.put("/x-coverage/checks/{cve_id}", response_model=XCoverageCheckOut)
     async def put_check(
-        cve_id: CvePath, body: CheckIn, request: Request, access: Checker, db: DB
-    ) -> CheckOut:
+        cve_id: CvePath, body: XCoverageCheckIn, request: Request, access: Checker, db: DB
+    ) -> XCoverageCheckOut:
         """An analyst's hand check: did a relevant X discussion exist for this CVE?"""
         urls = sorted(posts_in("\n".join(body.urls)))
         if len(urls) != len(set(body.urls)):

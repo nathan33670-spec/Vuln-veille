@@ -242,6 +242,6 @@ Workflow seed « Re-veille » : `trigger.schedule` (toutes les 6 h) → `vuln.li
 ## 6. Interfaces
 
 - **Connecteurs** : onglets Veille, Moteurs IA, Publication ; pour chacun : formulaire généré, secrets en écriture seule, test, santé, quotas et consommation, historique.
-- **Moteurs IA** : moteur préféré (plateforme, espace), modèles et capacités, test de capacités, rapport de compatibilité, lancement et historique du banc d'évaluation.
+- **Moteurs IA** : moteur préféré (plateforme, espace), modèles et capacités, test de capacités, rapport de compatibilité, lancement et historique du banc d'évaluation. Mise en œuvre (phase 4) : l'écran de l'espace bloque le changement tant que le rapport signale un agent incompatible ; le défaut de la plateforme reste réglable par l'API (`PUT /admin/ai-engine`).
 - **Agents** : liste par espace, édition (identité, moteur hérité ou épinglé, modèle, niveau de raisonnement, prompt, connecteurs et domaines, schéma de sortie, limites), bac à sable (lancer sur une CVE, voir les étapes, le coût et les signaux d'injection), versions et diff.
 - **Catalogue CVE** : nouveautés NVD (filtrables : dans ou hors du périmètre de chaque espace), état de la synchronisation (dernière réussite, retard), promotion manuelle.

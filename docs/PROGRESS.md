@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **en cours**, sur des branches `claude/phase-4-…` et des merge requests successives vers `Main`.
-- **Dernière étape terminée** : 4.18 couverture de X (merge request 4F : couche 2 de la découverte par la recherche web du moteur IA, indicateur de couverture). Les merge requests 4A à 4E sont fusionnées.
-- **Étape en cours** : merge request 4F en revue (branche `claude/phase-4-x-coverage`).
-- **Prochaine étape** : merge request 4G : interfaces de la phase 4 (4.15) et critère de sortie du jalon 1.
+- **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **terminée** : critère de sortie du jalon 1 atteint et testé en CI. Prochaine phase : 5 (éditeur visuel de workflows).
+- **Dernière étape terminée** : 4.15 interfaces de la phase 4 et critère de sortie du jalon 1 (merge request 4G). Les merge requests 4A à 4F sont fusionnées.
+- **Étape en cours** : merge request 4G en revue (branche `claude/phase-4-interfaces`).
+- **Prochaine étape** : phase 5, étape 5.1 (canvas React Flow), sur une nouvelle branche `claude/phase-5-…` depuis `Main`.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -48,9 +48,18 @@
   - Banc d'évaluation (`app/ai/evaluation/`) : cas de référence par espace (`expected` : champs clés validés par un analyste), exécution de la version active d'un agent épinglée sur le modèle candidat (`ai.evaluation_run`, budget propre et budget mensuel), notation déterministe (schéma, citations, refus, exactitude des champs, coût, latence), comparaison de deux exécutions. Le changement de moteur préféré accepte un `evaluation_id` facultatif, cité dans l'audit (Q26). La grille de relecture par un analyste ou un LLM juge n'est pas encore proposée.
   - Découverte de X, couche 2 (ADR-028) : désactivée par défaut, activée par l'espace sur son connecteur `x_reader` (`engine_web_search`), car la recherche part de chez le fournisseur IA. Le modèle préféré doit déclarer `web_search` (Claude et Gemini par défaut). La re-veille ne limite pas encore la couche 2 aux CVE KEV, P1 ou P2 (spec 07 §2.1) : à faire avec les interfaces, par une condition dans le workflow.
   - Indicateur de couverture de X (`app/ai/coverage.py`) : un post compte s'il est cité dans la sortie validée de l'agent « Réseaux sociaux » **et** lu par l'oEmbed pendant la même exécution ; comparaison avec les vérifications manuelles (`/x-coverage/checks`, permission `vuln.qualify`).
+  - Interfaces de la phase 4 (`apps/backoffice/src/pages/ai/`) : moteurs IA (catalogue, moteur préféré bloqué tant que le rapport de compatibilité signale un agent incompatible, évaluation citée en option, budget et coûts du mois par agent), agents (liste, configuration en JSON validée par le serveur, versions et réactivation, bac à sable), traces d'exécution (signaux d'injection, sortie et étapes en texte inerte, liens http(s) seulement), banc d'évaluation (cas, exécutions, comparaison), couverture de X. Écarts assumés : l'édition d'un agent se fait en JSON (formulaire guidé avec l'éditeur visuel, phase 5) ; le tableau de bord des coûts agrège les 200 dernières exécutions du mois côté navigateur (agrégation serveur par agent et par jour à prévoir si le volume l'exige) ; la notation par grille du banc n'est pas encore proposée.
+  - `ai.*` : paramètre `run_if` (condition par élément ; sinon l'élément passe avec le statut `skipped`, sans appel au moteur). La re-veille l'utilise pour ne relancer l'agent réseaux sociaux, donc la recherche X, que pour les CVE KEV, P1 ou P2.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 12 (suite) : interfaces de la phase 4 et jalon 1 (merge request 4G)
+
+- Écrans : moteurs IA et budget, agents et bac à sable, traces d'exécution d'agent, banc d'évaluation, couverture de X ; navigation selon les permissions de l'espace.
+- `run_if` sur les nœuds IA ; la re-veille limite l'agent réseaux sociaux aux CVE KEV, P1 ou P2 (spec 07 §2.1). Schémas OpenAPI du banc et de la couverture renommés (collision de noms avec les workflows).
+- Critère de sortie du jalon 1 testé sans moteur factice : vrais adaptateurs Gemini (SDK officiel) puis compatible OpenAI derrière des serveurs simulés, bascule du moteur préféré par l'API entre deux CVE, synthèses sourcées enregistrées sur des vulnérabilités non qualifiées.
+- Tests : 350 tests backend, 26 tests frontend (dont trace d'exécution hostile affichée en texte et changement de moteur bloqué par le rapport de compatibilité).
 
 ### 2026-10-22 — Session 12 (suite) : découverte de X par le moteur IA et couverture (merge request 4F)
 

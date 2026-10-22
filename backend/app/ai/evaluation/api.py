@@ -20,12 +20,12 @@ from app.ai.agents.spec import AgentSpec
 from app.ai.evaluation import scoring
 from app.ai.evaluation.models import EvalCase, EvalRun
 from app.ai.evaluation.schemas import (
-    CaseIn,
-    CaseOut,
-    ComparisonOut,
-    RunDetailOut,
-    RunIn,
-    RunOut,
+    EvalCaseIn,
+    EvalCaseOut,
+    EvalComparisonOut,
+    EvalRunDetailOut,
+    EvalRunIn,
+    EvalRunOut,
 )
 from app.ai.models import AIModel
 from app.ai.preferences import usable
@@ -62,8 +62,8 @@ async def _audit(
     )
 
 
-def case_out(case: EvalCase) -> CaseOut:
-    return CaseOut(
+def case_out(case: EvalCase) -> EvalCaseOut:
+    return EvalCaseOut(
         id=case.id,
         cve_id=case.cve_id,
         input=case.input,
@@ -74,8 +74,8 @@ def case_out(case: EvalCase) -> CaseOut:
     )
 
 
-def run_out(run: EvalRun) -> RunOut:
-    return RunOut(
+def run_out(run: EvalRun) -> EvalRunOut:
+    return EvalRunOut(
         id=run.id,
         agent_id=run.agent_id,
         model_row_id=run.model_row_id,
@@ -106,8 +106,8 @@ async def _run(db: AsyncSession, access: WorkspaceAccess, run_id: uuid.UUID) -> 
 
 
 def _routes_cases(router: APIRouter) -> None:
-    @router.get("/ai-evaluation/cases", response_model=list[CaseOut])
-    async def list_cases(access: Reader, db: DB) -> list[CaseOut]:
+    @router.get("/ai-evaluation/cases", response_model=list[EvalCaseOut])
+    async def list_cases(access: Reader, db: DB) -> list[EvalCaseOut]:
         rows = await db.execute(
             select(EvalCase)
             .where(EvalCase.workspace_id == access.workspace.id)
@@ -115,8 +115,10 @@ def _routes_cases(router: APIRouter) -> None:
         )
         return [case_out(c) for c in rows.scalars()]
 
-    @router.post("/ai-evaluation/cases", response_model=CaseOut, status_code=201)
-    async def create_case(body: CaseIn, request: Request, access: Evaluator, db: DB) -> CaseOut:
+    @router.post("/ai-evaluation/cases", response_model=EvalCaseOut, status_code=201)
+    async def create_case(
+        body: EvalCaseIn, request: Request, access: Evaluator, db: DB
+    ) -> EvalCaseOut:
         case = EvalCase(
             id=uuid7(),
             workspace_id=access.workspace.id,
@@ -138,10 +140,10 @@ def _routes_cases(router: APIRouter) -> None:
         await db.refresh(case)
         return case_out(case)
 
-    @router.put("/ai-evaluation/cases/{case_id}", response_model=CaseOut)
+    @router.put("/ai-evaluation/cases/{case_id}", response_model=EvalCaseOut)
     async def update_case(
-        case_id: uuid.UUID, body: CaseIn, request: Request, access: Evaluator, db: DB
-    ) -> CaseOut:
+        case_id: uuid.UUID, body: EvalCaseIn, request: Request, access: Evaluator, db: DB
+    ) -> EvalCaseOut:
         case = await _case(db, access, case_id)
         case.cve_id, case.input, case.expected = body.cve_id.upper(), body.input, body.expected
         case.notes, case.validated_by = body.notes, access.principal.user_id
@@ -163,8 +165,8 @@ def _routes_cases(router: APIRouter) -> None:
 
 
 def _routes_runs(router: APIRouter) -> None:
-    @router.post("/ai-evaluation/runs", response_model=RunOut, status_code=202)
-    async def start_run(body: RunIn, request: Request, access: Evaluator, db: DB) -> RunOut:
+    @router.post("/ai-evaluation/runs", response_model=EvalRunOut, status_code=202)
+    async def start_run(body: EvalRunIn, request: Request, access: Evaluator, db: DB) -> EvalRunOut:
         """Manual and budgeted: the cost also counts in the monthly budget."""
         workspace_id = access.workspace.id
         agent = await db.get(AIAgent, body.agent_id)
@@ -221,8 +223,8 @@ def _routes_runs(router: APIRouter) -> None:
         tasks.send(RUN_TASK, {"run_id": str(run.id), "workspace_id": str(workspace_id)})
         return run_out(run)
 
-    @router.get("/ai-evaluation/runs", response_model=list[RunOut])
-    async def list_runs(access: Reader, db: DB) -> list[RunOut]:
+    @router.get("/ai-evaluation/runs", response_model=list[EvalRunOut])
+    async def list_runs(access: Reader, db: DB) -> list[EvalRunOut]:
         rows = await db.execute(
             select(EvalRun)
             .where(EvalRun.workspace_id == access.workspace.id)
@@ -231,15 +233,15 @@ def _routes_runs(router: APIRouter) -> None:
         )
         return [run_out(r) for r in rows.scalars()]
 
-    @router.get("/ai-evaluation/runs/{run_id}", response_model=RunDetailOut)
-    async def get_run(run_id: uuid.UUID, access: Reader, db: DB) -> RunDetailOut:
+    @router.get("/ai-evaluation/runs/{run_id}", response_model=EvalRunDetailOut)
+    async def get_run(run_id: uuid.UUID, access: Reader, db: DB) -> EvalRunDetailOut:
         run = await _run(db, access, run_id)
-        return RunDetailOut(**run_out(run).model_dump(), results=run.results)
+        return EvalRunDetailOut(**run_out(run).model_dump(), results=run.results)
 
-    @router.get("/ai-evaluation/compare", response_model=ComparisonOut)
+    @router.get("/ai-evaluation/compare", response_model=EvalComparisonOut)
     async def compare(
         baseline: uuid.UUID, candidate: uuid.UUID, access: Reader, db: DB
-    ) -> ComparisonOut:
+    ) -> EvalComparisonOut:
         """Current engine against a candidate, metric by metric and case by case."""
         first, second = await _run(db, access, baseline), await _run(db, access, candidate)
         by_case = {r["cve_id"]: r for r in first.results}
@@ -247,7 +249,7 @@ def _routes_runs(router: APIRouter) -> None:
             {"cve_id": r["cve_id"], "baseline": by_case.get(r["cve_id"]), "candidate": r}
             for r in second.results
         ]
-        return ComparisonOut(
+        return EvalComparisonOut(
             baseline=run_out(first),
             candidate=run_out(second),
             metrics=scoring.compare(first.metrics, second.metrics),

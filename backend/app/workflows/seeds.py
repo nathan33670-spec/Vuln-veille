@@ -165,7 +165,16 @@ REWATCH: dict[str, Any] = {
         _node("upsert", "vuln.upsert", "Fiche vulnérabilité", 520, 200),
         _node("enrich", "vuln.enrich", "CVSS, EPSS, KEV", 780, 200),
         _agent("poc", "PoC GitHub", "poc_hunter", 1040, 0, max_items=20),
-        _agent("social", "Réseaux sociaux", "social", 1040, 200, max_items=20),
+        # X searches are rerun for the priority vulnerabilities only (spec 07 §2.1).
+        _agent(
+            "social",
+            "Réseaux sociaux (KEV, P1, P2)",
+            "social",
+            1040,
+            200,
+            max_items=20,
+            run_if={"$expr": "json.kev || json.priority == 'P1' || json.priority == 'P2'"},
+        ),
         _join("merge_watch", "Nouveaux résultats", 1300, 100),
         _agent("synthesis", "Synthèse", "synthesis", 1560, 100, max_items=20),
         _node("attach", "vuln.attach_analysis", "Enregistrer la synthèse", 1820, 100),

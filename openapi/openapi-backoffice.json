@@ -2021,172 +2021,6 @@
         "title": "BudgetOut",
         "type": "object"
       },
-      "CaseIn": {
-        "additionalProperties": false,
-        "properties": {
-          "cve_id": {
-            "pattern": "^CVE-\\d{4}-\\d{4,19}$",
-            "title": "Cve Id",
-            "type": "string"
-          },
-          "expected": {
-            "additionalProperties": true,
-            "description": "Champs cl\u00e9s attendus, valid\u00e9s par les analystes (ex. exploitation_status)",
-            "title": "Expected",
-            "type": "object"
-          },
-          "input": {
-            "additionalProperties": true,
-            "description": "Donn\u00e9es ajout\u00e9es \u00e0 l'entr\u00e9e de l'agent",
-            "title": "Input",
-            "type": "object"
-          },
-          "notes": {
-            "default": "",
-            "maxLength": 2000,
-            "title": "Notes",
-            "type": "string"
-          }
-        },
-        "required": [
-          "cve_id"
-        ],
-        "title": "CaseIn",
-        "type": "object"
-      },
-      "CaseOut": {
-        "properties": {
-          "cve_id": {
-            "title": "Cve Id",
-            "type": "string"
-          },
-          "expected": {
-            "additionalProperties": true,
-            "title": "Expected",
-            "type": "object"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "input": {
-            "additionalProperties": true,
-            "title": "Input",
-            "type": "object"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          },
-          "validated_by": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Validated By"
-          }
-        },
-        "required": [
-          "id",
-          "cve_id",
-          "input",
-          "expected",
-          "notes",
-          "validated_by",
-          "updated_at"
-        ],
-        "title": "CaseOut",
-        "type": "object"
-      },
-      "CheckIn": {
-        "additionalProperties": false,
-        "properties": {
-          "has_discussion": {
-            "title": "Has Discussion",
-            "type": "boolean"
-          },
-          "notes": {
-            "default": "",
-            "maxLength": 1000,
-            "title": "Notes",
-            "type": "string"
-          },
-          "urls": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Urls",
-            "type": "array"
-          }
-        },
-        "required": [
-          "has_discussion"
-        ],
-        "title": "CheckIn",
-        "type": "object"
-      },
-      "CheckOut": {
-        "properties": {
-          "checked_at": {
-            "format": "date-time",
-            "title": "Checked At",
-            "type": "string"
-          },
-          "checked_by": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Checked By"
-          },
-          "cve_id": {
-            "title": "Cve Id",
-            "type": "string"
-          },
-          "has_discussion": {
-            "title": "Has Discussion",
-            "type": "boolean"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string"
-          },
-          "urls": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Urls",
-            "type": "array"
-          }
-        },
-        "required": [
-          "cve_id",
-          "has_discussion",
-          "urls",
-          "notes",
-          "checked_by",
-          "checked_at"
-        ],
-        "title": "CheckOut",
-        "type": "object"
-      },
       "CheckQueuedOut": {
         "properties": {
           "queued": {
@@ -2349,37 +2183,6 @@
           "created_at"
         ],
         "title": "CommentOut",
-        "type": "object"
-      },
-      "ComparisonOut": {
-        "properties": {
-          "baseline": {
-            "$ref": "#/components/schemas/RunOut"
-          },
-          "candidate": {
-            "$ref": "#/components/schemas/RunOut"
-          },
-          "cases": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Cases",
-            "type": "array"
-          },
-          "metrics": {
-            "additionalProperties": true,
-            "title": "Metrics",
-            "type": "object"
-          }
-        },
-        "required": [
-          "baseline",
-          "candidate",
-          "metrics",
-          "cases"
-        ],
-        "title": "ComparisonOut",
         "type": "object"
       },
       "CompatibilityReportOut": {
@@ -2737,47 +2540,6 @@
           "version"
         ],
         "title": "ConnectorUpdate",
-        "type": "object"
-      },
-      "CoverageOut": {
-        "properties": {
-          "coverage_rate": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Coverage Rate"
-          },
-          "days": {
-            "title": "Days",
-            "type": "integer"
-          },
-          "investigated": {
-            "title": "Investigated",
-            "type": "integer"
-          },
-          "sample": {
-            "additionalProperties": true,
-            "title": "Sample",
-            "type": "object"
-          },
-          "with_x_discussion": {
-            "title": "With X Discussion",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "days",
-          "investigated",
-          "with_x_discussion",
-          "coverage_rate",
-          "sample"
-        ],
-        "title": "CoverageOut",
         "type": "object"
       },
       "CpeSuggestionOut": {
@@ -3386,6 +3148,382 @@
           "qr_data_uri"
         ],
         "title": "EnrollmentOut",
+        "type": "object"
+      },
+      "EvalCaseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cve_id": {
+            "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "description": "Champs cl\u00e9s attendus, valid\u00e9s par les analystes (ex. exploitation_status)",
+            "title": "Expected",
+            "type": "object"
+          },
+          "input": {
+            "additionalProperties": true,
+            "description": "Donn\u00e9es ajout\u00e9es \u00e0 l'entr\u00e9e de l'agent",
+            "title": "Input",
+            "type": "object"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cve_id"
+        ],
+        "title": "EvalCaseIn",
+        "type": "object"
+      },
+      "EvalCaseOut": {
+        "properties": {
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "title": "Expected",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "additionalProperties": true,
+            "title": "Input",
+            "type": "object"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "validated_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validated By"
+          }
+        },
+        "required": [
+          "id",
+          "cve_id",
+          "input",
+          "expected",
+          "notes",
+          "validated_by",
+          "updated_at"
+        ],
+        "title": "EvalCaseOut",
+        "type": "object"
+      },
+      "EvalComparisonOut": {
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/EvalRunOut"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/EvalRunOut"
+          },
+          "cases": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          }
+        },
+        "required": [
+          "baseline",
+          "candidate",
+          "metrics",
+          "cases"
+        ],
+        "title": "EvalComparisonOut",
+        "type": "object"
+      },
+      "EvalRunDetailOut": {
+        "properties": {
+          "agent_id": {
+            "format": "uuid",
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "cases": {
+            "title": "Cases",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_cost_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Cost Usd",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_row_id": {
+            "format": "uuid",
+            "title": "Model Row Id",
+            "type": "string"
+          },
+          "queued_at": {
+            "format": "date-time",
+            "title": "Queued At",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "agent_id",
+          "model_row_id",
+          "model_id",
+          "status",
+          "max_cost_usd",
+          "cases",
+          "metrics",
+          "error",
+          "queued_at",
+          "started_at",
+          "finished_at",
+          "results"
+        ],
+        "title": "EvalRunDetailOut",
+        "type": "object"
+      },
+      "EvalRunIn": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "format": "uuid",
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "case_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Par d\u00e9faut, tout le jeu de r\u00e9f\u00e9rence",
+            "title": "Case Ids"
+          },
+          "max_cost_usd": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
+                "type": "string"
+              }
+            ],
+            "default": "5",
+            "title": "Max Cost Usd"
+          },
+          "model_row_id": {
+            "description": "Mod\u00e8le candidat",
+            "format": "uuid",
+            "title": "Model Row Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "model_row_id"
+        ],
+        "title": "EvalRunIn",
+        "type": "object"
+      },
+      "EvalRunOut": {
+        "properties": {
+          "agent_id": {
+            "format": "uuid",
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "cases": {
+            "title": "Cases",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_cost_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Cost Usd",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_row_id": {
+            "format": "uuid",
+            "title": "Model Row Id",
+            "type": "string"
+          },
+          "queued_at": {
+            "format": "date-time",
+            "title": "Queued At",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "agent_id",
+          "model_row_id",
+          "model_id",
+          "status",
+          "max_cost_usd",
+          "cases",
+          "metrics",
+          "error",
+          "queued_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "EvalRunOut",
         "type": "object"
       },
       "EvidenceIn": {
@@ -4253,70 +4391,30 @@
         "title": "RunCreate",
         "type": "object"
       },
-      "RunIn": {
-        "additionalProperties": false,
+      "RunDetailOut": {
         "properties": {
-          "agent_id": {
-            "format": "uuid",
-            "title": "Agent Id",
-            "type": "string"
+          "approvals": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalOut"
+            },
+            "title": "Approvals",
+            "type": "array"
           },
-          "case_ids": {
+          "cancel_requested": {
+            "title": "Cancel Requested",
+            "type": "boolean"
+          },
+          "deadline_at": {
             "anyOf": [
               {
-                "items": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "maxItems": 200,
-                "type": "array"
+                "format": "date-time",
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Par d\u00e9faut, tout le jeu de r\u00e9f\u00e9rence",
-            "title": "Case Ids"
-          },
-          "max_cost_usd": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "maximum": 100.0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,4}0*$",
-                "type": "string"
-              }
-            ],
-            "default": "5",
-            "title": "Max Cost Usd"
-          },
-          "model_row_id": {
-            "description": "Mod\u00e8le candidat",
-            "format": "uuid",
-            "title": "Model Row Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "agent_id",
-          "model_row_id"
-        ],
-        "title": "RunIn",
-        "type": "object"
-      },
-      "RunOut": {
-        "properties": {
-          "agent_id": {
-            "format": "uuid",
-            "title": "Agent Id",
-            "type": "string"
-          },
-          "cases": {
-            "title": "Cases",
-            "type": "integer"
+            "title": "Deadline At"
           },
           "error": {
             "anyOf": [
@@ -4346,24 +4444,12 @@
             "title": "Id",
             "type": "string"
           },
-          "max_cost_usd": {
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Max Cost Usd",
-            "type": "string"
-          },
-          "metrics": {
-            "additionalProperties": true,
-            "title": "Metrics",
-            "type": "object"
-          },
-          "model_id": {
-            "title": "Model Id",
-            "type": "string"
-          },
-          "model_row_id": {
-            "format": "uuid",
-            "title": "Model Row Id",
-            "type": "string"
+          "node_runs": {
+            "items": {
+              "$ref": "#/components/schemas/NodeRunOut"
+            },
+            "title": "Node Runs",
+            "type": "array"
           },
           "queued_at": {
             "format": "date-time",
@@ -4382,26 +4468,77 @@
             ],
             "title": "Started At"
           },
+          "stats": {
+            "additionalProperties": true,
+            "title": "Stats",
+            "type": "object"
+          },
           "status": {
             "title": "Status",
+            "type": "string"
+          },
+          "trigger_node_id": {
+            "title": "Trigger Node Id",
+            "type": "string"
+          },
+          "trigger_payload": {
+            "additionalProperties": true,
+            "title": "Trigger Payload",
+            "type": "object"
+          },
+          "trigger_type": {
+            "title": "Trigger Type",
+            "type": "string"
+          },
+          "triggered_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By"
+          },
+          "version_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version No"
+          },
+          "workflow_id": {
+            "format": "uuid",
+            "title": "Workflow Id",
             "type": "string"
           }
         },
         "required": [
           "id",
-          "agent_id",
-          "model_row_id",
-          "model_id",
+          "workflow_id",
+          "version_no",
+          "trigger_type",
           "status",
-          "max_cost_usd",
-          "cases",
-          "metrics",
-          "error",
           "queued_at",
           "started_at",
-          "finished_at"
+          "finished_at",
+          "error",
+          "stats",
+          "trigger_node_id",
+          "triggered_by",
+          "trigger_payload",
+          "cancel_requested",
+          "deadline_at",
+          "node_runs",
+          "approvals"
         ],
-        "title": "RunOut",
+        "title": "RunDetailOut",
         "type": "object"
       },
       "RunStarted": {
@@ -7390,110 +7527,123 @@
         "title": "XAccountConfig",
         "type": "object"
       },
-      "app__ai__evaluation__schemas__RunDetailOut": {
+      "XCoverageCheckIn": {
+        "additionalProperties": false,
         "properties": {
-          "agent_id": {
-            "format": "uuid",
-            "title": "Agent Id",
+          "has_discussion": {
+            "title": "Has Discussion",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Notes",
             "type": "string"
           },
-          "cases": {
-            "title": "Cases",
-            "type": "integer"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "finished_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Finished At"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "max_cost_usd": {
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Max Cost Usd",
-            "type": "string"
-          },
-          "metrics": {
-            "additionalProperties": true,
-            "title": "Metrics",
-            "type": "object"
-          },
-          "model_id": {
-            "title": "Model Id",
-            "type": "string"
-          },
-          "model_row_id": {
-            "format": "uuid",
-            "title": "Model Row Id",
-            "type": "string"
-          },
-          "queued_at": {
-            "format": "date-time",
-            "title": "Queued At",
-            "type": "string"
-          },
-          "results": {
+          "urls": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "type": "string"
             },
-            "title": "Results",
+            "maxItems": 20,
+            "title": "Urls",
             "type": "array"
-          },
-          "started_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Started At"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
           }
         },
         "required": [
-          "id",
-          "agent_id",
-          "model_row_id",
-          "model_id",
-          "status",
-          "max_cost_usd",
-          "cases",
-          "metrics",
-          "error",
-          "queued_at",
-          "started_at",
-          "finished_at",
-          "results"
+          "has_discussion"
         ],
-        "title": "RunDetailOut",
+        "title": "XCoverageCheckIn",
+        "type": "object"
+      },
+      "XCoverageCheckOut": {
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checked_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked By"
+          },
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "has_discussion": {
+            "title": "Has Discussion",
+            "type": "boolean"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cve_id",
+          "has_discussion",
+          "urls",
+          "notes",
+          "checked_by",
+          "checked_at"
+        ],
+        "title": "XCoverageCheckOut",
+        "type": "object"
+      },
+      "XCoverageOut": {
+        "properties": {
+          "coverage_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Rate"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "investigated": {
+            "title": "Investigated",
+            "type": "integer"
+          },
+          "sample": {
+            "additionalProperties": true,
+            "title": "Sample",
+            "type": "object"
+          },
+          "with_x_discussion": {
+            "title": "With X Discussion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "investigated",
+          "with_x_discussion",
+          "coverage_rate",
+          "sample"
+        ],
+        "title": "XCoverageOut",
         "type": "object"
       },
       "app__iam__admin_schemas__ClientOrgOut": {
@@ -7558,156 +7708,6 @@
           "role"
         ],
         "title": "ClientOrgOut",
-        "type": "object"
-      },
-      "app__workflows__schemas__RunDetailOut": {
-        "properties": {
-          "approvals": {
-            "items": {
-              "$ref": "#/components/schemas/ApprovalOut"
-            },
-            "title": "Approvals",
-            "type": "array"
-          },
-          "cancel_requested": {
-            "title": "Cancel Requested",
-            "type": "boolean"
-          },
-          "deadline_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deadline At"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "finished_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Finished At"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "node_runs": {
-            "items": {
-              "$ref": "#/components/schemas/NodeRunOut"
-            },
-            "title": "Node Runs",
-            "type": "array"
-          },
-          "queued_at": {
-            "format": "date-time",
-            "title": "Queued At",
-            "type": "string"
-          },
-          "started_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Started At"
-          },
-          "stats": {
-            "additionalProperties": true,
-            "title": "Stats",
-            "type": "object"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "trigger_node_id": {
-            "title": "Trigger Node Id",
-            "type": "string"
-          },
-          "trigger_payload": {
-            "additionalProperties": true,
-            "title": "Trigger Payload",
-            "type": "object"
-          },
-          "trigger_type": {
-            "title": "Trigger Type",
-            "type": "string"
-          },
-          "triggered_by": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Triggered By"
-          },
-          "version_no": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Version No"
-          },
-          "workflow_id": {
-            "format": "uuid",
-            "title": "Workflow Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "workflow_id",
-          "version_no",
-          "trigger_type",
-          "status",
-          "queued_at",
-          "started_at",
-          "finished_at",
-          "error",
-          "stats",
-          "trigger_node_id",
-          "triggered_by",
-          "trigger_payload",
-          "cancel_requested",
-          "deadline_at",
-          "node_runs",
-          "approvals"
-        ],
-        "title": "RunDetailOut",
         "type": "object"
       }
     }
@@ -12299,7 +12299,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CaseOut"
+                    "$ref": "#/components/schemas/EvalCaseOut"
                   },
                   "title": "Response List Cases Api V1 Workspaces  Workspace  Ai Evaluation Cases Get",
                   "type": "array"
@@ -12341,7 +12341,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CaseIn"
+                "$ref": "#/components/schemas/EvalCaseIn"
               }
             }
           },
@@ -12352,7 +12352,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CaseOut"
+                  "$ref": "#/components/schemas/EvalCaseOut"
                 }
               }
             },
@@ -12446,7 +12446,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CaseIn"
+                "$ref": "#/components/schemas/EvalCaseIn"
               }
             }
           },
@@ -12457,7 +12457,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CaseOut"
+                  "$ref": "#/components/schemas/EvalCaseOut"
                 }
               }
             },
@@ -12520,7 +12520,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ComparisonOut"
+                  "$ref": "#/components/schemas/EvalComparisonOut"
                 }
               }
             },
@@ -12563,7 +12563,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/RunOut"
+                    "$ref": "#/components/schemas/EvalRunOut"
                   },
                   "title": "Response List Runs Api V1 Workspaces  Workspace  Ai Evaluation Runs Get",
                   "type": "array"
@@ -12606,7 +12606,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RunIn"
+                "$ref": "#/components/schemas/EvalRunIn"
               }
             }
           },
@@ -12617,7 +12617,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunOut"
+                  "$ref": "#/components/schemas/EvalRunOut"
                 }
               }
             },
@@ -12669,7 +12669,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__ai__evaluation__schemas__RunDetailOut"
+                  "$ref": "#/components/schemas/EvalRunDetailOut"
                 }
               }
             },
@@ -13892,7 +13892,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__workflows__schemas__RunDetailOut"
+                  "$ref": "#/components/schemas/RunDetailOut"
                 }
               }
             },
@@ -16031,7 +16031,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoverageOut"
+                  "$ref": "#/components/schemas/XCoverageOut"
                 }
               }
             },
@@ -16074,7 +16074,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CheckOut"
+                    "$ref": "#/components/schemas/XCoverageCheckOut"
                   },
                   "title": "Response List Checks Api V1 Workspaces  Workspace  X Coverage Checks Get",
                   "type": "array"
@@ -16172,7 +16172,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckIn"
+                "$ref": "#/components/schemas/XCoverageCheckIn"
               }
             }
           },
@@ -16183,7 +16183,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckOut"
+                  "$ref": "#/components/schemas/XCoverageCheckOut"
                 }
               }
             },

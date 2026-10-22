@@ -2082,6 +2082,61 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/x-coverage": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Coverage */
+    get: operations["get_coverage_api_v1_workspaces__workspace__x_coverage_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/x-coverage/checks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Checks */
+    get: operations["list_checks_api_v1_workspaces__workspace__x_coverage_checks_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/x-coverage/checks/{cve_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Put Check
+     * @description An analyst's hand check: did a relevant X discussion exist for this CVE?
+     */
+    put: operations["put_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__put"];
+    post?: never;
+    /** Delete Check */
+    delete: operations["delete_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/healthz": {
     parameters: {
       query?: never;
@@ -2161,6 +2216,8 @@ export interface components {
       price_input_per_mtok: string | null;
       /** Price Output Per Mtok */
       price_output_per_mtok: string | null;
+      /** Price Web Search Per K */
+      price_web_search_per_k: string | null;
       /** Scope */
       scope: string;
       /** Usable */
@@ -2841,6 +2898,36 @@ export interface components {
       /** Validated By */
       validated_by: string | null;
     };
+    /** CheckIn */
+    CheckIn: {
+      /** Has Discussion */
+      has_discussion: boolean;
+      /**
+       * Notes
+       * @default
+       */
+      notes: string;
+      /** Urls */
+      urls?: string[];
+    };
+    /** CheckOut */
+    CheckOut: {
+      /**
+       * Checked At
+       * Format: date-time
+       */
+      checked_at: string;
+      /** Checked By */
+      checked_by: string | null;
+      /** Cve Id */
+      cve_id: string;
+      /** Has Discussion */
+      has_discussion: boolean;
+      /** Notes */
+      notes: string;
+      /** Urls */
+      urls: string[];
+    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -3053,6 +3140,21 @@ export interface components {
        * @description Current version (optimistic locking).
        */
       version: number;
+    };
+    /** CoverageOut */
+    CoverageOut: {
+      /** Coverage Rate */
+      coverage_rate: number | null;
+      /** Days */
+      days: number;
+      /** Investigated */
+      investigated: number;
+      /** Sample */
+      sample: {
+        [key: string]: unknown;
+      };
+      /** With X Discussion */
+      with_x_discussion: number;
     };
     /** CpeSuggestionOut */
     CpeSuggestionOut: {
@@ -10040,6 +10142,136 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ActivationOut"];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_coverage_api_v1_workspaces__workspace__x_coverage_get: {
+    parameters: {
+      query?: {
+        days?: number;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CoverageOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_checks_api_v1_workspaces__workspace__x_coverage_checks_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CheckOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        cve_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CheckIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CheckOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        cve_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

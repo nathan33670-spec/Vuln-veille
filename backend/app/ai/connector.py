@@ -89,6 +89,7 @@ class EngineConnectorType(ConnectorType):
             row.location = config.location
             row.price_input_per_mtok = model.price_input_per_mtok
             row.price_output_per_mtok = model.price_output_per_mtok
+            row.price_web_search_per_k = model.price_web_search_per_k
         if rows:
             await db.execute(delete(AIModel).where(AIModel.id.in_([r.id for r in rows.values()])))
         await db.flush()

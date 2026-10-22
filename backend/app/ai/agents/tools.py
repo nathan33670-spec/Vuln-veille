@@ -31,6 +31,7 @@ from app.catalog.models import CveRecord
 from app.connectors.base import ConnectorContext
 from app.connectors.found import FetchError, Found, as_dict, fetch, json_of
 from app.connectors.models import Connector
+from app.connectors.quotas import QuotaExceededError
 from app.connectors.runtime import build_context
 from app.connectors.types import (
     bluesky,
@@ -45,7 +46,13 @@ from app.connectors.types import (
 from app.connectors.types.github import API as GITHUB_API
 from app.connectors.types.github import github_headers
 from app.connectors.types.rss import host_allowed
-from app.connectors.types.x_reader import POST_URL, discover_post_urls, read_post
+from app.connectors.types.x_reader import (
+    POST_URL,
+    X_DOMAINS,
+    XReaderConfig,
+    discover_post_urls,
+    read_post,
+)
 from app.core.config import Settings
 from app.core.narrow import expect
 from app.net.safe_http import EgressError, SafeHttpClient
@@ -157,6 +164,9 @@ class ToolConnectors:
         return await self.context(rows[0])
 
 
+WebSearchFn = Callable[[str, tuple[str, ...]], Awaitable[list[str]]]
+
+
 @dataclass
 class ToolContext:
     db: AsyncSession
@@ -164,6 +174,8 @@ class ToolContext:
     spec: AgentSpec
     connectors: ToolConnectors
     now: datetime
+    # The engine's web search, when the model has one (set by the runtime).
+    web_search: WebSearchFn | None = None
 
 
 Runner = Callable[[ToolContext, dict[str, Any]], Awaitable[ToolOutput]]
@@ -449,10 +461,20 @@ async def github_get(ctx: ToolContext, args: dict[str, Any]) -> ToolOutput:
     return out
 
 
+def _search_terms(cve_id: str | None, query: str | None) -> str:
+    """Strictly what is needed (spec 07 §2.1): the CVE identifier, else a short query."""
+    if cve_id:
+        return f'"{cve_id}" site:x.com OR site:twitter.com'
+    words = re.sub(r"[^\w .:+-]", " ", query or "").split()
+    return " ".join(words)[:100] + " site:x.com OR site:twitter.com"
+
+
 async def x_discover(ctx: ToolContext, args: dict[str, Any]) -> ToolOutput:
-    """Layer 1 (spec 07 §2.1): X post URLs cited by collected items and NVD references.
-    Layer 2 (the engine's web search restricted to x.com) comes with the social agent."""
-    await ctx.connectors.one(("x_reader",))  # the tool belongs to an allowed connector
+    """X post URLs (spec 07 §2.1): layer 1, those cited by collected items and NVD
+    references; layer 2, the engine's own web search restricted to x.com, when the
+    model has one and the connector allows it. Candidates only: ``x_read`` checks each
+    through the official oEmbed (a made-up URL comes back as withdrawn)."""
+    connector = await ctx.connectors.one(("x_reader",))
     cve_id, query = args.get("cve_id"), args.get("query")
     if not cve_id and not query:
         raise ToolError("cve_id_or_query_required")
@@ -473,9 +495,22 @@ async def x_discover(ctx: ToolContext, args: dict[str, Any]) -> ToolOutput:
     rows = await ctx.db.execute(items.order_by(CollectedItem.fetched_at.desc()).limit(500))
     for url, content in rows.all():
         texts.extend((url or "", content or ""))
-    urls = discover_post_urls("\n".join(texts))[: _limit(ctx)]
+    collected = discover_post_urls("\n".join(texts))
+    searched: list[str] = []
+    config = expect(connector.config, XReaderConfig)
+    if ctx.web_search is not None and config.engine_web_search and len(collected) < _limit(ctx):
+        try:
+            if connector.quotas is not None:
+                await connector.quotas.consume()
+        except QuotaExceededError as exc:
+            raise ToolError(f"quota_exceeded: {exc.window}") from None
+        found = await ctx.web_search(_search_terms(cve_id, query), X_DOMAINS)
+        searched = [u for u in discover_post_urls("\n".join(found)) if u not in collected]
+    urls = [*collected, *searched][: _limit(ctx)]
     out = ToolOutput()
-    out.documents.append({"x_post_urls": urls})
+    out.documents.append(
+        {"x_post_urls": urls, "layers": {"collected": len(collected), "web_search": len(searched)}}
+    )
     out.sources.extend(urls)
     return out
 

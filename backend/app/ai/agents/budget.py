@@ -2,7 +2,8 @@
 
 The cost is an estimate from the model's declared prices (the AI subscription is the
 only paid item allowed, ADR-023): input tokens, cache writes at 125 % and cache reads
-at 10 % of the input price, output tokens at the output price. A free-tier engine
+at 10 % of the input price, output tokens at the output price, and the engine's web
+searches at their price per thousand. A free-tier engine
 declares no price and costs 0. With a hard stop, engine calls are refused once the
 month's spend reaches the workspace limit; alerts fire once at 50, 80 and 100 %.
 """
@@ -37,6 +38,8 @@ def estimate_cost(model: AIModel, usage: Usage) -> Decimal:
         + Decimal(usage.cache_read_tokens) * Decimal("0.1")
     )
     cost = (weighted_input * price_in + Decimal(usage.output_tokens) * price_out) / MILLION
+    searches = model.price_web_search_per_k or Decimal(0)
+    cost += Decimal(usage.web_search_requests) * searches / Decimal(1000)
     return cost.quantize(Decimal("0.000001"))
 
 

@@ -34,6 +34,7 @@ from app.ai.types import (
     StopReason,
     ToolCall,
     Usage,
+    WebResult,
 )
 from app.connectors.base import (
     ConnectorContext,
@@ -59,7 +60,10 @@ STOP = {
     "tool_use": StopReason.TOOL_USE,
     "max_tokens": StopReason.MAX_TOKENS,
     "refusal": StopReason.REFUSAL,
+    # A long server-side web search paused the turn: what is there is what we keep.
+    "pause_turn": StopReason.END_TURN,
 }
+WEB_SEARCH_TOOL = "web_search_20260318"
 
 
 def _default_models() -> list[ModelConfig]:
@@ -73,6 +77,8 @@ def _default_models() -> list[ModelConfig]:
             prompt_cache=True,
             price_input_per_mtok=Decimal("4.00"),
             price_output_per_mtok=Decimal("20.00"),
+            web_search=True,
+            price_web_search_per_k=Decimal("10.00"),
         )
     ]
 
@@ -169,6 +175,17 @@ class AnthropicEngine:
                 }
                 for t in request.tools
             ]
+        if request.web_search is not None:
+            if not caps.web_search:
+                raise AIConfigurationError("web_search_unsupported")
+            params.setdefault("tools", []).append(
+                {
+                    "type": WEB_SEARCH_TOOL,
+                    "name": "web_search",
+                    "allowed_domains": list(request.web_search.allowed_domains),
+                    "max_uses": request.web_search.max_uses,
+                }
+            )
         output_config: dict[str, Any] = {}
         if request.reasoning_level in caps.reasoning_levels:
             output_config["effort"] = EFFORT[request.reasoning_level]
@@ -216,11 +233,13 @@ def _connection_error(exc: BaseException) -> AIError:
 
 def _parse(response: Any) -> AIResponse:
     usage = response.usage
+    server = getattr(usage, "server_tool_use", None)
     tokens = Usage(
         input_tokens=usage.input_tokens or 0,
         output_tokens=usage.output_tokens or 0,
         cache_read_tokens=getattr(usage, "cache_read_input_tokens", None) or 0,
         cache_write_tokens=getattr(usage, "cache_creation_input_tokens", None) or 0,
+        web_search_requests=(getattr(server, "web_search_requests", None) or 0) if server else 0,
     )
     if response.stop_reason == "refusal":  # checked before reading any content
         details = getattr(response, "stop_details", None)
@@ -243,7 +262,21 @@ def _parse(response: Any) -> AIResponse:
         usage=tokens,
         model_served=response.model,
         provider_state={"anthropic_content": [b.to_dict() for b in response.content]},
+        web_results=_web_results(response.content),
     )
+
+
+def _web_results(content: list[Any]) -> tuple[WebResult, ...]:
+    results: list[WebResult] = []
+    for block in content:
+        if block.type != "web_search_tool_result" or not isinstance(block.content, list):
+            continue  # an error result carries no list
+        results.extend(
+            WebResult(url=str(r.url), title=str(r.title or ""))
+            for r in block.content
+            if getattr(r, "type", "") == "web_search_result"
+        )
+    return tuple(results)
 
 
 @register

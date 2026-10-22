@@ -217,7 +217,8 @@ PRESETS: dict[str, Preset] = {
         "Signalements d'exploitation, chercheurs impliqués et liens utiles (X, Mastodon, Bluesky).",
         _spec(
             "Tu cherches ce que la communauté sécurité dit de la CVE fournie sur X (lecture "
-            "gratuite : découverte des posts déjà cités, puis lecture), Mastodon et Bluesky : "
+            "gratuite : x_discover trouve les posts, x_read lit ceux qui semblent pertinents), "
+            "Mastodon et Bluesky : "
             "signalements d'exploitation, chercheurs impliqués, liens utiles. Un post isolé "
             "n'établit pas une exploitation : précise la source de chaque signalement." + METHOD,
             ["x_discover", "x_read", "social_search"],

@@ -78,6 +78,18 @@
             ],
             "title": "Price Output Per Mtok"
           },
+          "price_web_search_per_k": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Web Search Per K"
+          },
           "scope": {
             "title": "Scope",
             "type": "string"
@@ -128,7 +140,8 @@
           "data_classes",
           "location",
           "price_input_per_mtok",
-          "price_output_per_mtok"
+          "price_output_per_mtok",
+          "price_web_search_per_k"
         ],
         "title": "AIModelOut",
         "type": "object"
@@ -2096,6 +2109,84 @@
         "title": "CaseOut",
         "type": "object"
       },
+      "CheckIn": {
+        "additionalProperties": false,
+        "properties": {
+          "has_discussion": {
+            "title": "Has Discussion",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "has_discussion"
+        ],
+        "title": "CheckIn",
+        "type": "object"
+      },
+      "CheckOut": {
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checked_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked By"
+          },
+          "cve_id": {
+            "title": "Cve Id",
+            "type": "string"
+          },
+          "has_discussion": {
+            "title": "Has Discussion",
+            "type": "boolean"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cve_id",
+          "has_discussion",
+          "urls",
+          "notes",
+          "checked_by",
+          "checked_at"
+        ],
+        "title": "CheckOut",
+        "type": "object"
+      },
       "CheckQueuedOut": {
         "properties": {
           "queued": {
@@ -2646,6 +2737,47 @@
           "version"
         ],
         "title": "ConnectorUpdate",
+        "type": "object"
+      },
+      "CoverageOut": {
+        "properties": {
+          "coverage_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Rate"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "investigated": {
+            "title": "Investigated",
+            "type": "integer"
+          },
+          "sample": {
+            "additionalProperties": true,
+            "title": "Sample",
+            "type": "object"
+          },
+          "with_x_discussion": {
+            "title": "With X Discussion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "investigated",
+          "with_x_discussion",
+          "coverage_rate",
+          "sample"
+        ],
+        "title": "CoverageOut",
         "type": "object"
       },
       "CpeSuggestionOut": {
@@ -15865,6 +15997,212 @@
         "summary": "Activate Version",
         "tags": [
           "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/x-coverage": {
+      "get": {
+        "operationId": "get_coverage_api_v1_workspaces__workspace__x_coverage_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Coverage",
+        "tags": [
+          "x-coverage"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/x-coverage/checks": {
+      "get": {
+        "operationId": "list_checks_api_v1_workspaces__workspace__x_coverage_checks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CheckOut"
+                  },
+                  "title": "Response List Checks Api V1 Workspaces  Workspace  X Coverage Checks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Checks",
+        "tags": [
+          "x-coverage"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/x-coverage/checks/{cve_id}": {
+      "delete": {
+        "operationId": "delete_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cve_id",
+            "required": true,
+            "schema": {
+              "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+              "title": "Cve Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Check",
+        "tags": [
+          "x-coverage"
+        ]
+      },
+      "put": {
+        "description": "An analyst's hand check: did a relevant X discussion exist for this CVE?",
+        "operationId": "put_check_api_v1_workspaces__workspace__x_coverage_checks__cve_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cve_id",
+            "required": true,
+            "schema": {
+              "pattern": "^CVE-\\d{4}-\\d{4,19}$",
+              "title": "Cve Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Check",
+        "tags": [
+          "x-coverage"
         ]
       }
     },

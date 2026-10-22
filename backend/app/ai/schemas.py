@@ -28,6 +28,7 @@ class AIModelOut(BaseModel):
     location: str
     price_input_per_mtok: Decimal | None
     price_output_per_mtok: Decimal | None
+    price_web_search_per_k: Decimal | None
 
 
 class EngineChoiceIn(StrictIn):

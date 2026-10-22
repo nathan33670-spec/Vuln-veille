@@ -33,6 +33,8 @@ class ModelCapabilities:
     reasoning_levels: frozenset[ReasoningLevel] = frozenset()
     streaming: bool = False
     prompt_cache: bool = False
+    # The engine's own web search (Claude web_search, Gemini Google Search grounding).
+    web_search: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -43,6 +45,7 @@ class ModelCapabilities:
             "reasoning_levels": sorted(self.reasoning_levels),
             "streaming": self.streaming,
             "prompt_cache": self.prompt_cache,
+            "web_search": self.web_search,
         }
 
 
@@ -84,6 +87,21 @@ class Message:
 
 
 @dataclass(frozen=True)
+class WebSearch:
+    """The engine's web search for this request, restricted to ``allowed_domains`` where
+    the provider can (otherwise the caller filters the results by domain)."""
+
+    allowed_domains: tuple[str, ...]
+    max_uses: int = 2
+
+
+@dataclass(frozen=True)
+class WebResult:
+    url: str
+    title: str = ""
+
+
+@dataclass(frozen=True)
 class AIRequest:
     model: str
     system: str
@@ -92,6 +110,7 @@ class AIRequest:
     output_schema: dict[str, Any] | None = None
     reasoning_level: ReasoningLevel = ReasoningLevel.MEDIUM
     max_output_tokens: int = 8192
+    web_search: WebSearch | None = None
 
 
 @dataclass(frozen=True)
@@ -100,6 +119,7 @@ class Usage:
     output_tokens: int = 0
     cache_read_tokens: int = 0
     cache_write_tokens: int = 0
+    web_search_requests: int = 0
 
     def __add__(self, other: "Usage") -> "Usage":
         return Usage(
@@ -107,6 +127,7 @@ class Usage:
             self.output_tokens + other.output_tokens,
             self.cache_read_tokens + other.cache_read_tokens,
             self.cache_write_tokens + other.cache_write_tokens,
+            self.web_search_requests + other.web_search_requests,
         )
 
 
@@ -119,6 +140,7 @@ class AIResponse:
     model_served: str = ""
     refusal_category: str | None = None
     provider_state: dict[str, Any] | None = None
+    web_results: tuple[WebResult, ...] = ()
 
     def assistant_message(self) -> Message:
         return Message(

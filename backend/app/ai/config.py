@@ -36,8 +36,12 @@ class ModelConfig(BaseModel):
     max_output_tokens: int = Field(default=8192, ge=256, le=1_000_000)
     reasoning_levels: list[ReasoningLevel] = Field(default_factory=list, max_length=4)
     prompt_cache: bool = False
+    web_search: bool = Field(default=False, description="Recherche web du moteur (Claude, Gemini)")
     price_input_per_mtok: Decimal | None = Field(default=None, ge=0, le=1000, decimal_places=4)
     price_output_per_mtok: Decimal | None = Field(default=None, ge=0, le=1000, decimal_places=4)
+    price_web_search_per_k: Decimal | None = Field(
+        default=None, ge=0, le=1000, decimal_places=4, description="Prix pour 1000 recherches web"
+    )
 
     def capabilities(self) -> ModelCapabilities:
         return ModelCapabilities(
@@ -48,6 +52,7 @@ class ModelConfig(BaseModel):
             reasoning_levels=frozenset(self.reasoning_levels),
             streaming=False,
             prompt_cache=self.prompt_cache,
+            web_search=self.web_search,
         )
 
 

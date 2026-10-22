@@ -30,6 +30,7 @@ def model_capabilities(model: AIModel) -> ModelCapabilities:
         reasoning_levels=frozenset(ReasoningLevel(r) for r in raw.get("reasoning_levels", [])),
         streaming=bool(raw.get("streaming", False)),
         prompt_cache=bool(raw.get("prompt_cache", False)),
+        web_search=bool(raw.get("web_search", False)),
     )
 
 

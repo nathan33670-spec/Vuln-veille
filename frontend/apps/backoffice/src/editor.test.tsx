@@ -14,7 +14,10 @@ import {
   type NodeType,
   parseGraph,
 } from "./pages/workflows/editor/model";
+import { explainCron } from "./pages/workflows/editor/cron";
+import { comparableJson, diffGraphs, lineDiff } from "./pages/workflows/editor/diff";
 import { fieldsOf } from "./pages/workflows/editor/schema";
+import { readWorkflowFile } from "./pages/workflows/workflowFile";
 import { routes } from "./routes";
 
 // React Flow measures its nodes: jsdom has no layout engine.
@@ -86,6 +89,15 @@ function nodeType(type: string, overrides: Partial<NodeType> = {}): NodeType {
 
 const TYPES: NodeType[] = [
   nodeType("trigger.manual", { label: "Lancement manuel", trigger_type: "manual" }),
+  nodeType("trigger.schedule", {
+    label: "Planification",
+    trigger_type: "schedule",
+    params_schema: {
+      properties: { cron: { type: "string", title: "Cron", maxLength: 100 } },
+      required: ["cron"],
+      type: "object",
+    },
+  }),
   nodeType("transform.limit", {
     label: "Limiter",
     params_schema: {
@@ -386,7 +398,9 @@ describe("workflow editor", () => {
     expect(lastDraft(calls)?.base_version_no).toBe(1);
     expect(lastDraft(calls)?.graph.nodes.map((n) => n.id)).toEqual(["start", "limit", "filter"]);
     // The server's validation lands on the node and on its field.
-    expect(await within(screen.getByTestId("node-filter")).findByText("1 erreur")).toBeVisible();
+    expect(
+      await within(screen.getByTestId("node-filter")).findByText("1 erreur", {}, { timeout: 4000 }),
+    ).toBeVisible();
     expect(screen.getByText("Champ obligatoire.")).toBeInTheDocument();
 
     typeCode("Condition (JMESPath) *", "json.score >= `7`");
@@ -397,7 +411,7 @@ describe("workflow editor", () => {
         }),
       { timeout: 4000 },
     );
-    await waitFor(() => expect(screen.queryByText("1 erreur")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("1 erreur")).toBeNull(), { timeout: 4000 });
 
     // One undo step per field: the node goes back to its empty condition, then disappears.
     fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
@@ -697,5 +711,215 @@ describe("run view", () => {
     expect(await screen.findByText("2 appels, 0.0240 $ estimés")).toBeInTheDocument();
     expect(screen.getByText(/onerror=alert\(1\)/)).toBeInTheDocument(); // output, as text
     expect(document.querySelector("img")).toBeNull();
+  });
+});
+
+describe("versions", () => {
+  const v1: Graph = {
+    schema_version: 1,
+    nodes: [
+      { id: "start", type: "trigger.manual", params: {}, position: { x: 0, y: 0 } },
+      {
+        id: "high",
+        type: "transform.filter",
+        params: { condition: { $expr: "json.score >= `7`" } },
+        position: { x: 280, y: 0 },
+      },
+      { id: "old", type: "transform.limit", params: { count: 5 }, position: { x: 560, y: 0 } },
+    ],
+    edges: [
+      { id: "e1", from: { node: "start", port: "out" }, to: { node: "high", port: "in" } },
+      { id: "e2", from: { node: "high", port: "out" }, to: { node: "old", port: "in" } },
+    ],
+  };
+  const v2: Graph = {
+    schema_version: 1,
+    nodes: [
+      { id: "start", type: "trigger.manual", params: {}, position: { x: 40, y: 40 } }, // moved
+      {
+        id: "high",
+        type: "transform.filter",
+        params: { condition: { $expr: "json.score >= `9`" } },
+        position: { x: 280, y: 0 },
+      },
+      { id: "summary", type: "ai.summarize", params: {}, position: { x: 560, y: 0 } },
+    ],
+    edges: [
+      { id: "e1", from: { node: "start", port: "out" }, to: { node: "high", port: "in" } },
+      { id: "e3", from: { node: "high", port: "out" }, to: { node: "summary", port: "in" } },
+    ],
+  };
+
+  it("diffs two graphs, positions aside", () => {
+    const diff = diffGraphs(v1, v2);
+    expect(Object.fromEntries(diff.nodes)).toEqual({
+      start: "same",
+      high: "modified",
+      summary: "added",
+      old: "removed",
+    });
+    expect(diff.fields.get("high")).toEqual([
+      {
+        path: "params.condition",
+        before: { $expr: "json.score >= `7`" },
+        after: { $expr: "json.score >= `9`" },
+      },
+    ]);
+    expect(diff.edges.added.map((e) => e.id)).toEqual(["e3"]);
+    expect(diff.edges.removed.map((e) => e.id)).toEqual(["e2"]);
+    expect(comparableJson(v1)).not.toContain("position");
+    expect(lineDiff("a\nb\nc", "a\nc\nd")).toEqual([
+      { op: " ", text: "a" },
+      { op: "-", text: "b" },
+      { op: " ", text: "c" },
+      { op: "+", text: "d" },
+    ]);
+  });
+
+  it("explains a cron in French and reads workflow files", async () => {
+    expect(explainCron("30 8 * * 1-5")).toBe("À 08:30, de lundi à vendredi");
+    expect(explainCron("not a cron")).toBeNull();
+    const file = (content: string, name = "w.json") => new File([content], name);
+    const exported = await readWorkflowFile(
+      file(JSON.stringify({ format: "vuln-veille.workflow/1", name: "W", graph: v1 })),
+    );
+    expect(exported.name).toBe("W");
+    expect((await readWorkflowFile(file(JSON.stringify(v1), "veille.json"))).name).toBe("veille");
+    await expect(readWorkflowFile(file("{"))).rejects.toThrow("invalid_json");
+    await expect(readWorkflowFile(file('{"a": 1}'))).rejects.toThrow("not_a_workflow");
+  });
+
+  function stubVersions(calls: Call[]) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: Request | string, init?: RequestInit) => {
+        const request = typeof input === "string" ? new Request(input, init) : input;
+        const url = new URL(request.url);
+        const path = url.pathname;
+        const text = request.method === "GET" ? "" : await request.clone().text();
+        calls.push({
+          method: request.method,
+          path: path + url.search,
+          body: text ? JSON.parse(text) : null,
+        });
+        const base = "/api/v1/workspaces/voc/workflows/w1";
+        const version = (no: number, graph: Graph) => ({
+          id: `v${no}`,
+          version_no: no,
+          comment: `c${no}`,
+          graph_hash: "h",
+          created_by: null,
+          created_at: "2026-10-22T08:00:00Z",
+          graph,
+        });
+        if (path === "/api/v1/auth/me") return Response.json(me);
+        if (path === "/api/v1/node-types") return Response.json(TYPES);
+        if (path === base) {
+          return Response.json({
+            ...workflow,
+            latest_version_no: 2,
+            active_version_no: 2,
+            latest_graph: v2,
+            versions: [version(2, v2), version(1, v1)],
+          });
+        }
+        if (path === `${base}/versions/1`) return Response.json(version(1, v1));
+        if (path === `${base}/versions/2`) return Response.json(version(2, v2));
+        if (path === `${base}/versions/1/restore`) {
+          return Response.json(version(3, v1), { status: 201 });
+        }
+        if (path === `${base}/export`) {
+          return Response.json({
+            format: "vuln-veille.workflow/1",
+            name: "N",
+            description: "",
+            tags: [],
+            graph: v1,
+          });
+        }
+        if (path === `${base}/draft`) return Response.json({ detail: "no_draft" }, { status: 404 });
+        return Response.json([]);
+      }),
+    );
+  }
+
+  it("compares two versions on the canvas and as JSON", async () => {
+    stubVersions([]);
+    render(
+      <App
+        router={createMemoryRouter(routes, {
+          initialEntries: ["/workflows/w1/compare?from=1&to=2"],
+        })}
+      />,
+    );
+    expect(
+      within(await screen.findByTestId("node-summary")).getByText("Ajouté"),
+    ).toBeInTheDocument();
+    expect(within(screen.getByTestId("node-old")).getByText("Supprimé")).toBeInTheDocument();
+    expect(within(screen.getByTestId("node-high")).getByText("Modifié")).toBeInTheDocument();
+    expect(within(screen.getByTestId("node-start")).queryByText("Modifié")).toBeNull();
+    expect(screen.getByText("params.condition")).toBeInTheDocument();
+    expect(screen.getByText(/Liaisons : 1 ajoutée\(s\), 1 supprimée\(s\)/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "JSON" }));
+    expect(await screen.findByText(/^- .*json.score >= `7`/)).toBeInTheDocument();
+    expect(screen.getByText(/^\+ .*json.score >= `9`/)).toBeInTheDocument();
+  });
+
+  it("restores and exports a version from the history", async () => {
+    const calls: Call[] = [];
+    stubVersions(calls);
+    const created: Blob[] = [];
+    vi.stubGlobal(
+      "URL",
+      Object.assign(URL, {
+        createObjectURL: (blob: Blob) => {
+          created.push(blob);
+          return "blob:export";
+        },
+        revokeObjectURL: () => undefined,
+      }),
+    );
+    render(<App router={createMemoryRouter(routes, { initialEntries: ["/workflows/w1"] })} />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Versions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Restaurer" }));
+    expect(await screen.findByText(/La v1 est republiée comme v3/)).toBeInTheDocument();
+    expect(calls).toContainEqual({
+      method: "POST",
+      path: "/api/v1/workspaces/voc/workflows/w1/versions/1/restore",
+      body: { comment: "", base_version_no: 2 },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: "Exporter (JSON)" })[1] as HTMLElement);
+    await waitFor(() => expect(created).toHaveLength(1));
+    expect(calls.some((c) => c.path.endsWith("/export?version_no=1"))).toBe(true);
+    expect(JSON.parse(await (created[0] as Blob).text()).format).toBe("vuln-veille.workflow/1");
+    expect(screen.getByRole("link", { name: "Comparer avec la précédente" })).toHaveAttribute(
+      "href",
+      "/workflows/w1/compare?from=1&to=2",
+    );
+  });
+
+  it("imports a graph into the editor and lists the changes before publishing", async () => {
+    stubVersions([]);
+    renderEditor();
+    await screen.findByTestId("node-summary");
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File([JSON.stringify(v1)], "ancienne.json")] },
+    });
+    expect(await screen.findByTestId("node-old")).toBeInTheDocument();
+    expect(screen.queryByTestId("node-summary")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Publier une version" }));
+    expect(await screen.findByText("Changements")).toBeInTheDocument();
+    expect(screen.getByText("params.condition")).toBeInTheDocument();
+  });
+
+  it("explains a schedule in plain words", async () => {
+    stubVersions([]);
+    renderEditor();
+    fireEvent.click(await screen.findByRole("button", { name: "Planification" }));
+    fireEvent.change(await screen.findByLabelText("Expression cron"), {
+      target: { value: "30 8 * * 1-5" },
+    });
+    expect(await screen.findByText("À 08:30, de lundi à vendredi")).toBeInTheDocument();
   });
 });

@@ -72,6 +72,12 @@ const pages: RouteObject[] = [
                   Component: (await import("./pages/workflows/editor/EditorPage")).EditorPage,
                 }),
               },
+              {
+                path: "/workflows/:id/compare",
+                lazy: async () => ({
+                  Component: (await import("./pages/workflows/editor/ComparePage")).ComparePage,
+                }),
+              },
               { path: "/runs/:id", element: <RunPage /> },
               { path: "/agents", element: <AgentsPage /> },
               { path: "/agents/:id", element: <AgentPage /> },

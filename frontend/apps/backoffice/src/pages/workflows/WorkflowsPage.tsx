@@ -2,7 +2,7 @@ import { type Schemas, unwrap } from "@vv/api-client";
 import { errorMessage } from "@vv/auth";
 import { Alert, Button, DataTable, Dialog, PageHeader, TextArea, TextField } from "@vv/ui";
 import { useQuery } from "@tanstack/react-query";
-import { type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 
@@ -10,6 +10,7 @@ import { client } from "../../api";
 import { formatDate } from "../../lib";
 import { useWorkspace } from "../../workspace";
 import { StatusBadge } from "./shared";
+import { readWorkflowFile, WorkflowFileError } from "./workflowFile";
 
 type Workflow = Schemas["WorkflowOut"];
 
@@ -56,17 +57,47 @@ export function WorkflowsPage() {
     }
   }
 
+  async function importFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError(undefined);
+    try {
+      const parsed = await readWorkflowFile(file);
+      const created = unwrap(
+        await client.POST("/api/v1/workspaces/{workspace}/workflows/import", {
+          params: { path: { workspace } },
+          body: { format: "vuln-veille.workflow/1", ...parsed },
+        }),
+      );
+      await navigate(`/workflows/${created.id}`);
+    } catch (err) {
+      setError(
+        err instanceof WorkflowFileError
+          ? t(`workflows.file.${err.message}`)
+          : errorMessage(t, err),
+      );
+    }
+  }
+
   return (
     <>
       <PageHeader
         title={t("workflows.title", { team: workspace.toUpperCase() })}
         actions={
           can("workflow.edit") ? (
-            <Button onClick={() => setCreating(true)}>{t("workflows.create")}</Button>
+            <span className="vv-actions">
+              <Button onClick={() => setCreating(true)}>{t("workflows.create")}</Button>
+              <label className="vv-button vv-button-secondary vv-file-button">
+                {t("workflows.importFile")}
+                <input type="file" accept="application/json,.json" onChange={importFile} />
+              </label>
+            </span>
           ) : null
         }
       />
       <p className="vv-muted">{t("workflows.intro")}</p>
+      {error && !creating ? <Alert>{error}</Alert> : null}
       <DataTable<Workflow>
         rows={workflows.data ?? []}
         rowKey={(w) => w.id}

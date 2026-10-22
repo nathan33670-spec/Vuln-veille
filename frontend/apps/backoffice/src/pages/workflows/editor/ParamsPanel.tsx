@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { splitList } from "../../../lib";
+import { explainCron } from "./cron";
 import { ExpressionField, type Item } from "./ExpressionField";
 import type { GraphNode, LocatedError, NodeSettings, NodeType } from "./model";
 import { dynamicText, type FieldSpec, fieldsOf } from "./schema";
@@ -313,19 +314,23 @@ function Field({
           onChange={onChange}
         />
       );
-    case "string":
+    case "string": {
+      const text = typeof value === "string" ? value : "";
+      // A schedule is shown in plain words, so a typo in the cron is seen at once.
+      const cron = field.name === "cron" && text ? explainCron(text) : null;
       return (
         <TextField
           label={label}
-          value={typeof value === "string" ? value : ""}
+          value={text}
           maxLength={field.maxLength}
           placeholder={typeof field.default === "string" ? field.default : undefined}
           required={field.required}
-          hint={hint}
+          hint={field.name === "cron" && text ? (cron ?? t("workflows.editor.cronInvalid")) : hint}
           error={error}
           onChange={(e) => onChange(e.target.value || undefined)}
         />
       );
+    }
     case "json":
       return (
         <JsonField label={label} value={value} hint={hint} error={error} onChange={onChange} />

@@ -2847,87 +2847,6 @@ export interface components {
       /** Spent Usd */
       spent_usd: string;
     };
-    /** CaseIn */
-    CaseIn: {
-      /** Cve Id */
-      cve_id: string;
-      /**
-       * Expected
-       * @description Champs clés attendus, validés par les analystes (ex. exploitation_status)
-       */
-      expected?: {
-        [key: string]: unknown;
-      };
-      /**
-       * Input
-       * @description Données ajoutées à l'entrée de l'agent
-       */
-      input?: {
-        [key: string]: unknown;
-      };
-      /**
-       * Notes
-       * @default
-       */
-      notes: string;
-    };
-    /** CaseOut */
-    CaseOut: {
-      /** Cve Id */
-      cve_id: string;
-      /** Expected */
-      expected: {
-        [key: string]: unknown;
-      };
-      /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /** Input */
-      input: {
-        [key: string]: unknown;
-      };
-      /** Notes */
-      notes: string;
-      /**
-       * Updated At
-       * Format: date-time
-       */
-      updated_at: string;
-      /** Validated By */
-      validated_by: string | null;
-    };
-    /** CheckIn */
-    CheckIn: {
-      /** Has Discussion */
-      has_discussion: boolean;
-      /**
-       * Notes
-       * @default
-       */
-      notes: string;
-      /** Urls */
-      urls?: string[];
-    };
-    /** CheckOut */
-    CheckOut: {
-      /**
-       * Checked At
-       * Format: date-time
-       */
-      checked_at: string;
-      /** Checked By */
-      checked_by: string | null;
-      /** Cve Id */
-      cve_id: string;
-      /** Has Discussion */
-      has_discussion: boolean;
-      /** Notes */
-      notes: string;
-      /** Urls */
-      urls: string[];
-    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -2992,19 +2911,6 @@ export interface components {
        * Format: uuid
        */
       id: string;
-    };
-    /** ComparisonOut */
-    ComparisonOut: {
-      baseline: components["schemas"]["RunOut"];
-      candidate: components["schemas"]["RunOut"];
-      /** Cases */
-      cases: {
-        [key: string]: unknown;
-      }[];
-      /** Metrics */
-      metrics: {
-        [key: string]: unknown;
-      };
     };
     /** CompatibilityReportOut */
     CompatibilityReportOut: {
@@ -3140,21 +3046,6 @@ export interface components {
        * @description Current version (optimistic locking).
        */
       version: number;
-    };
-    /** CoverageOut */
-    CoverageOut: {
-      /** Coverage Rate */
-      coverage_rate: number | null;
-      /** Days */
-      days: number;
-      /** Investigated */
-      investigated: number;
-      /** Sample */
-      sample: {
-        [key: string]: unknown;
-      };
-      /** With X Discussion */
-      with_x_discussion: number;
     };
     /** CpeSuggestionOut */
     CpeSuggestionOut: {
@@ -3328,6 +3219,180 @@ export interface components {
       qr_data_uri: string;
       /** Secret */
       secret: string;
+    };
+    /** EvalCaseIn */
+    EvalCaseIn: {
+      /** Cve Id */
+      cve_id: string;
+      /**
+       * Expected
+       * @description Champs clés attendus, validés par les analystes (ex. exploitation_status)
+       */
+      expected?: {
+        [key: string]: unknown;
+      };
+      /**
+       * Input
+       * @description Données ajoutées à l'entrée de l'agent
+       */
+      input?: {
+        [key: string]: unknown;
+      };
+      /**
+       * Notes
+       * @default
+       */
+      notes: string;
+    };
+    /** EvalCaseOut */
+    EvalCaseOut: {
+      /** Cve Id */
+      cve_id: string;
+      /** Expected */
+      expected: {
+        [key: string]: unknown;
+      };
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Input */
+      input: {
+        [key: string]: unknown;
+      };
+      /** Notes */
+      notes: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Validated By */
+      validated_by: string | null;
+    };
+    /** EvalComparisonOut */
+    EvalComparisonOut: {
+      baseline: components["schemas"]["EvalRunOut"];
+      candidate: components["schemas"]["EvalRunOut"];
+      /** Cases */
+      cases: {
+        [key: string]: unknown;
+      }[];
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
+    };
+    /** EvalRunDetailOut */
+    EvalRunDetailOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Cases */
+      cases: number;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Max Cost Usd */
+      max_cost_usd: string;
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
+      /** Model Id */
+      model_id: string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       */
+      model_row_id: string;
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Results */
+      results: {
+        [key: string]: unknown;
+      }[];
+      /** Started At */
+      started_at: string | null;
+      /** Status */
+      status: string;
+    };
+    /** EvalRunIn */
+    EvalRunIn: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /**
+       * Case Ids
+       * @description Par défaut, tout le jeu de référence
+       */
+      case_ids?: string[] | null;
+      /**
+       * Max Cost Usd
+       * @default 5
+       */
+      max_cost_usd: number | string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       * @description Modèle candidat
+       */
+      model_row_id: string;
+    };
+    /** EvalRunOut */
+    EvalRunOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Cases */
+      cases: number;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Max Cost Usd */
+      max_cost_usd: string;
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
+      /** Model Id */
+      model_id: string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       */
+      model_row_id: string;
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Started At */
+      started_at: string | null;
+      /** Status */
+      status: string;
     };
     /** EvidenceIn */
     EvidenceIn: {
@@ -3661,39 +3726,14 @@ export interface components {
         [key: string]: unknown;
       };
     };
-    /** RunIn */
-    RunIn: {
-      /**
-       * Agent Id
-       * Format: uuid
-       */
-      agent_id: string;
-      /**
-       * Case Ids
-       * @description Par défaut, tout le jeu de référence
-       */
-      case_ids?: string[] | null;
-      /**
-       * Max Cost Usd
-       * @default 5
-       */
-      max_cost_usd: number | string;
-      /**
-       * Model Row Id
-       * Format: uuid
-       * @description Modèle candidat
-       */
-      model_row_id: string;
-    };
-    /** RunOut */
-    RunOut: {
-      /**
-       * Agent Id
-       * Format: uuid
-       */
-      agent_id: string;
-      /** Cases */
-      cases: number;
+    /** RunDetailOut */
+    RunDetailOut: {
+      /** Approvals */
+      approvals: components["schemas"]["ApprovalOut"][];
+      /** Cancel Requested */
+      cancel_requested: boolean;
+      /** Deadline At */
+      deadline_at: string | null;
       /** Error */
       error: string | null;
       /** Finished At */
@@ -3703,19 +3743,8 @@ export interface components {
        * Format: uuid
        */
       id: string;
-      /** Max Cost Usd */
-      max_cost_usd: string;
-      /** Metrics */
-      metrics: {
-        [key: string]: unknown;
-      };
-      /** Model Id */
-      model_id: string;
-      /**
-       * Model Row Id
-       * Format: uuid
-       */
-      model_row_id: string;
+      /** Node Runs */
+      node_runs: components["schemas"]["NodeRunOut"][];
       /**
        * Queued At
        * Format: date-time
@@ -3723,8 +3752,29 @@ export interface components {
       queued_at: string;
       /** Started At */
       started_at: string | null;
+      /** Stats */
+      stats: {
+        [key: string]: unknown;
+      };
       /** Status */
       status: string;
+      /** Trigger Node Id */
+      trigger_node_id: string;
+      /** Trigger Payload */
+      trigger_payload: {
+        [key: string]: unknown;
+      };
+      /** Trigger Type */
+      trigger_type: string;
+      /** Triggered By */
+      triggered_by: string | null;
+      /** Version No */
+      version_no: number | null;
+      /**
+       * Workflow Id
+       * Format: uuid
+       */
+      workflow_id: string;
     };
     /** RunStarted */
     RunStarted: {
@@ -4782,50 +4832,50 @@ export interface components {
        */
       type: "x_account";
     };
-    /** RunDetailOut */
-    app__ai__evaluation__schemas__RunDetailOut: {
+    /** XCoverageCheckIn */
+    XCoverageCheckIn: {
+      /** Has Discussion */
+      has_discussion: boolean;
       /**
-       * Agent Id
-       * Format: uuid
+       * Notes
+       * @default
        */
-      agent_id: string;
-      /** Cases */
-      cases: number;
-      /** Error */
-      error: string | null;
-      /** Finished At */
-      finished_at: string | null;
+      notes: string;
+      /** Urls */
+      urls?: string[];
+    };
+    /** XCoverageCheckOut */
+    XCoverageCheckOut: {
       /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /** Max Cost Usd */
-      max_cost_usd: string;
-      /** Metrics */
-      metrics: {
-        [key: string]: unknown;
-      };
-      /** Model Id */
-      model_id: string;
-      /**
-       * Model Row Id
-       * Format: uuid
-       */
-      model_row_id: string;
-      /**
-       * Queued At
+       * Checked At
        * Format: date-time
        */
-      queued_at: string;
-      /** Results */
-      results: {
+      checked_at: string;
+      /** Checked By */
+      checked_by: string | null;
+      /** Cve Id */
+      cve_id: string;
+      /** Has Discussion */
+      has_discussion: boolean;
+      /** Notes */
+      notes: string;
+      /** Urls */
+      urls: string[];
+    };
+    /** XCoverageOut */
+    XCoverageOut: {
+      /** Coverage Rate */
+      coverage_rate: number | null;
+      /** Days */
+      days: number;
+      /** Investigated */
+      investigated: number;
+      /** Sample */
+      sample: {
         [key: string]: unknown;
-      }[];
-      /** Started At */
-      started_at: string | null;
-      /** Status */
-      status: string;
+      };
+      /** With X Discussion */
+      with_x_discussion: number;
     };
     /** ClientOrgOut */
     app__iam__admin_schemas__ClientOrgOut: {
@@ -4859,56 +4909,6 @@ export interface components {
       name: string;
       /** Role */
       role: string;
-    };
-    /** RunDetailOut */
-    app__workflows__schemas__RunDetailOut: {
-      /** Approvals */
-      approvals: components["schemas"]["ApprovalOut"][];
-      /** Cancel Requested */
-      cancel_requested: boolean;
-      /** Deadline At */
-      deadline_at: string | null;
-      /** Error */
-      error: string | null;
-      /** Finished At */
-      finished_at: string | null;
-      /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /** Node Runs */
-      node_runs: components["schemas"]["NodeRunOut"][];
-      /**
-       * Queued At
-       * Format: date-time
-       */
-      queued_at: string;
-      /** Started At */
-      started_at: string | null;
-      /** Stats */
-      stats: {
-        [key: string]: unknown;
-      };
-      /** Status */
-      status: string;
-      /** Trigger Node Id */
-      trigger_node_id: string;
-      /** Trigger Payload */
-      trigger_payload: {
-        [key: string]: unknown;
-      };
-      /** Trigger Type */
-      trigger_type: string;
-      /** Triggered By */
-      triggered_by: string | null;
-      /** Version No */
-      version_no: number | null;
-      /**
-       * Workflow Id
-       * Format: uuid
-       */
-      workflow_id: string;
     };
   };
   responses: never;
@@ -7904,7 +7904,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CaseOut"][];
+          "application/json": components["schemas"]["EvalCaseOut"][];
         };
       };
       /** @description Validation Error */
@@ -7929,7 +7929,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CaseIn"];
+        "application/json": components["schemas"]["EvalCaseIn"];
       };
     };
     responses: {
@@ -7939,7 +7939,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CaseOut"];
+          "application/json": components["schemas"]["EvalCaseOut"];
         };
       };
       /** @description Validation Error */
@@ -7965,7 +7965,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CaseIn"];
+        "application/json": components["schemas"]["EvalCaseIn"];
       };
     };
     responses: {
@@ -7975,7 +7975,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CaseOut"];
+          "application/json": components["schemas"]["EvalCaseOut"];
         };
       };
       /** @description Validation Error */
@@ -8039,7 +8039,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["ComparisonOut"];
+          "application/json": components["schemas"]["EvalComparisonOut"];
         };
       };
       /** @description Validation Error */
@@ -8070,7 +8070,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["RunOut"][];
+          "application/json": components["schemas"]["EvalRunOut"][];
         };
       };
       /** @description Validation Error */
@@ -8095,7 +8095,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["RunIn"];
+        "application/json": components["schemas"]["EvalRunIn"];
       };
     };
     responses: {
@@ -8105,7 +8105,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["RunOut"];
+          "application/json": components["schemas"]["EvalRunOut"];
         };
       };
       /** @description Validation Error */
@@ -8137,7 +8137,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["app__ai__evaluation__schemas__RunDetailOut"];
+          "application/json": components["schemas"]["EvalRunDetailOut"];
         };
       };
       /** @description Validation Error */
@@ -8889,7 +8889,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["app__workflows__schemas__RunDetailOut"];
+          "application/json": components["schemas"]["RunDetailOut"];
         };
       };
       /** @description Validation Error */
@@ -10173,7 +10173,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CoverageOut"];
+          "application/json": components["schemas"]["XCoverageOut"];
         };
       };
       /** @description Validation Error */
@@ -10204,7 +10204,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CheckOut"][];
+          "application/json": components["schemas"]["XCoverageCheckOut"][];
         };
       };
       /** @description Validation Error */
@@ -10230,7 +10230,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CheckIn"];
+        "application/json": components["schemas"]["XCoverageCheckIn"];
       };
     };
     responses: {
@@ -10240,7 +10240,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["CheckOut"];
+          "application/json": components["schemas"]["XCoverageCheckOut"];
         };
       };
       /** @description Validation Error */

@@ -35,6 +35,10 @@ function Shell() {
           {can("vuln.read") ? link("/vulnerabilities", t("nav.vulnerabilities")) : null}
           {can("vuln.read") ? link("/cves", t("nav.cves")) : null}
           {canInWorkspace("workflow.read") ? link("/workflows", t("nav.workflows")) : null}
+          {canInWorkspace("workflow.read") ? link("/agents", t("nav.agents")) : null}
+          {canInWorkspace("ai.engine.manage") ? link("/ai-engine", t("nav.aiEngine")) : null}
+          {canInWorkspace("workflow.read") ? link("/ai-evaluation", t("nav.evaluation")) : null}
+          {canInWorkspace("workflow.read") ? link("/x-coverage", t("nav.xCoverage")) : null}
           {canInWorkspace("watch_scope.manage") ? link("/watch-scope", t("nav.scope")) : null}
           {canInWorkspace("source.manage") ? link("/sources", t("nav.sources")) : null}
           {can("vuln.read") ? link("/technologies", t("nav.technologies")) : null}

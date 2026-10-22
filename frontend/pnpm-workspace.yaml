@@ -4,6 +4,10 @@ packages:
 
 # Only install releases published at least 14 days ago (supply-chain hygiene).
 minimumReleaseAge: 20160
+# Security fixes are exempt from the delay, package by package (PROCEDURES.md §8).
+# dompurify 3.4.17 fixes GHSA-c6gr-qvv4-5v3f and two other advisories.
+minimumReleaseAgeExclude:
+  - dompurify
 # Dependencies may not run install scripts unless explicitly allowed.
 onlyBuiltDependencies:
   - esbuild

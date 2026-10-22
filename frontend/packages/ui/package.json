@@ -16,6 +16,6 @@
     "react": "^19.3.0"
   },
   "dependencies": {
-    "dompurify": "^3.4.16"
+    "dompurify": "^3.4.17"
   }
 }

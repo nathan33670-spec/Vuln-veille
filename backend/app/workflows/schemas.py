@@ -11,6 +11,12 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ReferenceFieldOut(BaseModel):
+    kind: str
+    family: str | None
+    connector_kinds: list[str]
+
+
 class NodeTypeOut(BaseModel):
     type: str
     version: int
@@ -24,6 +30,7 @@ class NodeTypeOut(BaseModel):
     uses_egress: bool
     requires_approval_upstream: bool
     trigger_type: str | None
+    reference_fields: dict[str, ReferenceFieldOut]
 
 
 class WorkflowCreate(_In):

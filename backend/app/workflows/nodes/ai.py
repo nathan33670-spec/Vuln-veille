@@ -27,6 +27,7 @@ from app.workflows.base import (
     NodeType,
     Outputs,
     Reference,
+    ReferenceField,
     expect,
     register_node,
 )
@@ -120,6 +121,10 @@ class AgentNode(AINode):
     def references(self, params: NodeParams) -> list[Reference]:
         agent_id = expect(params, AgentParams).agent_id
         return [Reference("agent", agent_id)] if agent_id else []
+
+    @classmethod
+    def reference_fields(cls) -> dict[str, ReferenceField]:
+        return {"agent_id": ReferenceField("agent")}
 
     async def execute(self, ctx: NodeContext, params: NodeParams, inputs: Outputs) -> Outputs:
         params = expect(params, AgentParams)

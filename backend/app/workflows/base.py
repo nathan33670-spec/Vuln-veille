@@ -60,6 +60,15 @@ class Reference:
     kind_of_connector: str | None = None
 
 
+@dataclass(frozen=True)
+class ReferenceField:
+    """What a parameter points to: lets the editor offer the matching objects."""
+
+    kind: str  # "connector" or "agent"
+    family: str | None = None
+    connector_kinds: tuple[str, ...] = ()
+
+
 def item(json: Mapping[str, Any], *, source: str, trust: str = "trusted", **meta: Any) -> Item:
     return {"json": dict(json), "meta": {"source": source, "trust": trust, **meta}}
 
@@ -157,6 +166,11 @@ class NodeType(ABC):
 
     def references(self, params: NodeParams) -> list[Reference]:
         return []
+
+    @classmethod
+    def reference_fields(cls) -> dict[str, ReferenceField]:
+        """Parameters pointing to a workspace object, for the editor's selectors."""
+        return {}
 
     @abstractmethod
     async def execute(self, ctx: NodeContext, params: NodeParams, inputs: Outputs) -> Outputs:

@@ -60,6 +60,7 @@ from app.workflows.schemas import (
     NodeRunDetailOut,
     NodeRunOut,
     NodeTypeOut,
+    ReferenceFieldOut,
     RunCreate,
     RunDetailOut,
     RunStarted,
@@ -325,6 +326,12 @@ def node_type_list() -> list[NodeTypeOut]:
             uses_egress=t.uses_egress,
             requires_approval_upstream=t.requires_approval_upstream,
             trigger_type=t.trigger_type,
+            reference_fields={
+                name: ReferenceFieldOut(
+                    kind=ref.kind, family=ref.family, connector_kinds=list(ref.connector_kinds)
+                )
+                for name, ref in t.reference_fields().items()
+            },
         )
         for t in sorted(node_types().values(), key=lambda t: (t.category, t.type))
         if not t.type.startswith("test.")

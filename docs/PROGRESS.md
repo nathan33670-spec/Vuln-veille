@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 4 (moteurs IA, connecteurs et agents de veille) **terminée** : critère de sortie du jalon 1 atteint et testé en CI. Prochaine phase : 5 (éditeur visuel de workflows).
-- **Dernière étape terminée** : 4.15 interfaces de la phase 4 et critère de sortie du jalon 1 (merge request 4G). Les merge requests 4A à 4F sont fusionnées.
-- **Étape en cours** : merge request 4G en revue (branche `claude/phase-4-interfaces`).
-- **Prochaine étape** : phase 5, étape 5.1 (canvas React Flow), sur une nouvelle branche `claude/phase-5-…` depuis `Main`.
+- **Phase** : 5 (éditeur visuel de workflows) **en cours**. La phase 4 est terminée et le jalon 1 atteint (merge requests 4A à 4G fusionnées).
+- **Dernière étape terminée** : partie serveur de l'éditeur (merge request 5A) : brouillons côté serveur, test d'un nœud seul sur des données épinglées, flux d'événements d'une exécution. Les cases 5.4 et 5.6 seront cochées avec leur interface.
+- **Étape en cours** : merge request 5A en revue (branche `claude/phase-5-editor-backend`).
+- **Prochaine étape** : merge request 5B : canvas React Flow (5.1) et panneau de paramètres généré depuis le JSON Schema (5.2), puis 5C : expressions (5.3), test de nœud et vue d'exécution (5.4, 5.5), versions (5.6) et verrou optimiste (5.7).
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -50,9 +50,17 @@
   - Indicateur de couverture de X (`app/ai/coverage.py`) : un post compte s'il est cité dans la sortie validée de l'agent « Réseaux sociaux » **et** lu par l'oEmbed pendant la même exécution ; comparaison avec les vérifications manuelles (`/x-coverage/checks`, permission `vuln.qualify`).
   - Interfaces de la phase 4 (`apps/backoffice/src/pages/ai/`) : moteurs IA (catalogue, moteur préféré bloqué tant que le rapport de compatibilité signale un agent incompatible, évaluation citée en option, budget et coûts du mois par agent), agents (liste, configuration en JSON validée par le serveur, versions et réactivation, bac à sable), traces d'exécution (signaux d'injection, sortie et étapes en texte inerte, liens http(s) seulement), banc d'évaluation (cas, exécutions, comparaison), couverture de X. Écarts assumés : l'édition d'un agent se fait en JSON (formulaire guidé avec l'éditeur visuel, phase 5) ; le tableau de bord des coûts agrège les 200 dernières exécutions du mois côté navigateur (agrégation serveur par agent et par jour à prévoir si le volume l'exige) ; la notation par grille du banc n'est pas encore proposée.
   - `ai.*` : paramètre `run_if` (condition par élément ; sinon l'élément passe avec le statut `skipped`, sans appel au moteur). La re-veille l'utilise pour ne relancer l'agent réseaux sociaux, donc la recherche X, que pour les CVE KEV, P1 ou P2.
+  - Éditeur, côté serveur (phase 5) : `GET/PUT/DELETE …/workflows/{id}/draft` (brouillon unique par workflow, enregistré tel quel avec ses erreurs de validation, `stale` si une version a été publiée depuis son point de départ) ; `POST …/workflows/{id}/test-node` (graphe complet validé comme une publication, nœud exécuté seul sur le worker de sa file avec les éléments épinglés, en dry-run, écritures en base annulées ; 60 tests par heure et par utilisateur) ; `GET …/runs/{id}/events` (SSE : un événement `node` par changement d'état, puis `run`, dix minutes au plus, sans transaction ouverte). Les exécutions de test (`workflow_runs.mode = 'test'`, sans version) n'apparaissent ni dans l'historique ni dans « dernière exécution ». Les agents appelés pendant un test sont réellement exécutés (et comptés dans le budget) : seules les écritures du nœud sont annulées.
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 12 (suite) : phase 5, partie serveur de l'éditeur (merge request 5A)
+
+- Migration 0014 : brouillons de workflow (un par workflow, RLS par espace) et exécutions de test (graphe édité, nœud testé, entrées épinglées, sans version).
+- Orchestrateur : en mode test, seul le nœud testé est mis en file ; il tourne en dry-run sur le worker de sa file et ses écritures en base sont annulées après coup.
+- API : brouillon (lecture, enregistrement avec erreurs, détection d'une publication concurrente), test d'un nœud, flux SSE des événements d'exécution.
+- Tests : 351 tests backend (dont brouillon périmé, test de trois nœuds sans trace en base ni e-mail, flux SSE).
 
 ### 2026-10-22 — Session 12 (suite) : interfaces de la phase 4 et jalon 1 (merge request 4G)
 

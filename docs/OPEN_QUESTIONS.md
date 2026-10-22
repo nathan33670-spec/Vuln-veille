@@ -42,6 +42,7 @@ Les questions de cadrage ont été posées en interactif le 2026-10-20 (session 
 | Q30 | SearXNG ? | Sans objet. | — |
 | Q31 | Reddit ? | **Flux RSS publics.** | spec 07 §2 |
 | Q32 | Moteur de découverte des posts X ? | **(a) recherche web du moteur IA + (d) liens déjà collectés.** | spec 07 §2.1 |
+| Q36 | Couche 2 de X (recherche web du moteur IA) activée par défaut ? | **Oui** (2026-10-22) ; l'espace peut la désactiver sur son connecteur `x_reader`. | ADR-028 |
 
 ## Questions encore ouvertes
 

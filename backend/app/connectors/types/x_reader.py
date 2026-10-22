@@ -42,12 +42,13 @@ MAX_DISCOVERED = 50
 
 class XReaderConfig(ConnectorConfig):
     max_reads_per_cve: int = Field(default=5, ge=1, le=20, description="Lectures oEmbed par CVE")
-    # The engine's search runs on the provider's side, outside our egress proxy: an
-    # explicit choice of the workspace (spec 03 §5), off by default.
+    # The engine's search runs on the provider's side, outside our egress proxy. On by
+    # default (project owner's choice, ADR-028); a workspace can turn it off.
     engine_web_search: bool = Field(
-        default=False,
+        default=True,
         description="Couche 2 : recherche web du moteur IA restreinte à x.com (Q32) ; "
-        "le trafic de recherche passe alors chez le fournisseur IA, hors de notre proxy",
+        "le trafic de recherche passe chez le fournisseur IA, hors de notre proxy "
+        "(décocher pour s'en tenir aux liens déjà collectés)",
     )
 
 

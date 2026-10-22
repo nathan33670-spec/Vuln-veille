@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { splitList } from "../../../lib";
+import { ExpressionField, type Item } from "./ExpressionField";
 import type { GraphNode, LocatedError, NodeSettings, NodeType } from "./model";
 import { dynamicText, type FieldSpec, fieldsOf } from "./schema";
 
@@ -16,12 +17,19 @@ export interface Choices {
   agents: Agent[] | null;
 }
 
+/** Where expressions are previewed: the workspace, and the node's sample item if any. */
+export interface PreviewContext {
+  workspace: string;
+  sample: Item | undefined;
+}
+
 /** Parameters of the selected node, generated from its type's JSON Schema. */
 export function ParamsPanel({
   node,
   type,
   errors,
   choices,
+  preview,
   readOnly,
   onChange,
   onDelete,
@@ -30,6 +38,7 @@ export function ParamsPanel({
   type: NodeType | undefined;
   errors: LocatedError[];
   choices: Choices;
+  preview: PreviewContext;
   readOnly: boolean;
   /** `field` groups successive edits of one field into a single undo step. */
   onChange: (node: GraphNode, field: string) => void;
@@ -81,6 +90,7 @@ export function ParamsPanel({
           value={node.params[field.name]}
           error={fieldError(field.name)}
           choices={choices}
+          preview={preview}
           onChange={(value) => setParam(field.name, value)}
         />
       ))}
@@ -172,12 +182,14 @@ function Field({
   value,
   error,
   choices,
+  preview,
   onChange,
 }: {
   field: FieldSpec;
   value: unknown;
   error: string | undefined;
   choices: Choices;
+  preview: PreviewContext;
   onChange: (value: unknown) => void;
 }) {
   const { t } = useTranslation();
@@ -187,38 +199,25 @@ function Field({
     field.default === undefined || field.default === null
       ? undefined
       : t("workflows.editor.default", { value: JSON.stringify(field.default) });
-  const optional = !field.required;
 
   switch (field.kind) {
     case "expr":
+    case "tpl": {
+      const key = field.kind === "expr" ? "$expr" : "$tpl";
       return (
-        <TextField
-          label={`${label} (JMESPath)`}
-          className="vv-code"
-          value={dynamicText(value, "$expr")}
-          maxLength={2000}
-          spellCheck={false}
+        <ExpressionField
+          kind={field.kind}
+          label={label}
+          value={dynamicText(value, key)}
+          workspace={preview.workspace}
+          sample={preview.sample}
           required={field.required}
           hint={hint}
           error={error}
-          onChange={(e) =>
-            onChange(e.target.value ? { $expr: e.target.value } : optional ? undefined : value)
-          }
+          onChange={(text) => onChange(text ? { [key]: text } : undefined)}
         />
       );
-    case "tpl":
-      return (
-        <TextArea
-          label={`${label} (Liquid)`}
-          className="vv-textarea vv-code"
-          value={dynamicText(value, "$tpl")}
-          rows={3}
-          maxLength={20000}
-          spellCheck={false}
-          hint={error ?? hint}
-          onChange={(e) => onChange(e.target.value ? { $tpl: e.target.value } : undefined)}
-        />
-      );
+    }
     case "const":
       return (
         <p>

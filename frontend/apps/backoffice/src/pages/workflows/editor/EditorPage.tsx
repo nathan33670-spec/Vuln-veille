@@ -2,7 +2,7 @@ import "@xyflow/react/dist/style.css";
 
 import { ApiError, type FieldError, type Schemas, unwrap } from "@vv/api-client";
 import { errorMessage } from "@vv/auth";
-import { Alert, Button, Dialog, PageHeader, TextField } from "@vv/ui";
+import { Alert, Button, Dialog, PageHeader, Tabs, TextField } from "@vv/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   applyEdgeChanges,
@@ -40,16 +40,17 @@ import {
   connectionError,
   type Graph,
   type GraphNode,
-  layout,
   locateErrors,
   newEdgeId,
   newNodeId,
   type NodeType,
   parseGraph,
 } from "./model";
+import { type Snapshot, toFlow, toGraph } from "./flow";
 import { type EditorNode, NodeCard } from "./NodeCard";
 import { DRAG_TYPE, Palette } from "./Palette";
 import { type Choices, ParamsPanel } from "./ParamsPanel";
+import { type Pins, TestPanel } from "./TestPanel";
 
 type Draft = Schemas["DraftOut"];
 type Detail = Schemas["WorkflowDetailOut"];
@@ -134,11 +135,6 @@ export function EditorPage() {
   );
 }
 
-interface Snapshot {
-  nodes: EditorNode[];
-  edges: Edge[];
-}
-
 interface History {
   past: Snapshot[];
   future: Snapshot[];
@@ -150,40 +146,6 @@ type SaveState =
   | { kind: "pending" }
   | { kind: "saved"; at: string }
   | { kind: "error"; message: string };
-
-function toFlow(graph: Graph, types: ReadonlyMap<string, NodeType>): Snapshot {
-  const placed = layout(graph);
-  return {
-    nodes: placed.nodes.map((node) => ({
-      id: node.id,
-      type: "vv",
-      position: node.position ?? { x: 0, y: 0 },
-      data: { node, type: types.get(node.type), errorCount: 0 },
-    })),
-    edges: placed.edges.map((e) => ({
-      id: e.id,
-      source: e.from.node,
-      sourceHandle: e.from.port,
-      target: e.to.node,
-      targetHandle: e.to.port,
-    })),
-  };
-}
-
-function toGraph(nodes: EditorNode[], edges: Edge[]): Graph {
-  return {
-    schema_version: 1,
-    nodes: nodes.map((n) => ({
-      ...n.data.node,
-      position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
-    })),
-    edges: edges.map((e) => ({
-      id: e.id,
-      from: { node: e.source, port: e.sourceHandle ?? "out" },
-      to: { node: e.target, port: e.targetHandle ?? "in" },
-    })),
-  };
-}
 
 function Editor({
   workspace,
@@ -237,15 +199,24 @@ function Editor({
   const saved = useRef(graphJson);
 
   const located = useMemo(() => locateErrors(errors.list, errors.graph), [errors]);
+  const [side, setSide] = useState<"params" | "test">("params");
+  // Per node: pinned test inputs, and the state of its last test.
+  const [pins, setPins] = useState<Record<string, Pins>>({});
+  const [statuses, setStatuses] = useState<Record<string, string | undefined>>({});
   const shownNodes = useMemo(
     () =>
       nodes.map((n) => {
         const count = located.byNode.get(n.id)?.length ?? 0;
-        return count === n.data.errorCount ? n : { ...n, data: { ...n.data, errorCount: count } };
+        const status = statuses[n.id];
+        return count === n.data.errorCount && status === n.data.status
+          ? n
+          : { ...n, data: { ...n.data, errorCount: count, status } };
       }),
-    [nodes, located],
+    [nodes, located, statuses],
   );
   const selected = nodes.find((n) => n.selected);
+  const selectedPins = selected ? (pins[selected.id] ?? {}) : {};
+  const sample = Object.values(selectedPins).find((items) => items.length)?.[0];
 
   // Framed once the nodes are measured (fitView alone runs before the canvas has its size).
   const measured = useNodesInitialized();
@@ -546,16 +517,47 @@ function Editor({
         </div>
         <aside className="vv-editor-side">
           {selected ? (
-            <ParamsPanel
-              key={`${selected.id}:${revision}`}
-              node={selected.data.node}
-              type={selected.data.type}
-              errors={located.byNode.get(selected.id) ?? []}
-              choices={choices}
-              readOnly={readOnly}
-              onChange={updateNode}
-              onDelete={() => deleteNode(selected.id)}
-            />
+            <>
+              {readOnly ? null : (
+                <Tabs<"params" | "test">
+                  label={t("workflows.editor.sideTabs")}
+                  value={side}
+                  onChange={setSide}
+                  options={[
+                    { value: "params", label: t("workflows.editor.params") },
+                    { value: "test", label: t("workflows.editor.test.title") },
+                  ]}
+                />
+              )}
+              {side === "test" && !readOnly ? (
+                <TestPanel
+                  key={selected.id}
+                  workspace={workspace}
+                  workflowId={detail.id}
+                  node={selected.data.node}
+                  type={selected.data.type}
+                  graph={graph}
+                  pins={selectedPins}
+                  onPins={(next) => setPins((all) => ({ ...all, [selected.id]: next }))}
+                  onStatus={(nodeId, status) =>
+                    setStatuses((all) => ({ ...all, [nodeId]: status }))
+                  }
+                  onErrors={(list) => setErrors({ list, graph })}
+                />
+              ) : (
+                <ParamsPanel
+                  key={`${selected.id}:${revision}`}
+                  node={selected.data.node}
+                  type={selected.data.type}
+                  errors={located.byNode.get(selected.id) ?? []}
+                  choices={choices}
+                  preview={{ workspace, sample }}
+                  readOnly={readOnly}
+                  onChange={updateNode}
+                  onDelete={() => deleteNode(selected.id)}
+                />
+              )}
+            </>
           ) : (
             <p className="vv-muted">{t("workflows.editor.selectHint")}</p>
           )}

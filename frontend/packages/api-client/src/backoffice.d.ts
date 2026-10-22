@@ -1377,6 +1377,152 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/bulletin-settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Settings */
+    get: operations["get_settings_api_v1_workspaces__workspace__bulletin_settings_get"];
+    /** Put Settings */
+    put: operations["put_settings_api_v1_workspaces__workspace__bulletin_settings_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Templates */
+    get: operations["list_templates_api_v1_workspaces__workspace__bulletin_templates_get"];
+    put?: never;
+    /** Create Template */
+    post: operations["create_template_api_v1_workspaces__workspace__bulletin_templates_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/match": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Match Template
+     * @description The template the system would apply to this vulnerability, and why.
+     */
+    get: operations["match_template_api_v1_workspaces__workspace__bulletin_templates_match_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Preview Template
+     * @description A template rendered on the server, like a real bulletin: computed fields from a
+     *     real vulnerability, AI and manual fields as placeholders (no AI call).
+     */
+    post: operations["preview_template_api_v1_workspaces__workspace__bulletin_templates_preview_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/{template_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Template */
+    get: operations["get_template_api_v1_workspaces__workspace__bulletin_templates__template_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Template */
+    patch: operations["update_template_api_v1_workspaces__workspace__bulletin_templates__template_id__patch"];
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/{template_id}/versions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Version */
+    post: operations["create_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/{template_id}/versions/{version_no}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Version */
+    get: operations["get_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions__version_no__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/bulletin-templates/{template_id}/versions/{version_no}/activate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Activate Version */
+    post: operations["activate_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions__version_no__activate_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/connectors/ai_engine": {
     parameters: {
       query?: never;
@@ -3726,6 +3872,27 @@ export interface components {
        */
       type: "mastodon_account";
     };
+    /** MatchOut */
+    MatchOut: {
+      /** Language */
+      language: string;
+      /** Reasons */
+      reasons: string[];
+      /**
+       * Rule Index
+       * @description Règle satisfaite ; null : modèle par défaut
+       */
+      rule_index: number | null;
+      /**
+       * Template Id
+       * Format: uuid
+       */
+      template_id: string;
+      /** Template Name */
+      template_name: string;
+      /** Version No */
+      version_no: number;
+    };
     /** MeOut */
     MeOut: {
       client_org: components["schemas"]["app__iam__schemas__ClientOrgOut"] | null;
@@ -3916,35 +4083,6 @@ export interface components {
       current_password: string;
       /** New Password */
       new_password: string;
-    };
-    /**
-     * PreviewIn
-     * @description An expression or a template evaluated on a sample item, as a node would.
-     */
-    PreviewIn: {
-      /** Expr */
-      expr?: string | null;
-      /**
-       * Item
-       * @description Élément d'exemple : {json, meta}
-       */
-      item?: {
-        [key: string]: unknown;
-      };
-      /** Tpl */
-      tpl?: string | null;
-    };
-    /** PreviewOut */
-    PreviewOut: {
-      /** Error */
-      error?: string | null;
-      /**
-       * Truncated
-       * @default false
-       */
-      truncated: boolean;
-      /** Value */
-      value?: unknown;
     };
     /** Quotas */
     Quotas: {
@@ -4236,6 +4374,33 @@ export interface components {
       /** User Agent */
       user_agent: string | null;
     };
+    /** SettingsIn */
+    SettingsIn: {
+      /** Default Template Id */
+      default_template_id: string | null;
+      /** Ref Prefix */
+      ref_prefix: string;
+      /** Review Required */
+      review_required: boolean;
+      /** Version */
+      version: number;
+    };
+    /** SettingsOut */
+    SettingsOut: {
+      /** Default Template Id */
+      default_template_id: string | null;
+      /** Ref Prefix */
+      ref_prefix: string;
+      /** Review Required */
+      review_required: boolean;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+    };
     /** SpendOut */
     SpendOut: {
       /** Calls */
@@ -4383,6 +4548,190 @@ export interface components {
       status?: string | null;
       /** Version */
       version: number;
+    };
+    /** TemplateCreate */
+    TemplateCreate: {
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
+      /**
+       * Description
+       * @default
+       */
+      description: string;
+      /** Name */
+      name: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+    };
+    /** TemplateDetailOut */
+    TemplateDetailOut: {
+      /** Active Spec */
+      active_spec: {
+        [key: string]: unknown;
+      } | null;
+      /** Active Version No */
+      active_version_no: number | null;
+      /** Description */
+      description: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Is Default */
+      is_default: boolean;
+      /** Language */
+      language: string | null;
+      /** Latest Spec */
+      latest_spec: {
+        [key: string]: unknown;
+      } | null;
+      /** Latest Version No */
+      latest_version_no: number | null;
+      /** Name */
+      name: string;
+      /** Priority */
+      priority: number | null;
+      /** Rule Count */
+      rule_count: number;
+      /** Seed Key */
+      seed_key: string | null;
+      /** Status */
+      status: string;
+      /** Tlp */
+      tlp: string | null;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+      /** Versions */
+      versions: components["schemas"]["TemplateVersionOut"][];
+    };
+    /** TemplateOut */
+    TemplateOut: {
+      /** Active Version No */
+      active_version_no: number | null;
+      /** Description */
+      description: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Is Default */
+      is_default: boolean;
+      /** Language */
+      language: string | null;
+      /** Latest Version No */
+      latest_version_no: number | null;
+      /** Name */
+      name: string;
+      /** Priority */
+      priority: number | null;
+      /** Rule Count */
+      rule_count: number;
+      /** Seed Key */
+      seed_key: string | null;
+      /** Status */
+      status: string;
+      /** Tlp */
+      tlp: string | null;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Version */
+      version: number;
+    };
+    /** TemplateUpdate */
+    TemplateUpdate: {
+      /** Description */
+      description?: string | null;
+      /** Name */
+      name?: string | null;
+      /** Status */
+      status?: string | null;
+      /**
+       * Version
+       * @description Version lue ; 409 si le modèle a changé depuis
+       */
+      version: number;
+    };
+    /** TemplateVersionCreate */
+    TemplateVersionCreate: {
+      /**
+       * Base Version No
+       * @description Version éditée ; 409 si une autre a été créée depuis
+       */
+      base_version_no?: number | null;
+      /**
+       * Comment
+       * @default
+       */
+      comment: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+    };
+    /** TemplateVersionDetailOut */
+    TemplateVersionDetailOut: {
+      /** Comment */
+      comment: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /** Priority */
+      priority: number;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /** Version No */
+      version_no: number;
+    };
+    /** TemplateVersionOut */
+    TemplateVersionOut: {
+      /** Comment */
+      comment: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Created By */
+      created_by: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /** Priority */
+      priority: number;
+      /** Version No */
+      version_no: number;
     };
     /** TestNodeIn */
     TestNodeIn: {
@@ -5199,6 +5548,43 @@ export interface components {
       /** With X Discussion */
       with_x_discussion: number;
     };
+    /** PreviewIn */
+    app__bulletins__schemas__PreviewIn: {
+      /**
+       * Fields
+       * @description Valeurs de champs à rendre, à la place des exemples
+       */
+      fields?: {
+        [key: string]: unknown;
+      } | null;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /**
+       * Vulnerability Id
+       * @description Vulnérabilité réelle pour les champs calculés
+       */
+      vulnerability_id?: string | null;
+    };
+    /** PreviewOut */
+    app__bulletins__schemas__PreviewOut: {
+      /** Fields */
+      fields: {
+        [key: string]: unknown;
+      };
+      /** Html */
+      html: string;
+      /** Markdown */
+      markdown: string;
+      /**
+       * Matches
+       * @description Les règles du modèle retiennent cette vulnérabilité
+       */
+      matches: boolean | null;
+      /** Reasons */
+      reasons: string[];
+    };
     /** ClientOrgOut */
     app__iam__admin_schemas__ClientOrgOut: {
       /**
@@ -5231,6 +5617,35 @@ export interface components {
       name: string;
       /** Role */
       role: string;
+    };
+    /**
+     * PreviewIn
+     * @description An expression or a template evaluated on a sample item, as a node would.
+     */
+    app__workflows__schemas__PreviewIn: {
+      /** Expr */
+      expr?: string | null;
+      /**
+       * Item
+       * @description Élément d'exemple : {json, meta}
+       */
+      item?: {
+        [key: string]: unknown;
+      };
+      /** Tpl */
+      tpl?: string | null;
+    };
+    /** PreviewOut */
+    app__workflows__schemas__PreviewOut: {
+      /** Error */
+      error?: string | null;
+      /**
+       * Truncated
+       * @default false
+       */
+      truncated: boolean;
+      /** Value */
+      value?: unknown;
     };
   };
   responses: never;
@@ -8509,6 +8924,377 @@ export interface operations {
       };
     };
   };
+  get_settings_api_v1_workspaces__workspace__bulletin_settings_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_settings_api_v1_workspaces__workspace__bulletin_settings_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SettingsIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingsOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_templates_api_v1_workspaces__workspace__bulletin_templates_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_template_api_v1_workspaces__workspace__bulletin_templates_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TemplateCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  match_template_api_v1_workspaces__workspace__bulletin_templates_match_get: {
+    parameters: {
+      query: {
+        vulnerability_id: string;
+        language?: string | null;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MatchOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  preview_template_api_v1_workspaces__workspace__bulletin_templates_preview_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["app__bulletins__schemas__PreviewIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["app__bulletins__schemas__PreviewOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_template_api_v1_workspaces__workspace__bulletin_templates__template_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        template_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_template_api_v1_workspaces__workspace__bulletin_templates__template_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        template_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TemplateUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        template_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TemplateVersionCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateVersionDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions__version_no__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        template_id: string;
+        version_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateVersionDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  activate_version_api_v1_workspaces__workspace__bulletin_templates__template_id__versions__version_no__activate_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        template_id: string;
+        version_no: number;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TemplateDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   list_workspace_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine_get: {
     parameters: {
       query?: never;
@@ -10245,7 +11031,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["PreviewIn"];
+        "application/json": components["schemas"]["app__workflows__schemas__PreviewIn"];
       };
     };
     responses: {
@@ -10255,7 +11041,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["PreviewOut"];
+          "application/json": components["schemas"]["app__workflows__schemas__PreviewOut"];
         };
       };
       /** @description Validation Error */

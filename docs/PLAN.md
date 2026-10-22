@@ -188,9 +188,9 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 - [x] 5.1 Canvas React Flow : palette de nœuds issue du registre, glisser-déposer, connexions validées par type de port
 - [x] 5.2 Panneau de paramètres généré depuis le JSON Schema, avec sélecteurs de secrets, connecteurs, agents et modèles
-- [ ] 5.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
-- [ ] 5.4 Exécution d'un nœud en test avec données épinglées (par exemple, une CVE NVD réelle), mode dry-run pour les nœuds de sortie
-- [ ] 5.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
+- [x] 5.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
+- [x] 5.4 Exécution d'un nœud en test avec données épinglées (par exemple, une CVE NVD réelle), mode dry-run pour les nœuds de sortie
+- [x] 5.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
 - [ ] 5.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
 - [x] 5.7 Verrou d'édition optimiste (détection d'édition concurrente)
 

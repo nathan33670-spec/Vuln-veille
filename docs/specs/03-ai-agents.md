@@ -134,6 +134,8 @@ Mise en œuvre : `llm_budgets` (plafond mensuel en USD et arrêt dur, réglés p
 
 ## 9. Interfaces
 
+Mise en œuvre (phase 4) : écrans « Agents IA » (liste, détail avec la version active, nouvelle version en JSON validée par le serveur, réactivation d'une version, bac à sable) et « Exécution d'agent » (moteur et modèle servis, tokens, coût, signaux d'injection, sortie, sources et étapes affichées en texte inerte). La comparaison de deux moteurs sur la même entrée passe par le banc d'évaluation.
+
 - Liste et édition des agents (formulaire, éditeur de prompt, moteur hérité ou épinglé, sélection des connecteurs et outils, schéma de sortie, limites).
 - Bac à sable de test : lancer l'agent sur une CVE ou un texte, voir les étapes (appels d'outils, résultats, sortie), le coût et les éventuels signaux d'injection ; comparer deux moteurs sur la même entrée.
 - Traces : consultation des `agent_runs` et `agent_steps` liés à une vulnérabilité, un draft ou une exécution de workflow.

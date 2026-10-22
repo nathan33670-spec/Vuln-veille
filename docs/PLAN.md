@@ -177,12 +177,12 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 4.12 Agents de veille prédéfinis, créés en seed dans chaque espace : triage, chasseur de PoC GitHub, réseaux sociaux, forums techniques, avis éditeurs, synthèse
 - [x] 4.13 Nœuds `ai.agent`, `ai.summarize`, `ai.classify`, `ai.extract`, `ai.relevance` ; sources `source.github_search`, `source.x`, `source.stackexchange`, `source.social`
 - [x] 4.14 Workflow seed complet **« Nouvelle CVE NVD → investigation »** (agents de veille en parallèle, puis synthèse) et workflow de **re-veille** des vulnérabilités ouvertes (nouveaux PoC, exploitation, ajout au KEV)
-- [ ] 4.15 Interfaces : moteurs IA (moteur préféré, test de capacités), connecteurs de veille, agents (édition, bac à sable de test, historique des versions), traces d'exécution d'agent, tableau de bord des coûts
+- [x] 4.15 Interfaces : moteurs IA (moteur préféré, test de capacités), connecteurs de veille, agents (édition, bac à sable de test, historique des versions), traces d'exécution d'agent, tableau de bord des coûts
 - [x] 4.16 **Banc d'évaluation des moteurs** : jeu de CVE de référence validé par les analystes, critères (validité du schéma, citations, exactitude, coût, latence), rapport comparatif ; prérequis à tout changement de moteur préféré
 - [x] 4.17 Corpus de tests d'injection de prompt (contenus collectés piégés) intégré à la CI
 - [x] 4.18 Indicateur de couverture de X : part des CVE pour lesquelles une discussion X pertinente est trouvée par la lecture gratuite, comparée à un échantillon vérifié à la main ; décision sur l'activation de SearXNG (Q30)
 
-**Critère de sortie (Jalon 1)** : une nouvelle CVE NVD dans le périmètre produit, sans intervention, une vulnérabilité non qualifiée accompagnée d'une synthèse structurée et sourcée par les agents de veille ; un contenu piégé ne déclenche aucune action non prévue ; basculer le moteur préféré vers un point d'accès compatible OpenAI (simulé en CI) ne demande aucune modification de code.
+**Critère de sortie (Jalon 1)** : une nouvelle CVE NVD dans le périmètre produit, sans intervention, une vulnérabilité non qualifiée accompagnée d'une synthèse structurée et sourcée par les agents de veille ; un contenu piégé ne déclenche aucune action non prévue ; basculer le moteur préféré vers un point d'accès compatible OpenAI (simulé en CI) ne demande aucune modification de code. **Atteint** (2026-10-22) : `tests/integration/test_jalon1.py` (adaptateurs réels Gemini puis compatible OpenAI, bascule par l'API) et `tests/integration/test_injection_corpus.py`.
 
 ### Phase 5 — Éditeur visuel de workflows
 

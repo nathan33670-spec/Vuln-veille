@@ -235,3 +235,14 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - Les jetons de source sont des jetons gratuits en lecture seule (ADR-023) ; leur exposition au processus qui manipule du contenu non fiable est acceptée, puisqu'aucun outil n'exécute de code ni n'écrit.
 - **Conséquences** : la compromission de `worker-ai` expose les secrets `llm` et `source`, pas ceux de publication. Le tableau de SECURITY.md et le fichier `deploy/docker-compose.yml` sont alignés.
 
+## ADR-028 — Recherche web du moteur IA pour découvrir les posts X (couche 2)
+
+- **Statut** : Acceptée (2026-10-22, phase 4)
+- **Contexte** : Q32 retient, pour découvrir des posts X sans abonnement, les liens déjà collectés (couche 1) et la recherche web du moteur IA restreinte à x.com (couche 2). Cette recherche est un outil côté fournisseur : la requête part de chez Anthropic ou Google, pas de notre proxy de sortie (spec 03 §5).
+- **Décision** :
+  - `AIRequest.web_search` (domaines autorisés, nombre d'usages) est un paramètre abstrait ; Claude utilise l'outil serveur `web_search` avec `allowed_domains`, Gemini l'ancrage Google Search (sans filtre de domaine côté fournisseur) ; le compatible OpenAI refuse (`web_search_unsupported`) et la découverte garde sa couche 1.
+  - La couche 2 est **désactivée par défaut** : l'espace l'active sur son connecteur `x_reader` (`engine_web_search`), choix explicite d'un trafic hors de notre proxy. La recherche ne porte que sur l'identifiant CVE (ou une requête courte nettoyée), restreinte à x.com et twitter.com, et consomme les quotas du connecteur.
+  - Seules des URL de posts X sont retenues, comme candidates : chacune est lue ensuite par l'oEmbed officiel, et une URL inventée revient « retirée ». Le texte renvoyé par le moteur n'est jamais transmis tel quel.
+  - Chaque recherche est un appel au moteur comme un autre : contrôle du budget, trace (`purpose: web_search`), coût estimé avec le prix par millier de recherches du modèle (`price_web_search_per_k`, 10 USD chez Claude ; gratuit dans le quota de Gemini).
+- **Conséquences** : la couverture de X dépend du moteur préféré ; l'indicateur de couverture (`/workspaces/{espace}/x-coverage`) permet de le mesurer, en le comparant à un échantillon vérifié à la main. SearXNG reste écarté (Q30).
+

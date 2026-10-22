@@ -1,0 +1,444 @@
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { createMemoryRouter } from "react-router";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+import "./i18n";
+import { App } from "./App";
+import {
+  connectionError,
+  type Graph,
+  layout,
+  locateErrors,
+  newNodeId,
+  type NodeType,
+  parseGraph,
+} from "./pages/workflows/editor/model";
+import { fieldsOf } from "./pages/workflows/editor/schema";
+import { routes } from "./routes";
+
+// React Flow measures its nodes: jsdom has no layout engine.
+beforeAll(() => {
+  class ResizeObserverStub {
+    constructor(private readonly callback: ResizeObserverCallback) {}
+    observe(target: Element) {
+      const contentRect = { width: 800, height: 600 } as DOMRectReadOnly;
+      this.callback(
+        [{ target, contentRect } as ResizeObserverEntry],
+        this as unknown as ResizeObserver,
+      );
+    }
+    unobserve() {}
+    disconnect() {}
+  }
+  class DOMMatrixStub {
+    m22 = 1;
+  }
+  Object.assign(globalThis, {
+    ResizeObserver: ResizeObserverStub,
+    DOMMatrixReadOnly: DOMMatrixStub,
+  });
+  Object.defineProperties(HTMLElement.prototype, {
+    offsetHeight: { configurable: true, get: () => 60 },
+    offsetWidth: { configurable: true, get: () => 180 },
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const expr = {
+  additionalProperties: false,
+  properties: { $expr: { type: "string", maxLength: 2000 } },
+  required: ["$expr"],
+  type: "object",
+};
+const tpl = {
+  additionalProperties: false,
+  properties: { $tpl: { type: "string" } },
+  required: ["$tpl"],
+  type: "object",
+};
+
+function nodeType(type: string, overrides: Partial<NodeType> = {}): NodeType {
+  return {
+    type,
+    version: 1,
+    label: type,
+    category: type.split(".")[0] ?? "transform",
+    queue: "default",
+    inputs: type.startsWith("trigger.") ? [] : ["in"],
+    outputs: ["out"],
+    params_schema: { properties: {}, type: "object" },
+    required_permissions: [],
+    uses_egress: false,
+    requires_approval_upstream: false,
+    trigger_type: null,
+    reference_fields: {},
+    ...overrides,
+  };
+}
+
+const TYPES: NodeType[] = [
+  nodeType("trigger.manual", { label: "Lancement manuel", trigger_type: "manual" }),
+  nodeType("transform.limit", {
+    label: "Limiter",
+    params_schema: {
+      properties: { count: { type: "integer", minimum: 1, maximum: 5000, title: "Count" } },
+      required: ["count"],
+      type: "object",
+    },
+  }),
+  nodeType("transform.filter", {
+    label: "Filtrer",
+    params_schema: {
+      $defs: { Expr: expr },
+      properties: { condition: { $ref: "#/$defs/Expr" } },
+      required: ["condition"],
+      type: "object",
+    },
+  }),
+  nodeType("vuln.scope_match", { label: "Périmètre", outputs: ["in_scope", "out_of_scope"] }),
+  nodeType("source.x", {
+    label: "X",
+    category: "source",
+    params_schema: {
+      properties: {
+        connector_id: { format: "uuid", type: "string", title: "Connector Id" },
+        only_new: { default: false, type: "boolean", title: "Only New" },
+      },
+      required: ["connector_id"],
+      type: "object",
+    },
+    reference_fields: {
+      connector_id: { kind: "connector", family: "source", connector_kinds: ["x_reader"] },
+    },
+  }),
+  nodeType("publish.api", { label: "Publier", required_permissions: ["connector.publish.push"] }),
+];
+const typeMap = new Map(TYPES.map((t) => [t.type, t]));
+
+describe("graph model", () => {
+  const graph: Graph = {
+    schema_version: 1,
+    nodes: [
+      { id: "start", type: "trigger.manual", params: {} },
+      { id: "scope", type: "vuln.scope_match", params: {} },
+      { id: "limit", type: "transform.limit", params: { count: 5 } },
+    ],
+    edges: [
+      { id: "e1", from: { node: "start", port: "out" }, to: { node: "scope", port: "in" } },
+      { id: "e2", from: { node: "scope", port: "in_scope" }, to: { node: "limit", port: "in" } },
+    ],
+  };
+  const c = (source: string, sourceHandle: string, target: string, targetHandle: string) => ({
+    source,
+    sourceHandle,
+    target,
+    targetHandle,
+  });
+
+  it("validates connections by port, and refuses cycles", () => {
+    expect(connectionError(graph, typeMap, c("scope", "out_of_scope", "limit", "in"))).toBeNull();
+    expect(connectionError(graph, typeMap, c("scope", "in_scope", "limit", "in"))).toBe(
+      "duplicate",
+    );
+    expect(connectionError(graph, typeMap, c("scope", "out", "limit", "in"))).toBe("unknown_port");
+    expect(connectionError(graph, typeMap, c("limit", "out", "start", "in"))).toBe("unknown_port");
+    expect(connectionError(graph, typeMap, c("limit", "out", "scope", "in"))).toBe("cycle");
+    expect(connectionError(graph, typeMap, c("limit", "out", "limit", "in"))).toBe("self");
+  });
+
+  it("lays out delivered graphs by depth, and names nodes after their type", () => {
+    const placed = layout(graph);
+    expect(placed.nodes.map((n) => n.position?.x)).toEqual([0, 280, 560]);
+    expect(newNodeId("transform.limit", ["limit", "limit_2"])).toBe("limit_3");
+    expect(newNodeId("source.x", [])).toBe("x");
+  });
+
+  it("locates server errors on their node and field", () => {
+    const { byNode, global } = locateErrors(
+      [
+        { path: "nodes.2.params.count", code: "missing" },
+        { path: "edges.0", code: "unknown_port" },
+        { path: "", code: "no_trigger" },
+      ],
+      graph,
+    );
+    expect(byNode.get("limit")).toEqual([{ field: "count", code: "missing" }]);
+    expect(byNode.get("scope")).toEqual([{ field: null, code: "unknown_port" }]);
+    expect(global).toEqual([{ path: "", code: "no_trigger" }]);
+  });
+
+  it("reads untrusted graphs defensively", () => {
+    const parsed = parseGraph({ nodes: [{ id: 3, params: "x" }, null], edges: "no" });
+    expect(parsed.nodes[0]).toEqual({ id: "3", type: "", params: {} });
+    expect(parsed.edges).toEqual([]);
+  });
+
+  it("derives form fields from the JSON Schema", () => {
+    const fields = fieldsOf(
+      {
+        $defs: { Expr: expr, Tpl: tpl },
+        properties: {
+          run_if: { anyOf: [{ $ref: "#/$defs/Expr" }, { type: "null" }], default: null },
+          subject: { $ref: "#/$defs/Tpl" },
+          preset: { anyOf: [{ enum: ["triage", "poc_hunter"], type: "string" }, { type: "null" }] },
+          agent_id: { anyOf: [{ format: "uuid", type: "string" }, { type: "null" }] },
+          query: { type: "object", additionalProperties: { type: "string" } },
+          change_types: { type: "array", items: { enum: ["kev_added", "rejected"] } },
+        },
+        type: "object",
+      },
+      { agent_id: { kind: "agent", family: null, connector_kinds: [] } },
+    );
+    expect(fields.map((f) => [f.name, f.kind, f.nullable])).toEqual([
+      ["run_if", "expr", true],
+      ["subject", "tpl", false],
+      ["preset", "enum", true],
+      ["agent_id", "reference", true],
+      ["query", "json", false],
+      ["change_types", "multi", false],
+    ]);
+  });
+});
+
+const me = {
+  id: "u1",
+  email: "ana@example.com",
+  display_name: "Ana",
+  user_type: "internal",
+  locale: "fr",
+  mfa_enabled: true,
+  pending_mfa: false,
+  csrf_token: "csrf",
+  permissions: ["vuln.read"],
+  workspaces: [
+    {
+      slug: "voc",
+      name: "VOC",
+      role: "analyst",
+      permissions: ["workflow.read", "workflow.edit", "connector.source.manage"],
+    },
+  ],
+  client_org: null,
+};
+const hostile = "<img src=x onerror=alert(1)>";
+const latest = {
+  schema_version: 1,
+  nodes: [
+    { id: "start", type: "trigger.manual", name: hostile, params: {} },
+    { id: "limit", type: "transform.limit", params: { count: 5 } },
+  ],
+  edges: [{ id: "e1", from: { node: "start", port: "out" }, to: { node: "limit", port: "in" } }],
+};
+const workflow = {
+  id: "w1",
+  name: "Nouvelle CVE NVD",
+  description: "",
+  status: "active",
+  tags: [],
+  seed_key: null,
+  active_version_no: 1,
+  latest_version_no: 1,
+  version: 2,
+  updated_at: "2026-10-21T08:00:00Z",
+  last_run: null,
+  versions: [],
+  latest_graph: latest,
+  triggers: [],
+};
+const connector = (id: string, kind: string, name: string) => ({
+  id,
+  kind,
+  name,
+  family: "source",
+  enabled: true,
+  config: {},
+  secret_refs: {},
+  egress_domains: [],
+  allow_private_network: false,
+  quotas: {},
+  health: "ok",
+  consecutive_failures: 0,
+  last_check_at: null,
+  last_error: null,
+  last_success_at: null,
+  created_at: "2026-10-21T08:00:00Z",
+  updated_at: "2026-10-21T08:00:00Z",
+  version: 1,
+});
+
+type Call = { method: string; path: string; body: unknown };
+
+function stubApi(calls: Call[], options: { draft?: unknown; publish?: number } = {}) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: Request | string, init?: RequestInit) => {
+      const request = typeof input === "string" ? new Request(input, init) : input;
+      const path = new URL(request.url).pathname;
+      const text = request.method === "GET" ? "" : await request.clone().text();
+      const body = text ? JSON.parse(text) : null;
+      calls.push({ method: request.method, path, body });
+      const base = "/api/v1/workspaces/voc/workflows/w1";
+      if (path === "/api/v1/auth/me") return Response.json(me);
+      if (path === "/api/v1/node-types") return Response.json(TYPES);
+      if (path === base) return Response.json(workflow);
+      if (path === `${base}/draft` && request.method === "GET") {
+        return options.draft
+          ? Response.json(options.draft)
+          : Response.json({ detail: "not_found" }, { status: 404 });
+      }
+      if (path === `${base}/draft` && request.method === "PUT") {
+        const nodes = (body.graph.nodes ?? []) as { type: string; params: object }[];
+        const index = nodes.findIndex(
+          (n) => n.type === "transform.filter" && !("condition" in n.params),
+        );
+        return Response.json({
+          graph: body.graph,
+          base_version_no: body.base_version_no,
+          latest_version_no: 1,
+          stale: false,
+          updated_by: "u1",
+          updated_at: "2026-10-22T09:00:00Z",
+          errors: index >= 0 ? [{ path: `nodes.${index}.params.condition`, code: "missing" }] : [],
+        });
+      }
+      if (path === `${base}/draft` && request.method === "DELETE") {
+        return new Response(null, { status: 204 });
+      }
+      if (path === `${base}/versions` && request.method === "POST") {
+        if (options.publish === 409) {
+          return Response.json({ detail: "version_conflict" }, { status: 409 });
+        }
+        return Response.json(
+          {
+            id: "v2",
+            version_no: 2,
+            comment: body.comment,
+            graph_hash: "h",
+            created_by: "u1",
+            created_at: "2026-10-22T09:00:00Z",
+          },
+          { status: 201 },
+        );
+      }
+      if (path === "/api/v1/workspaces/voc/connectors/source") {
+        return Response.json([
+          connector("c1", "x_reader", "Lecteur X"),
+          connector("c2", "rss", "Flux RSS"),
+        ]);
+      }
+      return Response.json([]);
+    }),
+  );
+}
+
+function renderEditor() {
+  render(<App router={createMemoryRouter(routes, { initialEntries: ["/workflows/w1/edit"] })} />);
+}
+
+const lastDraft = (calls: Call[]) =>
+  calls.filter((c) => c.method === "PUT" && c.path.endsWith("/draft")).at(-1)?.body as
+    { graph: Graph; base_version_no: number } | undefined;
+
+describe("workflow editor", () => {
+  it("adds a node from the palette, saves the draft and shows its errors", async () => {
+    const calls: Call[] = [];
+    stubApi(calls);
+    renderEditor();
+    const start = await screen.findByTestId("node-start");
+    // Analyst-typed and collected texts stay inert.
+    expect(within(start).getByText(hostile)).toBeInTheDocument();
+    expect(document.querySelector("img")).toBeNull();
+    // A node needing a missing permission cannot be added.
+    expect(screen.getByRole("button", { name: "Publier" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Filtrer" }));
+    expect(await screen.findByTestId("node-filter")).toBeInTheDocument();
+    await waitFor(() => expect(lastDraft(calls)).toBeDefined(), { timeout: 4000 });
+    expect(lastDraft(calls)?.base_version_no).toBe(1);
+    expect(lastDraft(calls)?.graph.nodes.map((n) => n.id)).toEqual(["start", "limit", "filter"]);
+    // The server's validation lands on the node and on its field.
+    expect(await within(screen.getByTestId("node-filter")).findByText("1 erreur")).toBeVisible();
+    expect(screen.getByText("Champ obligatoire.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Condition (JMESPath)"), {
+      target: { value: "json.score >= `7`" },
+    });
+    await waitFor(
+      () =>
+        expect(lastDraft(calls)?.graph.nodes[2]?.params).toEqual({
+          condition: { $expr: "json.score >= `7`" },
+        }),
+      { timeout: 4000 },
+    );
+    await waitFor(() => expect(screen.queryByText("1 erreur")).toBeNull());
+
+    // One undo step per field: the node goes back to its empty condition, then disappears.
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+    expect(screen.getByLabelText("Condition (JMESPath)")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+    await waitFor(() => expect(screen.queryByTestId("node-filter")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Rétablir" }));
+    expect(await screen.findByTestId("node-filter")).toBeInTheDocument();
+  });
+
+  it("offers the workspace's connectors of the right kind", async () => {
+    stubApi([]);
+    renderEditor();
+    await screen.findByTestId("node-start");
+    fireEvent.click(screen.getByRole("button", { name: "X" }));
+    const select = await screen.findByLabelText("Connecteur");
+    const options = within(select)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
+    expect(options).toEqual(["—", "Lecteur X (x_reader)"]);
+  });
+
+  it("publishes a version from its base, then drops the draft", async () => {
+    const calls: Call[] = [];
+    stubApi(calls);
+    renderEditor();
+    await screen.findByTestId("node-start");
+    fireEvent.click(screen.getByRole("button", { name: "Publier une version" }));
+    fireEvent.change(await screen.findByLabelText("Commentaire"), {
+      target: { value: "Filtre ajouté" },
+    });
+    fireEvent.submit(screen.getByLabelText("Commentaire").closest("form") as HTMLFormElement);
+    expect(await screen.findByText(/Version 2 enregistrée/)).toBeInTheDocument();
+    const post = calls.find((c) => c.method === "POST" && c.path.endsWith("/versions"));
+    expect(post?.body).toMatchObject({ comment: "Filtre ajouté", base_version_no: 1 });
+    expect((post?.body as { graph: Graph }).graph.nodes[0]?.position).toEqual({ x: 0, y: 0 });
+    expect(calls.some((c) => c.method === "DELETE" && c.path.endsWith("/draft"))).toBe(true);
+  });
+
+  it("detects a concurrent publication instead of overwriting it", async () => {
+    const calls: Call[] = [];
+    stubApi(calls, { publish: 409 });
+    renderEditor();
+    await screen.findByTestId("node-start");
+    fireEvent.click(screen.getByRole("button", { name: "Publier une version" }));
+    fireEvent.submit(
+      (await screen.findByLabelText("Commentaire")).closest("form") as HTMLFormElement,
+    );
+    expect(await screen.findByText(/Une autre version a été publiée/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Garder mes modifications/ })).toBeInTheDocument();
+  });
+
+  it("resumes a stale draft with a warning", async () => {
+    stubApi([], {
+      draft: {
+        graph: latest,
+        base_version_no: 1,
+        latest_version_no: 3,
+        stale: true,
+        updated_by: "u2",
+        updated_at: "2026-10-22T08:00:00Z",
+        errors: [],
+      },
+    });
+    renderEditor();
+    expect(await screen.findByText(/part de la v1, mais la v3 a été publiée/)).toBeInTheDocument();
+  });
+});

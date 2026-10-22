@@ -65,6 +65,13 @@ const pages: RouteObject[] = [
             children: [
               { path: "/workflows", element: <WorkflowsPage /> },
               { path: "/workflows/:id", element: <WorkflowPage /> },
+              {
+                // Loaded on demand: the canvas library stays out of the main bundle.
+                path: "/workflows/:id/edit",
+                lazy: async () => ({
+                  Component: (await import("./pages/workflows/editor/EditorPage")).EditorPage,
+                }),
+              },
               { path: "/runs/:id", element: <RunPage /> },
               { path: "/agents", element: <AgentsPage /> },
               { path: "/agents/:id", element: <AgentPage /> },

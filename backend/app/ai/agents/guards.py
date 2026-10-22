@@ -50,7 +50,7 @@ _INSTRUCTION = re.compile(
     r"|system\s+prompt|prompt\s+système"
     r"|</?\s*(system|assistant|untrusted_document|tool_result|instructions?)\s*>"
     r"|<\|(im_start|im_end|system|endoftext)\|>|\[/?INST\]"
-    r"|^\s*(system|assistant)\s*:",
+    r"|(^|[.!?]\s)\s*(system|assistant|developer)\s*:",
     re.IGNORECASE | re.MULTILINE,
 )
 _EXFILTRATION = re.compile(
@@ -204,6 +204,11 @@ def uncited_urls(output: Any, consulted: Iterable[str]) -> list[str]:
             if normalise_url(url) not in known and url not in found:
                 found.append(url)
     return found[:MAX_FLAGS]
+
+
+def texts(value: Any) -> str:
+    """Every string of a (JSON) value, one per line: what the heuristics scan."""
+    return "\n".join(s for _, s in _strings(value))
 
 
 def urls_in(value: Any) -> list[str]:

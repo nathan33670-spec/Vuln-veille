@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.iam.schemas import StrictIn
 
@@ -32,6 +32,10 @@ class AIModelOut(BaseModel):
 
 class EngineChoiceIn(StrictIn):
     model_row_id: uuid.UUID
+    evaluation_id: uuid.UUID | None = Field(
+        default=None,
+        description="Banc d'évaluation du modèle choisi, cité dans l'audit (facultatif, Q26)",
+    )
 
 
 class EnginePreferenceOut(BaseModel):

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.evaluation.models import EvalRun
 from app.ai.models import AIModel
 from app.ai.preferences import preference, set_preference, usable
 from app.ai.schemas import AIModelOut, EngineChoiceIn, EnginePreferenceOut
@@ -54,6 +55,7 @@ async def _audit(
     action: str,
     workspace_id: uuid.UUID | None,
     model: AIModel | None,
+    evaluation_id: uuid.UUID | None = None,
 ) -> None:
     await record(
         db,
@@ -66,6 +68,7 @@ async def _audit(
             details={
                 "connector_id": str(model.connector_id) if model else None,
                 "model_id": model.model_id if model else None,
+                "evaluation_id": str(evaluation_id) if evaluation_id else None,
             },
         ),
     )
@@ -79,6 +82,15 @@ async def _choice(
         raise HTTPException(status_code=404, detail="not_found")
     if not usable(model, workspace_id):
         raise HTTPException(status_code=422, detail="engine_unavailable")
+    if body.evaluation_id is not None:
+        # An evaluation the caller can see (RLS), finished, on the model chosen.
+        evaluation = await db.get(EvalRun, body.evaluation_id)
+        if (
+            evaluation is None
+            or evaluation.model_row_id != model.id
+            or evaluation.status not in ("succeeded", "budget_exceeded")
+        ):
+            raise HTTPException(status_code=422, detail="evaluation_mismatch")
     return model
 
 
@@ -107,7 +119,9 @@ def build_ai_router() -> APIRouter:
         if model.workspace_id is not None:
             raise HTTPException(status_code=422, detail="global_engine_required")
         await set_preference(db, None, model, principal.user_id)
-        await _audit(db, request, principal, "ai_engine.platform_set", None, model)
+        await _audit(
+            db, request, principal, "ai_engine.platform_set", None, model, body.evaluation_id
+        )
         await db.commit()
         out = model_out(model)
         return EnginePreferenceOut(platform=out, workspace=None, effective=out, source="platform")
@@ -123,7 +137,15 @@ def build_ai_router() -> APIRouter:
         workspace_id = access.workspace.id
         model = await _choice(db, body, workspace_id)
         await set_preference(db, workspace_id, model, access.principal.user_id)
-        await _audit(db, request, access.principal, "ai_engine.workspace_set", workspace_id, model)
+        await _audit(
+            db,
+            request,
+            access.principal,
+            "ai_engine.workspace_set",
+            workspace_id,
+            model,
+            body.evaluation_id,
+        )
         await db.commit()
         return await _workspace_view(db, workspace_id)
 

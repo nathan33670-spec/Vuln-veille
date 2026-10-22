@@ -1266,6 +1266,100 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/ai-evaluation/cases": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Cases */
+    get: operations["list_cases_api_v1_workspaces__workspace__ai_evaluation_cases_get"];
+    put?: never;
+    /** Create Case */
+    post: operations["create_case_api_v1_workspaces__workspace__ai_evaluation_cases_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-evaluation/cases/{case_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Update Case */
+    put: operations["update_case_api_v1_workspaces__workspace__ai_evaluation_cases__case_id__put"];
+    post?: never;
+    /** Delete Case */
+    delete: operations["delete_case_api_v1_workspaces__workspace__ai_evaluation_cases__case_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-evaluation/compare": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Compare
+     * @description Current engine against a candidate, metric by metric and case by case.
+     */
+    get: operations["compare_api_v1_workspaces__workspace__ai_evaluation_compare_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-evaluation/runs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Runs */
+    get: operations["list_runs_api_v1_workspaces__workspace__ai_evaluation_runs_get"];
+    put?: never;
+    /**
+     * Start Run
+     * @description Manual and budgeted: the cost also counts in the monthly budget.
+     */
+    post: operations["start_run_api_v1_workspaces__workspace__ai_evaluation_runs_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/ai-evaluation/runs/{run_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Run */
+    get: operations["get_run_api_v1_workspaces__workspace__ai_evaluation_runs__run_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/audit": {
     parameters: {
       query?: never;
@@ -2696,6 +2790,57 @@ export interface components {
       /** Spent Usd */
       spent_usd: string;
     };
+    /** CaseIn */
+    CaseIn: {
+      /** Cve Id */
+      cve_id: string;
+      /**
+       * Expected
+       * @description Champs clés attendus, validés par les analystes (ex. exploitation_status)
+       */
+      expected?: {
+        [key: string]: unknown;
+      };
+      /**
+       * Input
+       * @description Données ajoutées à l'entrée de l'agent
+       */
+      input?: {
+        [key: string]: unknown;
+      };
+      /**
+       * Notes
+       * @default
+       */
+      notes: string;
+    };
+    /** CaseOut */
+    CaseOut: {
+      /** Cve Id */
+      cve_id: string;
+      /** Expected */
+      expected: {
+        [key: string]: unknown;
+      };
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Input */
+      input: {
+        [key: string]: unknown;
+      };
+      /** Notes */
+      notes: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Validated By */
+      validated_by: string | null;
+    };
     /** CheckQueuedOut */
     CheckQueuedOut: {
       /**
@@ -2760,6 +2905,19 @@ export interface components {
        * Format: uuid
        */
       id: string;
+    };
+    /** ComparisonOut */
+    ComparisonOut: {
+      baseline: components["schemas"]["RunOut"];
+      candidate: components["schemas"]["RunOut"];
+      /** Cases */
+      cases: {
+        [key: string]: unknown;
+      }[];
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
     };
     /** CompatibilityReportOut */
     CompatibilityReportOut: {
@@ -3041,6 +3199,11 @@ export interface components {
     };
     /** EngineChoiceIn */
     EngineChoiceIn: {
+      /**
+       * Evaluation Id
+       * @description Banc d'évaluation du modèle choisi, cité dans l'audit (facultatif, Q26)
+       */
+      evaluation_id?: string | null;
       /**
        * Model Row Id
        * Format: uuid
@@ -3396,14 +3559,39 @@ export interface components {
         [key: string]: unknown;
       };
     };
-    /** RunDetailOut */
-    RunDetailOut: {
-      /** Approvals */
-      approvals: components["schemas"]["ApprovalOut"][];
-      /** Cancel Requested */
-      cancel_requested: boolean;
-      /** Deadline At */
-      deadline_at: string | null;
+    /** RunIn */
+    RunIn: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /**
+       * Case Ids
+       * @description Par défaut, tout le jeu de référence
+       */
+      case_ids?: string[] | null;
+      /**
+       * Max Cost Usd
+       * @default 5
+       */
+      max_cost_usd: number | string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       * @description Modèle candidat
+       */
+      model_row_id: string;
+    };
+    /** RunOut */
+    RunOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Cases */
+      cases: number;
       /** Error */
       error: string | null;
       /** Finished At */
@@ -3413,8 +3601,19 @@ export interface components {
        * Format: uuid
        */
       id: string;
-      /** Node Runs */
-      node_runs: components["schemas"]["NodeRunOut"][];
+      /** Max Cost Usd */
+      max_cost_usd: string;
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
+      /** Model Id */
+      model_id: string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       */
+      model_row_id: string;
       /**
        * Queued At
        * Format: date-time
@@ -3422,29 +3621,8 @@ export interface components {
       queued_at: string;
       /** Started At */
       started_at: string | null;
-      /** Stats */
-      stats: {
-        [key: string]: unknown;
-      };
       /** Status */
       status: string;
-      /** Trigger Node Id */
-      trigger_node_id: string;
-      /** Trigger Payload */
-      trigger_payload: {
-        [key: string]: unknown;
-      };
-      /** Trigger Type */
-      trigger_type: string;
-      /** Triggered By */
-      triggered_by: string | null;
-      /** Version No */
-      version_no: number | null;
-      /**
-       * Workflow Id
-       * Format: uuid
-       */
-      workflow_id: string;
     };
     /** RunStarted */
     RunStarted: {
@@ -4502,6 +4680,51 @@ export interface components {
        */
       type: "x_account";
     };
+    /** RunDetailOut */
+    app__ai__evaluation__schemas__RunDetailOut: {
+      /**
+       * Agent Id
+       * Format: uuid
+       */
+      agent_id: string;
+      /** Cases */
+      cases: number;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Max Cost Usd */
+      max_cost_usd: string;
+      /** Metrics */
+      metrics: {
+        [key: string]: unknown;
+      };
+      /** Model Id */
+      model_id: string;
+      /**
+       * Model Row Id
+       * Format: uuid
+       */
+      model_row_id: string;
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Results */
+      results: {
+        [key: string]: unknown;
+      }[];
+      /** Started At */
+      started_at: string | null;
+      /** Status */
+      status: string;
+    };
     /** ClientOrgOut */
     app__iam__admin_schemas__ClientOrgOut: {
       /**
@@ -4534,6 +4757,56 @@ export interface components {
       name: string;
       /** Role */
       role: string;
+    };
+    /** RunDetailOut */
+    app__workflows__schemas__RunDetailOut: {
+      /** Approvals */
+      approvals: components["schemas"]["ApprovalOut"][];
+      /** Cancel Requested */
+      cancel_requested: boolean;
+      /** Deadline At */
+      deadline_at: string | null;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Node Runs */
+      node_runs: components["schemas"]["NodeRunOut"][];
+      /**
+       * Queued At
+       * Format: date-time
+       */
+      queued_at: string;
+      /** Started At */
+      started_at: string | null;
+      /** Stats */
+      stats: {
+        [key: string]: unknown;
+      };
+      /** Status */
+      status: string;
+      /** Trigger Node Id */
+      trigger_node_id: string;
+      /** Trigger Payload */
+      trigger_payload: {
+        [key: string]: unknown;
+      };
+      /** Trigger Type */
+      trigger_type: string;
+      /** Triggered By */
+      triggered_by: string | null;
+      /** Version No */
+      version_no: number | null;
+      /**
+       * Workflow Id
+       * Format: uuid
+       */
+      workflow_id: string;
     };
   };
   responses: never;
@@ -7512,6 +7785,270 @@ export interface operations {
       };
     };
   };
+  list_cases_api_v1_workspaces__workspace__ai_evaluation_cases_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_case_api_v1_workspaces__workspace__ai_evaluation_cases_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CaseIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_case_api_v1_workspaces__workspace__ai_evaluation_cases__case_id__put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CaseIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_case_api_v1_workspaces__workspace__ai_evaluation_cases__case_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  compare_api_v1_workspaces__workspace__ai_evaluation_compare_get: {
+    parameters: {
+      query: {
+        baseline: string;
+        candidate: string;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ComparisonOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_runs_api_v1_workspaces__workspace__ai_evaluation_runs_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RunOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  start_run_api_v1_workspaces__workspace__ai_evaluation_runs_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RunIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RunOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_run_api_v1_workspaces__workspace__ai_evaluation_runs__run_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        run_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["app__ai__evaluation__schemas__RunDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   workspace_audit_api_v1_workspaces__workspace__audit_get: {
     parameters: {
       query?: {
@@ -8250,7 +8787,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["RunDetailOut"];
+          "application/json": components["schemas"]["app__workflows__schemas__RunDetailOut"];
         };
       };
       /** @description Validation Error */

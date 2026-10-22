@@ -216,6 +216,16 @@ def compiled_version(version: WorkflowVersion) -> Compiled:
     return cached
 
 
+async def compiled_run(db: AsyncSession, run: WorkflowRun) -> Compiled:
+    """The graph a run executes: its version's, or the edited one of a test run."""
+    if run.mode == "test":
+        assert run.test_graph is not None  # noqa: S101 - database constraint
+        return compile_graph(run.test_graph)
+    version = await db.get(WorkflowVersion, run.version_id)
+    assert version is not None  # noqa: S101 - foreign key
+    return compiled_version(version)
+
+
 def _latest(node_runs: list[NodeRun]) -> dict[str, NodeRun]:
     latest: dict[str, NodeRun] = {}
     for node_run in node_runs:
@@ -423,10 +433,8 @@ async def advance(
     if run is None or run.status in TERMINAL_RUN:
         await db.commit()
         return run.status if run else None
-    version = await db.get(WorkflowVersion, run.version_id)
-    assert version is not None  # noqa: S101 - foreign key
     try:
-        compiled = compiled_version(version)
+        compiled = await compiled_run(db, run)
     except GraphValidationError:
         _finish(run, "failed", now, "invalid_graph")
         await db.commit()
@@ -447,6 +455,8 @@ async def advance(
         if run.status == "running" and run.deadline_at and now > run.deadline_at:
             _stop_active(state, "run_timed_out")
             _finish(run, "timed_out", now, "run_timed_out")
+        elif run.mode == "test":
+            _progress_test(state)
         else:
             _progress(state)
     run.stats = _stats(state.latest)
@@ -469,6 +479,19 @@ async def advance(
     if status in TERMINAL_RUN:
         await _wake_queued(db, tasks, workspace_id)
     return status
+
+
+def _progress_test(state: _Advance) -> None:
+    """A test run (editor): the node under test only, once, with its pinned inputs."""
+    run = state.run
+    node_id = run.test_node_id or ""
+    latest = state.latest.get(node_id)
+    if latest is None:
+        state.queue(node_id, 1, run.test_inputs or {})
+    elif latest.status in ("succeeded", "skipped"):
+        _finish(run, "succeeded", state.now)
+    elif latest.status == "failed":
+        _finish(run, "failed", state.now, latest.error)
 
 
 def _progress(state: _Advance) -> None:
@@ -658,18 +681,18 @@ async def execute_node(
 async def _run_node(
     deps: EngineDeps, db: AsyncSession, run: WorkflowRun, node_run: NodeRun, *, dry_run: bool
 ) -> str:
-    version = await db.get(WorkflowVersion, run.version_id)
     workflow = await db.get(Workflow, run.workflow_id)
-    assert version is not None  # noqa: S101 - foreign key
     assert workflow is not None  # noqa: S101 - foreign key
-    compiled = compiled_version(version)
+    compiled = await compiled_run(db, run)
+    testing = run.mode == "test"
+    dry_run = dry_run or testing  # output nodes have no external effect in a test
     node_id, node_run_id, run_id = node_run.node_id, node_run.id, run.id
     node_type = compiled.types[node_id]
     settings = compiled.graph.node(node_id).settings
     latest = _latest(
         list((await db.execute(select(NodeRun).where(NodeRun.run_id == run_id))).scalars())
     )
-    inputs = gather_inputs(compiled, node_id, latest)
+    inputs = (run.test_inputs or {}) if testing else gather_inputs(compiled, node_id, latest)
     upstream = {
         src: latest[src].output.get(port, [])
         for src, port, _ in compiled.upstream.get(node_id, [])
@@ -712,6 +735,8 @@ async def _run_node(
 
     if error is None:
         try:
+            if testing:
+                await db.rollback()  # a test leaves no data behind, only its output
             current = await db.get(NodeRun, node_run_id)
             assert current is not None  # noqa: S101
             current.status = "succeeded"

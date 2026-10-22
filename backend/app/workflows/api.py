@@ -5,33 +5,48 @@ version validates the graph against the editor's own permissions and the workspa
 connectors; runs started here are queued to the orchestrator.
 """
 
+import asyncio
+import json
+import re
 import uuid
+from collections.abc import AsyncIterator
+from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.audit.service import AuditEntry, record
 from app.core.access import public_endpoint
 from app.core.errors import ApiError
 from app.core.ids import uuid7
 from app.core.rate_limit import RateLimiter
+from app.core.rls import get_context, init_context, set_context
 from app.core.tasks import TaskQueue
 from app.iam.deps import DB, WorkspaceAccess, authenticated, require_workspace
 from app.iam.permissions import Permission
 from app.iam.principal import Principal
 from app.vault.service import Vault
 from app.workflows.base import node_types
-from app.workflows.engine import RunRefusedError, advance_task, decide_approval, start_run
+from app.workflows.engine import (
+    LIMITS,
+    TERMINAL_RUN,
+    RunRefusedError,
+    advance_task,
+    decide_approval,
+    start_run,
+)
 from app.workflows.graph import GraphValidationError
 from app.workflows.models import (
     NodeRun,
     Workflow,
     WorkflowApproval,
+    WorkflowDraft,
     WorkflowRun,
     WorkflowTrigger,
     WorkflowVersion,
@@ -40,6 +55,8 @@ from app.workflows.schemas import (
     ActivationOut,
     ApprovalDecision,
     ApprovalOut,
+    DraftIn,
+    DraftOut,
     NodeRunDetailOut,
     NodeRunOut,
     NodeTypeOut,
@@ -47,6 +64,7 @@ from app.workflows.schemas import (
     RunDetailOut,
     RunStarted,
     RunSummaryOut,
+    TestNodeIn,
     TriggerOut,
     VersionCreate,
     VersionDetailOut,
@@ -130,16 +148,20 @@ async def _run(db: AsyncSession, access: WorkspaceAccess, run_id: uuid.UUID) -> 
     return run
 
 
-async def _version_numbers(db: AsyncSession, ids: set[uuid.UUID]) -> dict[uuid.UUID, int]:
-    if not ids:
+async def _version_numbers(
+    db: AsyncSession, ids: set[uuid.UUID | None]
+) -> dict[uuid.UUID | None, int]:
+    """Version numbers by version id (test runs have none)."""
+    known = {i for i in ids if i is not None}
+    if not known:
         return {}
     rows = await db.execute(
-        select(WorkflowVersion.id, WorkflowVersion.version_no).where(WorkflowVersion.id.in_(ids))
+        select(WorkflowVersion.id, WorkflowVersion.version_no).where(WorkflowVersion.id.in_(known))
     )
-    return dict(rows.all())
+    return {row[0]: row[1] for row in rows.all()}
 
 
-def run_summary(run: WorkflowRun, numbers: dict[uuid.UUID, int]) -> RunSummaryOut:
+def run_summary(run: WorkflowRun, numbers: dict[uuid.UUID | None, int]) -> RunSummaryOut:
     return RunSummaryOut(
         id=run.id,
         workflow_id=run.workflow_id,
@@ -181,7 +203,7 @@ async def _summaries(db: AsyncSession, workflows: list[Workflow]) -> list[Workfl
     last_runs: dict[uuid.UUID, WorkflowRun] = {}
     rows = await db.execute(
         select(WorkflowRun)
-        .where(WorkflowRun.workflow_id.in_(ids))
+        .where(WorkflowRun.workflow_id.in_(ids), WorkflowRun.mode == "normal")
         .ext(distinct_on(WorkflowRun.workflow_id))
         .order_by(WorkflowRun.workflow_id, WorkflowRun.queued_at.desc())
     )
@@ -189,8 +211,7 @@ async def _summaries(db: AsyncSession, workflows: list[Workflow]) -> list[Workfl
         last_runs[run.workflow_id] = run
     numbers = await _version_numbers(
         db,
-        {w.active_version_id for w in workflows if w.active_version_id}
-        | {r.version_id for r in last_runs.values()},
+        {*(w.active_version_id for w in workflows), *(r.version_id for r in last_runs.values())},
     )
     return [
         WorkflowOut(
@@ -594,7 +615,7 @@ def _routes_runs(router: APIRouter) -> None:
             (
                 await db.execute(
                     select(WorkflowRun)
-                    .where(WorkflowRun.workflow_id == workflow.id)
+                    .where(WorkflowRun.workflow_id == workflow.id, WorkflowRun.mode == "normal")
                     .order_by(WorkflowRun.queued_at.desc(), WorkflowRun.id.desc())
                     .limit(limit)
                     .offset(offset)
@@ -756,6 +777,196 @@ def _route_hooks(router: APIRouter) -> None:
         return {"status": "accepted"}
 
 
+# Editor (phase 5): drafts, a node tested alone, run events ------------------------
+
+MAX_PINNED = 200
+MAX_DRAFT_BYTES = 512 * 1024
+EVENTS_SECONDS = 600
+POLL_SECONDS = 1.0
+
+
+async def _latest_version(db: AsyncSession, workflow: Workflow) -> WorkflowVersion | None:
+    return (
+        await db.execute(
+            select(WorkflowVersion)
+            .where(WorkflowVersion.workflow_id == workflow.id)
+            .order_by(WorkflowVersion.version_no.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+
+
+async def _draft_out(db: AsyncSession, access: WorkspaceAccess, draft: WorkflowDraft) -> DraftOut:
+    workflow = await db.get(Workflow, draft.workflow_id)
+    assert workflow is not None  # noqa: S101 - foreign key
+    latest = await _latest_version(db, workflow)
+    try:
+        await validate_for(db, access.workspace.id, draft.graph, access.workspace.permissions)
+        errors: list[dict[str, Any]] = []
+    except GraphValidationError as exc:
+        errors = exc.errors[:100]
+    latest_no = latest.version_no if latest else None
+    return DraftOut(
+        graph=draft.graph,
+        base_version_no=draft.base_version_no,
+        latest_version_no=latest_no,
+        stale=latest_no is not None and draft.base_version_no != latest_no,
+        updated_by=draft.updated_by,
+        updated_at=draft.updated_at,
+        errors=errors,
+    )
+
+
+def _pinned(inputs: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    """Analyst-given items, as data: ``{json, meta}`` with a ``pinned`` provenance."""
+    out: dict[str, list[dict[str, Any]]] = {}
+    for port, entries in inputs.items():
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,31}", port):
+            raise HTTPException(status_code=422, detail="invalid_port")
+        items = []
+        for entry in entries[:MAX_PINNED]:
+            data = entry.get("json", entry) if isinstance(entry, dict) else None
+            if not isinstance(data, dict):
+                raise HTTPException(status_code=422, detail="invalid_item")
+            items.append({"json": data, "meta": {"source": "pinned", "trust": "untrusted"}})
+        out[port] = items
+    if len(json.dumps(out, default=str)) > LIMITS.max_payload_bytes:
+        raise HTTPException(status_code=413, detail="payload_too_large")
+    return out
+
+
+def _routes_editor(router: APIRouter) -> None:
+    @router.get("/workflows/{workflow_id}/draft", response_model=DraftOut)
+    async def get_draft(workflow_id: uuid.UUID, access: Reader, db: DB) -> DraftOut:
+        workflow = await _workflow(db, access, workflow_id)
+        draft = await db.get(WorkflowDraft, workflow.id)
+        if draft is None:
+            raise HTTPException(status_code=404, detail="no_draft")
+        return await _draft_out(db, access, draft)
+
+    @router.put("/workflows/{workflow_id}/draft", response_model=DraftOut)
+    async def put_draft(workflow_id: uuid.UUID, body: DraftIn, access: Editor, db: DB) -> DraftOut:
+        """Saved as typed, even if invalid: validation errors come back with it."""
+        workflow = await _workflow(db, access, workflow_id)
+        if len(json.dumps(body.graph)) > MAX_DRAFT_BYTES:
+            raise HTTPException(status_code=413, detail="payload_too_large")
+        draft = await db.get(WorkflowDraft, workflow.id, with_for_update=True)
+        if draft is None:
+            draft = WorkflowDraft(workflow_id=workflow.id, workspace_id=workflow.workspace_id)
+            db.add(draft)
+        draft.graph, draft.base_version_no = body.graph, body.base_version_no
+        draft.updated_by = access.principal.user_id
+        await db.commit()
+        await db.refresh(draft)
+        return await _draft_out(db, access, draft)
+
+    @router.delete("/workflows/{workflow_id}/draft", status_code=204)
+    async def delete_draft(workflow_id: uuid.UUID, access: Editor, db: DB) -> None:
+        workflow = await _workflow(db, access, workflow_id)
+        draft = await db.get(WorkflowDraft, workflow.id)
+        if draft is not None:
+            await db.delete(draft)
+            await db.commit()
+
+    @router.post("/workflows/{workflow_id}/test-node", response_model=RunStarted, status_code=202)
+    async def test_node(
+        workflow_id: uuid.UUID, body: TestNodeIn, request: Request, access: Editor, db: DB
+    ) -> RunStarted:
+        """Runs one node alone on pinned inputs, on the worker of its queue: dry-run for
+        output nodes, database effects rolled back. The graph is validated against the
+        editor's permissions and the workspace's connectors, like a published version."""
+        workflow = await _workflow(db, access, workflow_id)
+        graph = body.graph
+        if graph is None:
+            draft = await db.get(WorkflowDraft, workflow.id)
+            latest = None if draft else await _latest_version(db, workflow)
+            graph = draft.graph if draft else (latest.graph if latest else None)
+        if graph is None:
+            raise HTTPException(status_code=422, detail="no_graph")
+        await _validated(db, access, graph)
+        if body.node_id not in {n.get("id") for n in graph.get("nodes", [])}:
+            raise HTTPException(status_code=422, detail="unknown_node")
+        inputs = _pinned(body.inputs)
+        limiter: RateLimiter = request.app.state.rate_limiter
+        if not await limiter.hit("test_node", str(access.principal.user_id), 60, 3600):
+            raise HTTPException(status_code=429, detail="rate_limited")
+        run = WorkflowRun(
+            id=uuid7(),
+            workspace_id=workflow.workspace_id,
+            workflow_id=workflow.id,
+            mode="test",
+            test_graph=graph,
+            test_node_id=body.node_id,
+            test_inputs=inputs,
+            trigger_type="test",
+            trigger_node_id=body.node_id,
+            triggered_by=access.principal.user_id,
+            trigger_payload={},
+            status="queued",
+            cancel_requested=False,
+            queued_at=now(),
+            stats={},
+        )
+        db.add(run)
+        await _audit(
+            db, request, access, "workflow.node_tested", str(workflow.id), node_id=body.node_id
+        )
+        await db.commit()
+        advance_task(tasks_of(request), run.id, access.workspace.id)
+        return RunStarted(run_id=run.id, created=True)
+
+    @router.get("/runs/{run_id}/events")
+    async def run_events(
+        run_id: uuid.UUID, request: Request, access: Reader, db: DB
+    ) -> StreamingResponse:
+        """Server-sent events: one ``node`` event per node state change, ``run`` events,
+        until the run ends (or ten minutes). Polls the database, holds no transaction."""
+        run = await _run(db, access, run_id)
+        context = get_context(db)
+        sessions: async_sessionmaker[AsyncSession] = request.app.state.sessionmaker
+        workspace_id = run.workspace_id
+
+        async def stream() -> AsyncIterator[str]:
+            seen: dict[tuple[str, int], tuple[str, int]] = {}
+            last_status = ""
+            async with sessions() as session:
+                init_context(session)
+                await set_context(session, **asdict(context))
+                for _ in range(int(EVENTS_SECONDS / POLL_SECONDS)):
+                    if await request.is_disconnected():
+                        return
+                    current = await session.get(WorkflowRun, run_id, populate_existing=True)
+                    if current is None or current.workspace_id != workspace_id:
+                        return
+                    rows = await session.execute(
+                        select(NodeRun)
+                        .where(NodeRun.run_id == run_id)
+                        .order_by(NodeRun.scheduled_at)
+                    )
+                    for node in rows.scalars():
+                        state = (node.status, node.output_count)
+                        if seen.get((node.node_id, node.attempt)) != state:
+                            seen[(node.node_id, node.attempt)] = state
+                            yield _sse("node", _node_run_out(node).model_dump(mode="json"))
+                    if current.status != last_status:
+                        last_status = current.status
+                        yield _sse("run", {"status": current.status, "error": current.error})
+                    await session.commit()
+                    if current.status in TERMINAL_RUN:
+                        return
+                    await asyncio.sleep(POLL_SECONDS)
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"cache-control": "no-store", "x-accel-buffering": "no"},
+        )
+
+
+def _sse(event: str, data: dict[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
 def build_workflow_router() -> APIRouter:
     router = APIRouter(tags=["workflows"])
     _route_hooks(router)
@@ -770,5 +981,6 @@ def build_workflow_router() -> APIRouter:
     _routes_workflows(workspace)
     _routes_versions(workspace)
     _routes_runs(workspace)
+    _routes_editor(workspace)
     router.include_router(workspace)
     return router

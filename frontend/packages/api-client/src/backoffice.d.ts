@@ -1641,6 +1641,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/runs/{run_id}/events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Run Events
+     * @description Server-sent events: one ``node`` event per node state change, ``run`` events,
+     *     until the run ends (or ten minutes). Polls the database, holds no transaction.
+     */
+    get: operations["run_events_api_v1_workspaces__workspace__runs__run_id__events_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/runs/{run_id}/nodes/{node_id}": {
     parameters: {
       query?: never;
@@ -1979,6 +2000,28 @@ export interface paths {
     patch: operations["update_workflow_api_v1_workspaces__workspace__workflows__workflow_id__patch"];
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/draft": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Draft */
+    get: operations["get_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_get"];
+    /**
+     * Put Draft
+     * @description Saved as typed, even if invalid: validation errors come back with it.
+     */
+    put: operations["put_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_put"];
+    post?: never;
+    /** Delete Draft */
+    delete: operations["delete_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/export": {
     parameters: {
       query?: never;
@@ -2008,6 +2051,28 @@ export interface paths {
     put?: never;
     /** Start Manual Run */
     post: operations["start_manual_run_api_v1_workspaces__workspace__workflows__workflow_id__runs_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/test-node": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Test Node
+     * @description Runs one node alone on pinned inputs, on the worker of its queue: dry-run for
+     *     output nodes, database effects rolled back. The graph is validated against the
+     *     editor's permissions and the workspace's connectors, like a published version.
+     */
+    post: operations["test_node_api_v1_workspaces__workspace__workflows__workflow_id__test_node_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3190,6 +3255,48 @@ export interface components {
       /** Total */
       total: number;
     };
+    /** DraftIn */
+    DraftIn: {
+      /**
+       * Base Version No
+       * @description Version dont part le brouillon (détection d'édition concurrente)
+       */
+      base_version_no?: number | null;
+      /** Graph */
+      graph: {
+        [key: string]: unknown;
+      };
+    };
+    /** DraftOut */
+    DraftOut: {
+      /** Base Version No */
+      base_version_no: number | null;
+      /**
+       * Errors
+       * @description Erreurs de validation du graphe (indicatif)
+       */
+      errors: {
+        [key: string]: unknown;
+      }[];
+      /** Graph */
+      graph: {
+        [key: string]: unknown;
+      };
+      /** Latest Version No */
+      latest_version_no: number | null;
+      /**
+       * Stale
+       * @description Une version a été publiée depuis le début du brouillon
+       */
+      stale: boolean;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Updated By */
+      updated_by: string | null;
+    };
     /** EngineChoiceIn */
     EngineChoiceIn: {
       /**
@@ -4095,6 +4202,27 @@ export interface components {
       status?: string | null;
       /** Version */
       version: number;
+    };
+    /** TestNodeIn */
+    TestNodeIn: {
+      /**
+       * Graph
+       * @description Graphe à tester ; par défaut le brouillon, sinon la dernière version
+       */
+      graph?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Inputs
+       * @description Éléments épinglés par port d'entrée ({json, meta}), par ex. une CVE réelle
+       */
+      inputs?: {
+        [key: string]: {
+          [key: string]: unknown;
+        }[];
+      };
+      /** Node Id */
+      node_id: string;
     };
     /** TimelineEventOut */
     TimelineEventOut: {
@@ -8972,6 +9100,38 @@ export interface operations {
       };
     };
   };
+  run_events_api_v1_workspaces__workspace__runs__run_id__events_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        run_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   get_node_run_api_v1_workspaces__workspace__runs__run_id__nodes__node_id__get: {
     parameters: {
       query?: never;
@@ -9916,6 +10076,104 @@ export interface operations {
       };
     };
   };
+  get_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DraftIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DraftOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_draft_api_v1_workspaces__workspace__workflows__workflow_id__draft_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   export_workflow_api_v1_workspaces__workspace__workflows__workflow_id__export_get: {
     parameters: {
       query?: never;
@@ -9996,6 +10254,42 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["RunCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RunStarted"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  test_node_api_v1_workspaces__workspace__workflows__workflow_id__test_node_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workflow_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TestNodeIn"];
       };
     };
     responses: {

@@ -40,6 +40,7 @@ from app.ai.agents.guards import (
     document,
     output_errors,
     scan,
+    texts,
     uncited_urls,
     untrusted_json,
     urls_in,
@@ -388,7 +389,7 @@ async def _prepare(db: AsyncSession, deps: AgentDeps, run: AgentRun) -> _Loop:
     tools = ToolContext(db, run.workspace_id, spec, connectors, deps.clock())
     state = _Loop(db, deps, run, spec, model, engine, tools)
     payload = document("input", None, "Entrée de l'agent", run.input)
-    state.flag(scan(untrusted_json(run.input), "input"))
+    state.flag(scan(texts(run.input), "input"))
     state.consulted(urls_in(run.input))
     state.messages.append(Message(role="user", text=INPUT_INTRO + untrusted_json(payload)))
     return state

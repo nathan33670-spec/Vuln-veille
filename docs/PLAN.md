@@ -200,13 +200,13 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 - [x] 6.1 Modèles versionnés : champs typés, consignes IA par champ, gabarit de rendu Liquid, guide de style, exemple, langue
 - [x] 6.2 Règles de sélection par sujet (techno, éditeur, catégorie, sévérité, KEV…) avec priorités
-- [ ] 6.3 Éditeur de modèle avec aperçu calculé côté serveur sur une vulnérabilité réelle
+- [x] 6.3 Éditeur de modèle avec aperçu calculé côté serveur sur une vulnérabilité réelle
 - [x] 6.4 Demande unitaire de draft (depuis une vulnérabilité, un CVE, des URL ou un texte libre), exécution asynchrone, progression en SSE
 - [x] 6.5 Génération par sortie structurée avec le moteur IA de l'espace, puis rendu déterministe ; Markdown assaini en HTML
 - [x] 6.6 Cycle de vie : `draft`, `approved`, `published`, `withdrawn` (`in_review` si l'espace active la double validation, désactivée par défaut) ; révisions et diff ; versions FR et EN liées
 - [x] 6.7 Marquage TLP, audience (tous les clients ou une sélection), technos associées
 - [x] 6.8 Nœud `bulletin.generate_draft` pour les workflows
-- [ ] 6.9 Interfaces : bibliothèque de modèles, demande de draft, éditeur de bulletin (champs et aperçu), relecture et validation
+- [x] 6.9 Interfaces : bibliothèque de modèles, demande de draft, éditeur de bulletin (champs et aperçu), relecture et validation
 
 **Critère de sortie** : un analyste demande un draft sur une CVE, le modèle adapté au sujet est appliqué, il l'édite, un second analyste valide, le bulletin est publié.
 

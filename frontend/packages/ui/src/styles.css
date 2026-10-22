@@ -650,3 +650,29 @@ h1 {
   opacity: 0;
   overflow: hidden;
 }
+
+.vv-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+/* A rendered bulletin (HTML sanitized by the server, then by DOMPurify). */
+.vv-bulletin {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.vv-bulletin h1 {
+  font-size: 1.4rem;
+}
+
+.vv-bulletin h2 {
+  font-size: 1.1rem;
+  margin-top: 1.25rem;
+}
+
+.vv-bulletin blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--vv-error);
+}

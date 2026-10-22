@@ -25,6 +25,10 @@ import { EvaluationPage } from "./pages/ai/EvaluationPage";
 import { XCoveragePage } from "./pages/ai/XCoveragePage";
 import { CvesPage } from "./pages/catalog/CvesPage";
 import { ConnectorsPage } from "./pages/connectors/ConnectorsPage";
+import { BulletinPage } from "./pages/bulletins/BulletinPage";
+import { BulletinsPage } from "./pages/bulletins/BulletinsPage";
+import { TemplatePage } from "./pages/bulletins/TemplatePage";
+import { TemplatesPage } from "./pages/bulletins/TemplatesPage";
 import { HomePage } from "./pages/HomePage";
 import { SecretsPage } from "./pages/secrets/SecretsPage";
 import { TechnologiesPage } from "./pages/technologies/TechnologiesPage";
@@ -84,6 +88,15 @@ const pages: RouteObject[] = [
               { path: "/agent-runs/:id", element: <AgentRunPage /> },
               { path: "/ai-evaluation", element: <EvaluationPage /> },
               { path: "/x-coverage", element: <XCoveragePage /> },
+            ],
+          },
+          {
+            element: <RequireWorkspacePermission permission="bulletin.draft" />,
+            children: [
+              { path: "/bulletins", element: <BulletinsPage /> },
+              { path: "/bulletins/:id", element: <BulletinPage /> },
+              { path: "/bulletin-templates", element: <TemplatesPage /> },
+              { path: "/bulletin-templates/:id", element: <TemplatePage /> },
             ],
           },
           {

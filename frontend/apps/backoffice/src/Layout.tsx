@@ -34,6 +34,10 @@ function Shell() {
           {link("/", t("nav.home"), true)}
           {can("vuln.read") ? link("/vulnerabilities", t("nav.vulnerabilities")) : null}
           {can("vuln.read") ? link("/cves", t("nav.cves")) : null}
+          {canInWorkspace("bulletin.draft") ? link("/bulletins", t("nav.bulletins")) : null}
+          {canInWorkspace("bulletin.draft")
+            ? link("/bulletin-templates", t("nav.bulletinTemplates"))
+            : null}
           {canInWorkspace("workflow.read") ? link("/workflows", t("nav.workflows")) : null}
           {canInWorkspace("workflow.read") ? link("/agents", t("nav.agents")) : null}
           {canInWorkspace("ai.engine.manage") ? link("/ai-engine", t("nav.aiEngine")) : null}

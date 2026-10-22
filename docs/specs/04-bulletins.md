@@ -128,6 +128,14 @@ Markdown et HTML, **PDF** (WeasyPrint dans un worker isolé, gabarit sobre avec 
 - **Lecture par l'autre équipe** (ADR-024) : `GET /workspaces/{autre}/bulletins?scope=shared` et le détail ne montrent que la révision publiée, sans historique, modèle, relecteurs ni motif ; un bulletin retiré disparaît (RLS `bulletins_published`, `bulletin_revisions_published`).
 - **Nœud** `bulletin.generate_draft` (file `ai`) : un draft par élément (`max_items`), modèle imposé ou choisi par les règles ; sortie `bulletin` (`status`, `id`, `ref`, `title`) ; un échec n'arrête pas le workflow.
 
+## 5 ter. État de la merge request 6C (interfaces)
+
+- **Bibliothèque de modèles** (`/bulletin-templates`) : liste (langue, priorité, règles, TLP, version active, modèle par défaut), création par copie d'un modèle existant, réglages de l'espace (préfixe, double validation, modèle par défaut).
+- **Éditeur de modèle** (`/bulletin-templates/{id}`) : définition en JSON validée par le serveur à chaque modification, aperçu rendu par le serveur sur une vulnérabilité réelle choisie dans le catalogue (avec la règle qui retient, ou non, le modèle), versions, activation, archivage.
+- **Demande de draft** (`/bulletins`, ou « Rédiger un bulletin » depuis une vulnérabilité) : CVE ou vulnérabilité, URL, texte, modèle (automatique par défaut), langue, consignes ; progression suivie en SSE (ou par interrogation), puis ouverture du bulletin.
+- **Éditeur de bulletin** (`/bulletins/{id}`) : formulaire généré depuis les champs du modèle (texte, Markdown, listes, JSON pour les objets), aperçu rendu par le serveur avec le TLP du bulletin (`preview` accepte `tlp`), erreurs par champ, régénération d'un champ avec une consigne, marquage et audience (organisations par `GET …/bulletin-audiences`, nom seulement), révisions et différences entre deux révisions, actions de relecture, validation, publication (MFA récente demandée au besoin), traduction et retrait. Le bulletin d'une autre équipe s'affiche en lecture seule.
+- Le HTML d'un bulletin est assaini par le serveur (nh3) puis par DOMPurify avant affichage (`SafeHtml`).
+
 ## 6. Sécurité spécifique
 
 - Le gabarit est écrit par un analyste, les valeurs viennent du LLM ou des données : le rendu Liquid ne réinterprète jamais une valeur comme gabarit.

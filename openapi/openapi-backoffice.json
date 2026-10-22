@@ -1718,6 +1718,25 @@
         "title": "AssessmentOut",
         "type": "object"
       },
+      "AudienceOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "AudienceOut",
+        "type": "object"
+      },
       "AuditEventOut": {
         "properties": {
           "action": {
@@ -9655,6 +9674,25 @@
             "title": "Spec",
             "type": "object"
           },
+          "tlp": {
+            "anyOf": [
+              {
+                "enum": [
+                  "CLEAR",
+                  "GREEN",
+                  "AMBER",
+                  "AMBER+STRICT",
+                  "RED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Marquage du bulletin, sinon celui du mod\u00e8le",
+            "title": "Tlp"
+          },
           "vulnerability_id": {
             "anyOf": [
               {
@@ -14933,6 +14971,53 @@
         "summary": "Workspace Audit",
         "tags": [
           "audit"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/bulletin-audiences": {
+      "get": {
+        "description": "The client organisations a bulletin can be addressed to (name only).",
+        "operationId": "list_audiences_api_v1_workspaces__workspace__bulletin_audiences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AudienceOut"
+                  },
+                  "title": "Response List Audiences Api V1 Workspaces  Workspace  Bulletin Audiences Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Audiences",
+        "tags": [
+          "bulletins"
         ]
       }
     },

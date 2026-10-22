@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from app.bulletins.fields import clean_fields, output_schema, system_prompt
+from app.bulletins.render import render_markdown
 from app.bulletins.seeds import SEEDS
 from app.bulletins.selection import Candidate, fallback_template
 from app.bulletins.spec import parse_spec
@@ -89,3 +90,16 @@ def test_fallback_template_in_another_language() -> None:
     french = [c for c in candidates if c.spec.language == "fr"]
     assert fallback_template(french, french_default.template_id) is french_default
     assert fallback_template([], None) is None
+
+
+def test_delivered_templates_skip_empty_optional_sections() -> None:
+    # In this Liquid, nil != blank is true: a missing note must not leave its heading.
+    for _, _, raw in SEEDS.values():
+        spec = parse_spec(raw)
+        fields = {"title": "T", "summary": "S", "recommendations": "R", "analyst_note": None}
+        markdown = render_markdown(
+            spec.render_template, {"fields": fields, "tlp": "AMBER", "language": spec.language}
+        )
+        assert "Note de l'analyste" not in markdown
+        assert "Analyst note" not in markdown
+        assert "Exploitation" not in markdown

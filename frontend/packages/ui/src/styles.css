@@ -521,3 +521,54 @@ h1 {
   color: var(--vv-muted);
   pointer-events: none;
 }
+
+.vv-flow-node-summary {
+  font-size: 0.7rem;
+  color: var(--vv-muted);
+}
+
+.vv-flow-node-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.vv-flow-node-status-running,
+.vv-flow-node-status-queued,
+.vv-flow-node-status-waiting_approval {
+  box-shadow: 0 0 0 3px #d4a72c;
+}
+
+.vv-flow-node-status-succeeded {
+  box-shadow: 0 0 0 3px var(--vv-ok);
+}
+
+.vv-flow-node-status-failed,
+.vv-flow-node-status-timed_out {
+  box-shadow: 0 0 0 3px var(--vv-error);
+}
+
+.vv-flow-node-status-skipped,
+.vv-flow-node-status-cancelled {
+  opacity: 0.6;
+}
+
+.vv-run-canvas {
+  height: 28rem;
+  margin: 1rem 0;
+  border: 1px solid var(--vv-border);
+  border-radius: 6px;
+  background: var(--vv-surface);
+}
+
+.vv-label {
+  font-weight: 600;
+}
+
+.vv-code-field {
+  display: block;
+}
+
+.vv-preview pre {
+  max-height: 12rem;
+  overflow: auto;
+}

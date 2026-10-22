@@ -9,7 +9,9 @@ export interface NodeData extends Record<string, unknown> {
   type: NodeType | undefined;
   errorCount: number;
   /** Run status of the node (run view, node test), when shown. */
-  status?: string;
+  status?: string | undefined;
+  /** Counters of a run (items in → out, duration, AI cost). */
+  summary?: string | undefined;
 }
 
 export type EditorNode = Node<NodeData, "vv">;
@@ -21,7 +23,7 @@ function offset(index: number, count: number): string {
 /** A node on the canvas: its ports are handles, its texts are inert. */
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<EditorNode>) {
   const { t } = useTranslation();
-  const { node, type, errorCount, status } = data;
+  const { node, type, errorCount, status, summary } = data;
   const inputs = type?.inputs ?? [];
   const outputs = type?.outputs ?? [];
   const classes = [
@@ -56,6 +58,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Edi
       {status ? (
         <div className="vv-flow-node-status">{t(`workflows.status.${status}`, status)}</div>
       ) : null}
+      {summary ? <div className="vv-flow-node-summary">{summary}</div> : null}
       {outputs.map((port, i) => (
         <Handle
           key={port}

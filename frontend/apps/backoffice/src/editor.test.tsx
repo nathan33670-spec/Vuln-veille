@@ -1,3 +1,4 @@
+import { EditorView } from "@codemirror/view";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter } from "react-router";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -37,6 +38,10 @@ beforeAll(() => {
     ResizeObserver: ResizeObserverStub,
     DOMMatrixReadOnly: DOMMatrixStub,
   });
+  // CodeMirror measures text ranges.
+  const rects = () => Object.assign([], { item: () => null }) as unknown as DOMRectList;
+  Range.prototype.getClientRects = rects;
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
   Object.defineProperties(HTMLElement.prototype, {
     offsetHeight: { configurable: true, get: () => 60 },
     offsetWidth: { configurable: true, get: () => 180 },
@@ -115,6 +120,13 @@ const TYPES: NodeType[] = [
     },
   }),
   nodeType("publish.api", { label: "Publier", required_permissions: ["connector.publish.push"] }),
+  nodeType("ai.summarize", {
+    label: "Résumer (IA)",
+    params_schema: {
+      properties: { max_items: { type: "integer", default: 10, title: "Max Items" } },
+      type: "object",
+    },
+  }),
 ];
 const typeMap = new Map(TYPES.map((t) => [t.type, t]));
 
@@ -338,6 +350,20 @@ function renderEditor() {
   render(<App router={createMemoryRouter(routes, { initialEntries: ["/workflows/w1/edit"] })} />);
 }
 
+/** The CodeMirror view of an expression field (mounted in a shadow root). */
+function codeView(label: string): EditorView {
+  const host = screen.getByTestId(`code-${label}`);
+  const dom = host.shadowRoot?.querySelector(".cm-editor");
+  const view = dom ? EditorView.findFromDOM(dom as HTMLElement) : null;
+  if (!view) throw new Error(`no code field ${label}`);
+  return view;
+}
+
+function typeCode(label: string, text: string) {
+  const view = codeView(label);
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
+}
+
 const lastDraft = (calls: Call[]) =>
   calls.filter((c) => c.method === "PUT" && c.path.endsWith("/draft")).at(-1)?.body as
     { graph: Graph; base_version_no: number } | undefined;
@@ -363,9 +389,7 @@ describe("workflow editor", () => {
     expect(await within(screen.getByTestId("node-filter")).findByText("1 erreur")).toBeVisible();
     expect(screen.getByText("Champ obligatoire.")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Condition (JMESPath)"), {
-      target: { value: "json.score >= `7`" },
-    });
+    typeCode("Condition (JMESPath) *", "json.score >= `7`");
     await waitFor(
       () =>
         expect(lastDraft(calls)?.graph.nodes[2]?.params).toEqual({
@@ -377,7 +401,7 @@ describe("workflow editor", () => {
 
     // One undo step per field: the node goes back to its empty condition, then disappears.
     fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
-    expect(screen.getByLabelText("Condition (JMESPath)")).toHaveValue("");
+    expect(codeView("Condition (JMESPath) *").state.doc.toString()).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
     await waitFor(() => expect(screen.queryByTestId("node-filter")).toBeNull());
     fireEvent.click(screen.getByRole("button", { name: "Rétablir" }));
@@ -440,5 +464,238 @@ describe("workflow editor", () => {
     });
     renderEditor();
     expect(await screen.findByText(/part de la v1, mais la v3 a été publiée/)).toBeInTheDocument();
+  });
+});
+
+const nodeRun = (nodeId: string, status: string, extra: Record<string, unknown> = {}) => ({
+  node_id: nodeId,
+  attempt: 1,
+  status,
+  queue: "default",
+  scheduled_at: "2026-10-22T09:00:00Z",
+  started_at: "2026-10-22T09:00:01Z",
+  finished_at: status === "succeeded" ? "2026-10-22T09:00:03Z" : null,
+  input_count: 1,
+  output_count: 1,
+  output_truncated: false,
+  error: null,
+  logs: [],
+  metrics: {},
+  ai_calls: 0,
+  ai_cost_usd: null,
+  ...extra,
+});
+
+const testGraph = {
+  schema_version: 1,
+  nodes: [
+    { id: "start", type: "trigger.manual", params: {} },
+    { id: "high", type: "transform.filter", params: { condition: { $expr: "json.score >= `7`" } } },
+    { id: "summary", type: "ai.summarize", params: { max_items: 2 } },
+  ],
+  edges: [
+    { id: "e1", from: { node: "start", port: "out" }, to: { node: "high", port: "in" } },
+    { id: "e2", from: { node: "high", port: "out" }, to: { node: "summary", port: "in" } },
+  ],
+};
+const event = {
+  cve_id: "CVE-2026-1234",
+  change_types: ["published"],
+  source: "nvd",
+  severity: "CRITICAL",
+  base_score: 9.8,
+};
+
+function stubTestApi(calls: Call[]) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: Request | string, init?: RequestInit) => {
+      const request = typeof input === "string" ? new Request(input, init) : input;
+      const path = new URL(request.url).pathname;
+      const text = request.method === "GET" ? "" : await request.clone().text();
+      const body = text ? JSON.parse(text) : null;
+      calls.push({ method: request.method, path, body });
+      const ws = "/api/v1/workspaces/voc";
+      const base = `${ws}/workflows/w1`;
+      if (path === "/api/v1/auth/me") return Response.json(me);
+      if (path === "/api/v1/node-types") return Response.json(TYPES);
+      if (path === base) return Response.json({ ...workflow, latest_graph: testGraph });
+      if (path === `${base}/draft`) return Response.json({ detail: "no_draft" }, { status: 404 });
+      if (path === `${ws}/workflow-samples/cve/CVE-2026-1234`) {
+        return Response.json({ event, summary: { ...event, description: "RCE" } });
+      }
+      if (path === `${ws}/workflows/preview-expression`) {
+        return Response.json({ value: body.item.json.base_score >= 7, error: null });
+      }
+      if (path === `${base}/test-node`) {
+        return Response.json({ run_id: `t-${body.node_id}`, created: true }, { status: 202 });
+      }
+      if (path === `${ws}/runs/t-high`) {
+        return Response.json({
+          status: "succeeded",
+          error: null,
+          node_runs: [nodeRun("high", "succeeded")],
+        });
+      }
+      if (path === `${ws}/runs/t-high/nodes/high`) {
+        return Response.json({
+          ...nodeRun("high", "succeeded"),
+          output: { out: [{ json: event }] },
+        });
+      }
+      if (path === `${base}/nodes/high/outputs`) {
+        return Response.json([
+          {
+            run_id: "t-high",
+            mode: "test",
+            status: "succeeded",
+            finished_at: "2026-10-22T09:00:03Z",
+            output_count: 1,
+            version_no: null,
+          },
+        ]);
+      }
+      if (path === `${ws}/ai-budget`) {
+        return Response.json({
+          monthly_limit_usd: "10.00",
+          hard_stop: true,
+          period: "2026-10-01",
+          spent_usd: "2.500000",
+          percent: 25,
+          exhausted: false,
+          alerts_sent: [],
+          history: [],
+        });
+      }
+      return Response.json([]);
+    }),
+  );
+}
+
+async function selectNode(id: string) {
+  fireEvent.click(await screen.findByTestId(`node-${id}`));
+}
+
+describe("node test and expressions", () => {
+  it("pins a real CVE, tests a node alone and previews its expression", async () => {
+    const calls: Call[] = [];
+    stubTestApi(calls);
+    renderEditor();
+    await selectNode("high");
+    fireEvent.click(await screen.findByRole("tab", { name: "Tester" }));
+    fireEvent.change(screen.getByLabelText("CVE du catalogue"), {
+      target: { value: "CVE-2026-1234" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Épingler cette CVE" }));
+    expect(await screen.findByText("1 élément épinglé")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tester ce nœud" }));
+    await waitFor(() => expect(screen.getAllByText("Réussi").length).toBeGreaterThan(0));
+    const post = calls.find((c) => c.path.endsWith("/test-node"));
+    expect(post?.body).toMatchObject({ node_id: "high", inputs: { in: [{ json: event }] } });
+    expect((post?.body as { graph: Graph }).graph.nodes.map((n) => n.id)).toEqual([
+      "start",
+      "high",
+      "summary",
+    ]);
+    // The output, shown as data; the canvas node carries the test's status.
+    expect(await screen.findByText("Port « out » : 1 élément(s)")).toBeInTheDocument();
+    expect(within(screen.getByTestId("node-high")).getByText("Réussi")).toBeInTheDocument();
+
+    // The pinned CVE is the sample of the expression preview, evaluated by the server.
+    fireEvent.click(screen.getByRole("tab", { name: "Paramètres du nœud" }));
+    typeCode("Condition (JMESPath) *", "json.base_score >= `7`");
+    expect(await screen.findByText("true", {}, { timeout: 3000 })).toBeInTheDocument();
+    const preview = calls.find((c) => c.path.endsWith("/preview-expression"));
+    expect(preview?.body).toEqual({ expr: "json.base_score >= `7`", item: { json: event } });
+  });
+
+  it("asks before a billed AI test, and pins the upstream node's last output", async () => {
+    const calls: Call[] = [];
+    stubTestApi(calls);
+    renderEditor();
+    await selectNode("summary");
+    fireEvent.click(await screen.findByRole("tab", { name: "Tester" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Épingler cette sortie" }));
+    expect(await screen.findByText("1 élément épinglé")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tester ce nœud" }));
+    expect(await screen.findByText(/2,5000 \$|2\.5000 \$/)).toBeInTheDocument();
+    expect(screen.getByText(/1 appel\(s\) au plus/)).toBeInTheDocument();
+    expect(calls.some((c) => c.path.endsWith("/test-node"))).toBe(false); // not before consent
+    // jsdom does not open native dialogs: the button is found by its text.
+    fireEvent.click(screen.getByText("Lancer le test (facturé)"));
+    await waitFor(() => expect(calls.some((c) => c.path.endsWith("/test-node"))).toBe(true));
+    const post = calls.find((c) => c.path.endsWith("/test-node"));
+    expect(post?.body).toMatchObject({ node_id: "summary", inputs: { in: [{ json: event }] } });
+  });
+});
+
+describe("run view", () => {
+  it("shows the run on its graph, updated live, with each node's AI cost", async () => {
+    let polls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: Request | string, init?: RequestInit) => {
+        const request = typeof input === "string" ? new Request(input, init) : input;
+        const path = new URL(request.url).pathname;
+        const ws = "/api/v1/workspaces/voc";
+        if (path === "/api/v1/auth/me") return Response.json(me);
+        if (path === "/api/v1/node-types") return Response.json(TYPES);
+        if (path === `${ws}/workflows/w1/versions/1`) {
+          return Response.json({ version_no: 1, graph: testGraph, comment: "" });
+        }
+        if (path === `${ws}/runs/r1`) {
+          polls += 1;
+          const done = polls > 2; // the page, then a first poll, see it running
+          return Response.json({
+            id: "r1",
+            workflow_id: "w1",
+            version_no: 1,
+            trigger_type: "manual",
+            status: done ? "succeeded" : "running",
+            queued_at: "2026-10-22T09:00:00Z",
+            started_at: "2026-10-22T09:00:01Z",
+            finished_at: done ? "2026-10-22T09:00:09Z" : null,
+            error: null,
+            stats: {},
+            mode: "normal",
+            test_node_id: null,
+            trigger_node_id: "start",
+            triggered_by: "u1",
+            trigger_payload: { cve_id: "CVE-2026-1234" },
+            cancel_requested: false,
+            deadline_at: null,
+            approvals: [],
+            node_runs: [
+              nodeRun("start", "succeeded"),
+              nodeRun("high", "succeeded"),
+              nodeRun("summary", done ? "succeeded" : "running", {
+                ai_calls: done ? 2 : 0,
+                ai_cost_usd: done ? "0.024000" : null,
+              }),
+            ],
+          });
+        }
+        if (path === `${ws}/runs/r1/nodes/summary`) {
+          return Response.json({
+            ...nodeRun("summary", "succeeded", { ai_calls: 2, ai_cost_usd: "0.024000" }),
+            output: { out: [{ json: { summary: hostile } }] },
+          });
+        }
+        return Response.json([]);
+      }),
+    );
+    render(<App router={createMemoryRouter(routes, { initialEntries: ["/runs/r1"] })} />);
+    const summary = await screen.findByTestId("node-summary");
+    expect(within(summary).getByText("En cours")).toBeInTheDocument();
+    await waitFor(() => expect(within(summary).getByText("Réussi")).toBeInTheDocument(), {
+      timeout: 4000,
+    });
+    expect(within(summary).getByText(/IA 0\.0240 \$/)).toBeInTheDocument();
+    fireEvent.click(summary);
+    expect(await screen.findByText("2 appels, 0.0240 $ estimés")).toBeInTheDocument();
+    expect(screen.getByText(/onerror=alert\(1\)/)).toBeInTheDocument(); // output, as text
+    expect(document.querySelector("img")).toBeNull();
   });
 });

@@ -2,16 +2,33 @@ import { type Schemas, unwrap } from "@vv/api-client";
 import { errorMessage } from "@vv/auth";
 import { Alert, Button, Card, DataTable, PageHeader, TextField } from "@vv/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { client } from "../../api";
 import { formatDate } from "../../lib";
 import { useWorkspace } from "../../workspace";
+import { parseGraph } from "./editor/model";
+import { followRun } from "./follow";
+import { NodeResult } from "./NodeResult";
 import { duration, JsonBlock, StatusBadge, TERMINAL } from "./shared";
 
 type NodeRun = Schemas["NodeRunOut"];
+type RunDetail = Schemas["RunDetailOut"];
+
+// The canvas library is loaded with the run view only.
+const RunCanvas = lazy(async () => ({
+  default: (await import("./editor/RunCanvas")).RunCanvas,
+}));
+
+/** A node state from the event stream, merged into the run (by node and attempt). */
+function merged(run: RunDetail, node: NodeRun): RunDetail {
+  const others = run.node_runs.filter(
+    (n) => !(n.node_id === node.node_id && n.attempt === node.attempt),
+  );
+  return { ...run, node_runs: [...others, node] };
+}
 
 export function RunPage() {
   const { t } = useTranslation();
@@ -26,8 +43,6 @@ export function RunPage() {
   const run = useQuery({
     queryKey: key,
     enabled: Boolean(slug),
-    refetchInterval: (query) =>
-      query.state.data && TERMINAL.has(query.state.data.status) ? false : 3000,
     queryFn: async () =>
       unwrap(
         await client.GET("/api/v1/workspaces/{workspace}/runs/{run_id}", {
@@ -35,8 +50,52 @@ export function RunPage() {
         }),
       ),
   });
+  const status = run.data?.status;
+  const live = Boolean(status && !TERMINAL.has(status));
+  // Live updates while the run goes on: node states from the event stream.
+  useEffect(() => {
+    if (!live || !slug) return;
+    return followRun(slug, id, {
+      onNode: (n) =>
+        queryClient.setQueryData<RunDetail>(["run", slug, id], (current) =>
+          current ? merged(current, n) : current,
+        ),
+      onRun: (next, error) => {
+        queryClient.setQueryData<RunDetail>(["run", slug, id], (current) =>
+          current ? { ...current, status: next, error } : current,
+        );
+        if (TERMINAL.has(next)) void queryClient.invalidateQueries({ queryKey: ["run", slug, id] });
+      },
+    });
+  }, [live, slug, id, queryClient]);
+  const versionNo = run.data?.version_no;
+  const version = useQuery({
+    queryKey: ["workflow-version", workspace, run.data?.workflow_id, versionNo],
+    enabled: Boolean(slug && run.data && versionNo),
+    staleTime: Infinity, // versions are immutable
+    queryFn: async () =>
+      unwrap(
+        await client.GET(
+          "/api/v1/workspaces/{workspace}/workflows/{workflow_id}/versions/{version_no}",
+          {
+            params: {
+              path: {
+                workspace,
+                workflow_id: run.data?.workflow_id ?? "",
+                version_no: versionNo ?? 0,
+              },
+            },
+          },
+        ),
+      ),
+  });
+  const types = useQuery({
+    queryKey: ["node-types"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => unwrap(await client.GET("/api/v1/node-types")),
+  });
   const node = useQuery({
-    queryKey: ["node-run", workspace, id, selected],
+    queryKey: ["node-run", workspace, id, selected, status],
     enabled: Boolean(slug && selected),
     queryFn: async () =>
       unwrap(
@@ -135,6 +194,22 @@ export function RunPage() {
           ) : null}
         </Card>
       ))}
+      {version.data && types.data ? (
+        <Suspense fallback={<p className="vv-muted">{t("auth.loading")}</p>}>
+          <RunCanvas
+            graph={parseGraph(version.data.graph)}
+            types={types.data}
+            nodeRuns={r.node_runs}
+            selected={selected}
+            onSelect={setSelected}
+          />
+        </Suspense>
+      ) : null}
+      {selected && node.data ? (
+        <Card title={t("runs.nodeDetail", { node: selected })}>
+          <NodeResult result={node.data} />
+        </Card>
+      ) : null}
       <Card title={t("runs.payload")}>
         <JsonBlock value={r.trigger_payload} />
       </Card>
@@ -173,15 +248,6 @@ export function RunPage() {
           { key: "error", header: t("workflows.error"), render: (n) => n.error ?? "" },
         ]}
       />
-      {selected && node.data ? (
-        <Card title={t("runs.nodeDetail", { node: selected })}>
-          <p className="vv-muted">{t("runs.untrustedHint")}</p>
-          <h3>{t("runs.logs")}</h3>
-          <JsonBlock value={node.data.logs} />
-          <h3>{t("runs.output")}</h3>
-          <JsonBlock value={node.data.output} />
-        </Card>
-      ) : null}
     </>
   );
 }

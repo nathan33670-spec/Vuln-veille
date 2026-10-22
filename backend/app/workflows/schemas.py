@@ -2,9 +2,12 @@
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.workflows.expressions import MAX_EXPRESSION, MAX_TEMPLATE
 
 
 class _In(BaseModel):
@@ -155,6 +158,9 @@ class NodeRunOut(BaseModel):
     error: str | None
     logs: list[Any]
     metrics: dict[str, Any]
+    # AI engine calls made by the node (agents and AI tasks), and their estimated cost.
+    ai_calls: int = 0
+    ai_cost_usd: Decimal | None = None
 
 
 class NodeRunDetailOut(NodeRunOut):
@@ -171,6 +177,8 @@ class ApprovalOut(BaseModel):
 
 
 class RunDetailOut(RunSummaryOut):
+    mode: str
+    test_node_id: str | None
     trigger_node_id: str
     triggered_by: uuid.UUID | None
     trigger_payload: dict[str, Any]
@@ -225,3 +233,43 @@ class TestNodeIn(_In):
         default_factory=dict,
         description="Éléments épinglés par port d'entrée ({json, meta}), par ex. une CVE réelle",
     )
+
+
+class PreviewIn(_In):
+    """An expression or a template evaluated on a sample item, as a node would."""
+
+    expr: str | None = Field(default=None, min_length=1, max_length=MAX_EXPRESSION)
+    tpl: str | None = Field(default=None, max_length=MAX_TEMPLATE)
+    item: dict[str, Any] = Field(
+        default_factory=dict, description="Élément d'exemple : {json, meta}"
+    )
+
+    @model_validator(mode="after")
+    def _one(self) -> "PreviewIn":
+        if (self.expr is None) == (self.tpl is None):
+            raise ValueError("expr or tpl, exactly one")
+        return self
+
+
+class PreviewOut(BaseModel):
+    value: Any = None
+    error: str | None = None
+    truncated: bool = False
+
+
+class CveSampleOut(BaseModel):
+    """A catalogue CVE as a workflow sees it: the NVD event, or the CVE record."""
+
+    event: dict[str, Any]
+    summary: dict[str, Any]
+
+
+class NodeOutputOut(BaseModel):
+    """A past output of a node, reusable as pinned data."""
+
+    run_id: uuid.UUID
+    mode: str
+    status: str
+    finished_at: datetime | None
+    output_count: int
+    version_no: int | None

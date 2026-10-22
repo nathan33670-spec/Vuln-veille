@@ -623,6 +623,43 @@
         "kev_added": "Entrée au catalogue KEV",
         "exploit_reference_added": "Référence d'exploit ajoutée",
         "rejected": "CVE rejetée"
+      },
+      "tooLarge": "Résultat trop volumineux pour l'aperçu (64 Kio au maximum).",
+      "previewNeedsSample": "Aperçu : chargez des données d'exemple dans l'onglet « Tester » de ce nœud.",
+      "preview": "Aperçu sur l'élément d'exemple :",
+      "sideTabs": "Panneau du nœud",
+      "test": {
+        "title": "Tester",
+        "hint": "Le nœud est exécuté seul, sur les données épinglées, avec le graphe en cours d'édition. Les nœuds de sortie tournent à blanc (rien n'est envoyé) et les écritures en base sont annulées.",
+        "noInput": "Ce nœud n'a pas d'entrée : testez le nœud suivant, avec une CVE réelle par exemple.",
+        "cve": "CVE du catalogue",
+        "shape": "Forme de l'élément",
+        "shapes": {
+          "event": "Événement NVD (comme le déclencheur « Nouvelle CVE »)",
+          "summary": "Fiche CVE complète (comme le catalogue)"
+        },
+        "toPort": "Port d'entrée",
+        "loadCve": "Épingler cette CVE",
+        "upstream": "Liaison amont",
+        "outputOf": "Sortie de « {{node}} »",
+        "noOutput": "« {{node}} » n'a pas encore de sortie : testez-le, ou attendez une exécution.",
+        "fromTest": "Test du {{at}} ({{count}} élément(s))",
+        "fromRun": "Exécution v{{version}} du {{at}} ({{count}} élément(s))",
+        "loadOutput": "Épingler cette sortie",
+        "pinned_one": "{{count}} élément épinglé",
+        "pinned_other": "{{count}} éléments épinglés",
+        "port": "Port « {{port}} » : {{count}} élément(s)",
+        "run": "Tester ce nœud",
+        "aiTitle": "Appel réel au moteur IA",
+        "aiWarning": "Ce test appelle réellement le moteur IA de l'espace ({{calls}} appel(s) au plus) et son coût est compté dans le budget du mois.",
+        "budget": "Budget du mois : {{spent}} $ dépensés sur {{limit}} $ ({{percent}} %).",
+        "noBudget": "Aucun plafond mensuel ; {{spent}} $ dépensés ce mois-ci.",
+        "exhausted": "Le budget du mois est épuisé : le test serait refusé.",
+        "aiConfirm": "Lancer le test (facturé)",
+        "aiCost": "Moteur IA",
+        "aiCalls_one": "{{count}} appel, {{cost}} $ estimés",
+        "aiCalls_other": "{{count}} appels, {{cost}} $ estimés",
+        "runId": "Exécution de test"
       }
     }
   },
@@ -648,7 +685,8 @@
     "nodeDetail": "Nœud {{node}}",
     "untrustedHint": "Contenu collecté : données non fiables, affichées comme texte brut.",
     "logs": "Journal",
-    "output": "Sortie"
+    "output": "Sortie",
+    "aiCost": "IA {{cost}} $"
   },
   "errors": {
     "version_conflict": "Quelqu'un a modifié cet élément entre-temps. Rechargez la page.",

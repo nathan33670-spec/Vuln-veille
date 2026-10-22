@@ -9,6 +9,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.14",
     "@tanstack/react-query": "^5.104.1",
     "@vv/api-client": "workspace:*",
     "@vv/auth": "workspace:*",

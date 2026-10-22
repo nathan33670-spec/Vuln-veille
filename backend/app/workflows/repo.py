@@ -49,6 +49,17 @@ def cve_summary(cve: CveRecord) -> dict[str, Any]:
     }
 
 
+def cve_event(cve: CveRecord) -> dict[str, Any]:
+    """The ``cve.published`` event of a catalogue CVE, as the NVD sync announces it."""
+    return {
+        "cve_id": cve.cve_id,
+        "change_types": ["published"],
+        "source": "nvd",
+        "severity": cve.severity,
+        "base_score": _num(cve.base_score),
+    }
+
+
 @dataclass
 class WorkspaceRepo:
     db: AsyncSession

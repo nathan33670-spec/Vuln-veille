@@ -12,16 +12,20 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import asdict
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from fastapi.responses import StreamingResponse
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.ai.agents.models import AgentRun
 from app.audit.service import AuditEntry, record
+from app.catalog.models import CveRecord
 from app.core.access import public_endpoint
 from app.core.errors import ApiError
 from app.core.ids import uuid7
@@ -41,6 +45,7 @@ from app.workflows.engine import (
     decide_approval,
     start_run,
 )
+from app.workflows.expressions import Expr, ExpressionError, Tpl
 from app.workflows.graph import GraphValidationError
 from app.workflows.models import (
     NodeRun,
@@ -51,15 +56,20 @@ from app.workflows.models import (
     WorkflowTrigger,
     WorkflowVersion,
 )
+from app.workflows.repo import cve_event, cve_summary
 from app.workflows.schemas import (
     ActivationOut,
     ApprovalDecision,
     ApprovalOut,
+    CveSampleOut,
     DraftIn,
     DraftOut,
+    NodeOutputOut,
     NodeRunDetailOut,
     NodeRunOut,
     NodeTypeOut,
+    PreviewIn,
+    PreviewOut,
     ReferenceFieldOut,
     RunCreate,
     RunDetailOut,
@@ -636,13 +646,16 @@ def _routes_runs(router: APIRouter) -> None:
     async def get_run(run_id: uuid.UUID, access: Reader, db: DB) -> RunDetailOut:
         run = await _run(db, access, run_id)
         numbers = await _version_numbers(db, {run.version_id})
-        node_runs = (
-            await db.execute(
-                select(NodeRun)
-                .where(NodeRun.run_id == run.id)
-                .order_by(NodeRun.scheduled_at, NodeRun.attempt)
-            )
-        ).scalars()
+        node_runs = list(
+            (
+                await db.execute(
+                    select(NodeRun)
+                    .where(NodeRun.run_id == run.id)
+                    .order_by(NodeRun.scheduled_at, NodeRun.attempt)
+                )
+            ).scalars()
+        )
+        costs = await _ai_costs(db, node_runs)
         approvals = (
             await db.execute(select(WorkflowApproval).where(WorkflowApproval.run_id == run.id))
         ).scalars()
@@ -653,7 +666,9 @@ def _routes_runs(router: APIRouter) -> None:
             trigger_payload=run.trigger_payload,
             cancel_requested=run.cancel_requested,
             deadline_at=run.deadline_at,
-            node_runs=[_node_run_out(n) for n in node_runs],
+            mode=run.mode,
+            test_node_id=run.test_node_id,
+            node_runs=[_node_run_out(n, costs) for n in node_runs],
             approvals=[
                 ApprovalOut(
                     node_id=a.node_id,
@@ -685,7 +700,10 @@ def _routes_runs(router: APIRouter) -> None:
         ).scalar_one_or_none()
         if node_run is None:
             raise HTTPException(status_code=404, detail="not_found")
-        return NodeRunDetailOut(**_node_run_out(node_run).model_dump(), output=node_run.output)
+        costs = await _ai_costs(db, [node_run])
+        return NodeRunDetailOut(
+            **_node_run_out(node_run, costs).model_dump(), output=node_run.output
+        )
 
     @router.post("/runs/{run_id}/cancel", response_model=RunSummaryOut, status_code=202)
     async def cancel_run(
@@ -740,7 +758,27 @@ def _routes_runs(router: APIRouter) -> None:
         return run_summary(run, numbers)
 
 
-def _node_run_out(node_run: NodeRun) -> NodeRunOut:
+async def _ai_costs(
+    db: AsyncSession, node_runs: list[NodeRun]
+) -> dict[uuid.UUID, tuple[int, Decimal]]:
+    """AI engine calls per node run (agent runs record the node run as their context)."""
+    if not node_runs:
+        return {}
+    rows = await db.execute(
+        select(AgentRun.context_id, func.count(), func.sum(AgentRun.cost_estimate_usd))
+        .where(
+            AgentRun.context_type == "node_run",
+            AgentRun.context_id.in_([str(n.id) for n in node_runs]),
+        )
+        .group_by(AgentRun.context_id)
+    )
+    return {uuid.UUID(ctx): (count, cost or Decimal(0)) for ctx, count, cost in rows.all()}
+
+
+def _node_run_out(
+    node_run: NodeRun, costs: dict[uuid.UUID, tuple[int, Decimal]] | None = None
+) -> NodeRunOut:
+    calls, cost = (costs or {}).get(node_run.id, (0, None))
     return NodeRunOut(
         node_id=node_run.node_id,
         attempt=node_run.attempt,
@@ -755,6 +793,8 @@ def _node_run_out(node_run: NodeRun) -> NodeRunOut:
         error=node_run.error,
         logs=node_run.logs,
         metrics=node_run.metrics,
+        ai_calls=calls,
+        ai_cost_usd=cost,
     )
 
 
@@ -787,6 +827,8 @@ def _route_hooks(router: APIRouter) -> None:
 # Editor (phase 5): drafts, a node tested alone, run events ------------------------
 
 MAX_PINNED = 200
+MAX_PREVIEW_BYTES = 64 * 1024
+CveIdPath = Annotated[str, Path(pattern=r"^(?i:CVE)-\d{4}-\d{4,19}$")]
 MAX_DRAFT_BYTES = 512 * 1024
 EVENTS_SECONDS = 600
 POLL_SECONDS = 1.0
@@ -921,6 +963,78 @@ def _routes_editor(router: APIRouter) -> None:
         await db.commit()
         advance_task(tasks_of(request), run.id, access.workspace.id)
         return RunStarted(run_id=run.id, created=True)
+
+    @router.post("/workflows/preview-expression", response_model=PreviewOut)
+    async def preview_expression(body: PreviewIn, request: Request, access: Editor) -> PreviewOut:
+        """Evaluates an expression or a template on a sample item, with the engine's own
+        evaluator and limits. The item is data: it is never compiled."""
+        if len(json.dumps(body.item, default=str)) > LIMITS.max_item_bytes:
+            raise HTTPException(status_code=413, detail="payload_too_large")
+        limiter: RateLimiter = request.app.state.rate_limiter
+        if not await limiter.hit("expr_preview", str(access.principal.user_id), 1200, 3600):
+            raise HTTPException(status_code=429, detail="rate_limited")
+        item = body.item
+        context = {
+            "json": item.get("json", {}) if isinstance(item.get("json"), dict) else {},
+            "meta": item.get("meta", {}) if isinstance(item.get("meta"), dict) else {},
+            "run": {"id": "preview", "trigger": "test", "payload": {}},
+            "nodes": {},
+        }
+        try:
+            if body.expr is not None:
+                value: Any = Expr.model_validate({"$expr": body.expr}).evaluate(context)
+            else:
+                value = Tpl.model_validate({"$tpl": body.tpl}).render(context)
+        except ValidationError as exc:
+            return PreviewOut(error=str(exc.errors()[0].get("ctx", {}).get("error", "invalid")))
+        except ExpressionError as exc:
+            return PreviewOut(error=str(exc))
+        if len(json.dumps(value, default=str)) > MAX_PREVIEW_BYTES:
+            return PreviewOut(truncated=True)
+        return PreviewOut(value=value)
+
+    @router.get("/workflow-samples/cve/{cve_id}", response_model=CveSampleOut)
+    async def cve_sample(cve_id: CveIdPath, access: Editor, db: DB) -> CveSampleOut:
+        """A real catalogue CVE as pinned data: the NVD event that starts a run, or the
+        CVE record that catalogue nodes produce."""
+        cve = await db.get(CveRecord, cve_id.upper())
+        if cve is None:
+            raise HTTPException(status_code=404, detail="not_found")
+        return CveSampleOut(event=cve_event(cve), summary=cve_summary(cve))
+
+    @router.get(
+        "/workflows/{workflow_id}/nodes/{node_id}/outputs", response_model=list[NodeOutputOut]
+    )
+    async def node_outputs(
+        workflow_id: uuid.UUID, node_id: NodeIdPath, access: Reader, db: DB
+    ) -> list[NodeOutputOut]:
+        """Recent successful outputs of a node (test and real runs), to pin downstream."""
+        workflow = await _workflow(db, access, workflow_id)
+        rows = (
+            await db.execute(
+                select(NodeRun, WorkflowRun)
+                .join(WorkflowRun, WorkflowRun.id == NodeRun.run_id)
+                .where(
+                    WorkflowRun.workflow_id == workflow.id,
+                    NodeRun.node_id == node_id,
+                    NodeRun.status == "succeeded",
+                )
+                .order_by(NodeRun.finished_at.desc())
+                .limit(20)
+            )
+        ).all()
+        numbers = await _version_numbers(db, {run.version_id for _, run in rows})
+        return [
+            NodeOutputOut(
+                run_id=run.id,
+                mode=run.mode,
+                status=node.status,
+                finished_at=node.finished_at,
+                output_count=node.output_count,
+                version_no=numbers.get(run.version_id),
+            )
+            for node, run in rows
+        ]
 
     @router.get("/runs/{run_id}/events")
     async def run_events(

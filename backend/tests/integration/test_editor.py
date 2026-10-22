@@ -2,6 +2,7 @@
 a node tested alone on pinned inputs (dry-run, no data left behind), run events."""
 
 import json
+import uuid
 from typing import Any
 
 import asyncpg
@@ -9,7 +10,7 @@ import pytest
 
 from tests.integration.conftest import Api, ApiFactory, Database
 from tests.integration.helpers import sign_in
-from tests.integration.seed import create_user
+from tests.integration.seed import WORKSPACE_IDS, create_user
 from tests.integration.workflow_harness import harness
 
 pytestmark = pytest.mark.integration
@@ -109,6 +110,7 @@ async def test_drafts_test_node_and_events(
     pinned = {"in": [{"json": {"cve_id": CVE, "score": 9.8}}, {"json": {"score": 3}}]}
     async with harness(database, redis_url) as engine:
         results: dict[str, Any] = {}
+        run_ids: dict[str, str] = {}
         for node_id in ("high", "upsert", "notify"):
             started = await api.client.post(
                 api.url(f"{base}/test-node"),
@@ -119,10 +121,11 @@ async def test_drafts_test_node_and_events(
             engine.tasks.sent.extend(api.tasks.sent)
             api.tasks.sent.clear()
             await engine.drain()
-            run_id = started.json()["run_id"]
+            run_id = run_ids[node_id] = started.json()["run_id"]
             run = (await api.client.get(api.url(f"/workspaces/voc/runs/{run_id}"))).json()
             assert run["status"] == "succeeded", run
             assert [n["node_id"] for n in run["node_runs"]] == [node_id]  # that node only
+            assert (run["mode"], run["test_node_id"]) == ("test", node_id)
             node = (
                 await api.client.get(api.url(f"/workspaces/voc/runs/{run_id}/nodes/{node_id}"))
             ).json()
@@ -157,3 +160,89 @@ async def test_drafts_test_node_and_events(
     assert events[0][0] == "node"
     assert events[0][1]["node_id"] == "notify"
     assert events[-1] == ("run", {"status": "succeeded", "error": None})
+
+    # Past outputs of a node, reusable as pinned data downstream.
+    outputs = (await api.client.get(api.url(f"{base}/nodes/high/outputs"))).json()
+    assert [(o["run_id"], o["mode"], o["output_count"]) for o in outputs] == [
+        (run_ids["high"], "test", 1)
+    ]
+
+    # AI engine calls made by a node are counted on it, with their estimated cost.
+    node_run_id = (
+        await _sql(
+            database, "SELECT id FROM node_runs WHERE run_id = $1", uuid.UUID(run_ids["upsert"])
+        )
+    )[0]["id"]
+    await _sql(
+        database,
+        "INSERT INTO agent_runs (id, workspace_id, task, spec, context_type, context_id, input, "
+        "status, turns, tool_calls, input_tokens, output_tokens, cache_read_tokens, "
+        "cache_write_tokens, cost_estimate_usd, sources, injection_flags, queued_at) "
+        "VALUES ($1, $2, 'ai.summarize', '{}', 'node_run', $3, '{}', 'succeeded', 1, 0, 10, 5, "
+        "0, 0, 0.012, '[]', '[]', now())",
+        uuid.uuid4(),
+        WORKSPACE_IDS["voc"],
+        str(node_run_id),
+    )
+    detail = (await api.client.get(api.url(f"/workspaces/voc/runs/{run_ids['upsert']}"))).json()
+    assert (detail["node_runs"][0]["ai_calls"], detail["node_runs"][0]["ai_cost_usd"]) == (
+        1,
+        "0.012000",
+    )
+
+
+async def test_expression_preview_and_samples(make_api: ApiFactory, database: Database) -> None:
+    analyst = await create_user(
+        database.admin_dsn, "voc@voc.example.com", workspaces={"voc": "analyst"}, with_totp=True
+    )
+    viewer = await create_user(
+        database.admin_dsn, "view@voc.example.com", workspaces={"voc": "viewer"}, with_totp=True
+    )
+    api: Api = await make_api("backoffice")
+    h = {"x-csrf-token": await sign_in(api, analyst)}
+    preview = api.url("/workspaces/voc/workflows/preview-expression")
+    item = {"json": {"score": 9.8, "cve_id": CVE, "text": "{{ 7 * 7 }}"}, "meta": {"trust": "x"}}
+
+    async def evaluate(body: dict[str, Any]) -> dict[str, Any]:
+        response = await api.client.post(preview, json=body, headers=h)
+        assert response.status_code == 200, response.text
+        return dict(response.json())
+
+    assert (await evaluate({"expr": "json.score >= `7`", "item": item}))["value"] is True
+    assert (await evaluate({"expr": "json.[", "item": item}))["error"].startswith(
+        "invalid expression"
+    )
+    rendered = await evaluate({"tpl": "{{ json.cve_id }} : {{ json.text }}", "item": item})
+    assert rendered["value"] == f"{CVE} : {{{{ 7 * 7 }}}}"  # item data is never compiled
+    bad = await api.client.post(preview, json={"expr": "a", "tpl": "b"}, headers=h)
+    assert bad.status_code == 422
+
+    # A real catalogue CVE, as the NVD event or as the CVE record.
+    assert (
+        await api.client.get(api.url(f"/workspaces/voc/workflow-samples/cve/{CVE}"))
+    ).status_code == 404
+    await _sql(
+        database,
+        "INSERT INTO cve_records (cve_id, description, base_score, severity, first_seen_at, "
+        "synced_at) VALUES ($1, 'RCE', 9.8, 'CRITICAL', now(), now())",
+        CVE,
+    )
+    sample = (
+        await api.client.get(api.url(f"/workspaces/voc/workflow-samples/cve/{CVE.lower()}"))
+    ).json()
+    assert sample["event"] == {
+        "cve_id": CVE,
+        "change_types": ["published"],
+        "source": "nvd",
+        "severity": "CRITICAL",
+        "base_score": 9.8,
+    }
+    assert sample["summary"]["description"] == "RCE"
+
+    # Both are editor tools.
+    await api.client.post(api.url("/auth/logout"), headers=h)
+    hv = {"x-csrf-token": await sign_in(api, viewer)}
+    denied = await api.client.post(preview, json={"expr": "json", "item": item}, headers=hv)
+    assert denied.status_code == 403
+    sample_denied = await api.client.get(api.url(f"/workspaces/voc/workflow-samples/cve/{CVE}"))
+    assert sample_denied.status_code == 403

@@ -4,7 +4,7 @@
 
 - **Phase** : 6 (modèles de bulletins et drafts) **terminée** : critère de sortie atteint et testé dans un navigateur (`tests/integration/test_phase6_exit.py`). Prochaine phase : 7 (publication), voir `docs/PLAN.md`.
 - **Dernière étape terminée** : interfaces des bulletins (merge request 6C, 6.3 et 6.9) : bibliothèque et éditeur de modèles avec aperçu serveur, demande de draft suivie en direct, éditeur de bulletin (champs, aperçu, révisions et différences, régénération d'un champ, marquage et audience), relecture, validation, publication, traduction, retrait. Drafts et cycle de vie (6B) dans la merge request précédente.
-- **Étape en cours** : merge requests 6B (`claude/phase-6-bulletins`) et 6C (`claude/phase-6-bulletin-ui`) en revue ; 6C se fusionne après 6B.
+- **Étape en cours** : merge request 6C en revue (branche `claude/phase-6-bulletin-ui`) ; 6A et 6B sont fusionnées.
 - **Prochaine étape** : phase 7 — lire sa section du plan et `docs/specs/05-publishing-connectors.md` avant de commencer.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.

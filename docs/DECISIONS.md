@@ -152,7 +152,7 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 ## ADR-019 — Humain dans la boucle pour toute diffusion
 
 - **Statut** : Proposée
-- **Décision** : aucun contenu produit par l'IA n'atteint un client ou une API distante sans action explicite d'un analyste (approbation de bulletin, nœud `control.approval` obligatoire avant `publish.api`). La double validation est configurable par espace et activée par défaut pour le portail.
+- **Décision** : aucun contenu produit par l'IA n'atteint un client ou une API distante sans action explicite d'un analyste (approbation de bulletin, nœud `control.approval` obligatoire avant `publish.api`). La double validation est configurable par espace et **désactivée par défaut** (Q4) : un analyste peut approuver et publier son propre bulletin, avec une MFA récente ; un espace qui l'active impose un relecteur différent de l'auteur (`bulletin_settings.review_required`).
 
 ## ADR-020 — NVD, vecteur d'entrée n°1 des investigations
 
@@ -245,4 +245,15 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - Seules des URL de posts X sont retenues, comme candidates : chacune est lue ensuite par l'oEmbed officiel, et une URL inventée revient « retirée ». Le texte renvoyé par le moteur n'est jamais transmis tel quel.
   - Chaque recherche est un appel au moteur comme un autre : contrôle du budget, trace (`purpose: web_search`), coût estimé avec le prix par millier de recherches du modèle (`price_web_search_per_k`, 10 USD chez Claude ; gratuit dans le quota de Gemini).
 - **Conséquences** : la couverture de X dépend du moteur préféré ; l'indicateur de couverture (`/workspaces/{espace}/x-coverage`) permet de le mesurer, en le comparant à un échantillon vérifié à la main. SearXNG reste écarté (Q30).
+
+## ADR-029 — Rendu des bulletins : Liquid restreint, Markdown sans HTML, assainissement nh3
+
+- **Statut** : Acceptée (2026-10-22, phase 6)
+- **Contexte** : le gabarit de rendu est écrit par un analyste, les valeurs des champs viennent du moteur IA ou des données collectées (non fiables). Le HTML produit part vers le portail, l'e-mail et des API distantes.
+- **Décision** :
+  - Gabarit Liquid dans un environnement dédié : filtres en liste blanche (vérifiés statiquement à l'enregistrement, y compris sur les branches non atteintes par l'aperçu), sans `include` ni `render`, limites de boucles, de profondeur et de taille de sortie. Les valeurs sont insérées comme texte et ne sont jamais réinterprétées comme gabarit.
+  - Markdown rendu par markdown-it-py en mode CommonMark avec `html=False` : le HTML présent dans une valeur est échappé.
+  - HTML final assaini par nh3 : liste blanche de balises (titres, paragraphes, listes, tableaux, code, liens), liens `http`, `https` et `mailto` uniquement, avec `rel="noopener noreferrer nofollow"`, aucune image (pas de chargement distant sur le portail).
+  - L'aperçu d'un modèle est calculé par le serveur avec exactement ces règles.
+- **Conséquences** : un modèle ne peut pas produire de mise en forme hors de cette liste ; un lien inventé par le moteur reste possible en `http(s)` et passe par la relecture humaine (ADR-019).
 

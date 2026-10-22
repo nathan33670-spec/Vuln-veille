@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 5 (éditeur visuel de workflows) **terminée** : critère de sortie atteint et testé dans un navigateur. La phase 4 est terminée et le jalon 1 atteint.
-- **Dernière étape terminée** : versions des workflows (merge request 5D) : historique, comparaison visuelle et JSON de deux versions ou du brouillon, restauration, import/export, cron expliqué (5.6) ; critère de sortie de la phase 5 testé dans Chromium contre la vraie API (`tests/integration/test_phase5_exit.py`). Expressions, test de nœud et vue d'exécution (5C) fusionnés.
-- **Étape en cours** : merge request 5D en revue (branche `claude/phase-5-editor-versions`).
-- **Prochaine étape** : phase 6 (modèles de bulletins et drafts), en commençant par la spec 04 et les questions ouvertes qui la concernent. À envisager : exécuter le test navigateur en CI (job dédié avec Chromium et Playwright).
+- **Phase** : 6 (modèles de bulletins et drafts) **en cours**. La phase 5 est terminée (critère de sortie atteint et testé dans un navigateur).
+- **Dernière étape terminée** : modèles de bulletins (merge request 6A) : modèles versionnés et validés, rendu sûr (ADR-029), sélection par règles et priorité, aperçu côté serveur, réglages d'espace, modèles livrés (6.1, 6.2 ; l'éditeur de modèle de 6.3 viendra avec les interfaces). Versions de workflows et fin de la phase 5 (5D) fusionnées.
+- **Étape en cours** : merge request 6A en revue (branche `claude/phase-6-templates`).
+- **Prochaine étape** : merge request 6B : demande de draft et génération (sortie structurée, champs calculés, rendu), cycle de vie et révisions, TLP et audience, nœud `bulletin.generate_draft` (6.4 à 6.8) ; puis 6C : interfaces et critère de sortie de la phase 6.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -55,9 +55,17 @@
   - Éditeur, test et exécutions (5C) : les champs JMESPath et Liquid sont des éditeurs CodeMirror 6 montés dans un shadow root (leurs styles passent par une feuille construite, `adoptedStyleSheets`, que la CSP `style-src 'self'` autorise ; une balise `<style>` serait bloquée), avec complétion des chemins de l'élément d'exemple et des fonctions. L'aperçu est calculé par le serveur (`POST …/workflows/preview-expression`, même évaluateur et mêmes limites qu'à l'exécution, 1 200 aperçus par heure) sur le premier élément épinglé du nœud. Données épinglées (choix du porteur du projet) : une CVE du catalogue (`GET …/workflow-samples/cve/{id}`, sous forme d'événement NVD ou de fiche complète), ou la sortie d'un nœud amont lors de son dernier test ou d'une exécution réelle (`GET …/workflows/{id}/nodes/{nœud}/outputs`). Le test d'un nœud `ai.*` demande une confirmation explicite, avec le budget du mois. Le suivi d'une exécution passe par le flux SSE, ou par une interrogation toutes les 1,5 s sans EventSource ; la page d'exécution montre le graphe de la version (canvas chargé à la demande) avec statut, éléments entrés et sortis, durée et coût IA par nœud (`ai_calls`, `ai_cost_usd`, agrégés depuis `agent_runs`).
   - Versions (5D) : la restauration crée une nouvelle version depuis l'ancienne (`…/versions/{n}/restore`, revalidée avec les permissions de l'analyste, auditée `workflow.version_restored`) ; l'historique n'est jamais réécrit. La comparaison (`/workflows/{id}/compare?from=&to=`, `draft` accepté) ignore les positions sur le canvas. Fichiers d'échange : format `vuln-veille.workflow/1` ou graphe nu, 1 Mio au plus, lus comme JSON seulement et validés par le serveur. Le cron des planifications est expliqué en français par `cronstrue` (chargé avec l'éditeur).
   - Test navigateur (critère de sortie de la phase 5) : `tests/integration/test_phase5_exit.py` sert le back-office construit et l'API réelle sur `localhost` avec la CSP de production, fait tourner le moteur de workflows en processus et pilote Chromium (connexion avec TOTP, ajout d'un agent, modification d'un filtre, test sur une CVE, publication). Il est ignoré sans `VV_E2E_CHROMIUM` et `VV_E2E_PLAYWRIGHT` (PROCEDURES §4) ; il ne tourne donc pas encore en CI.
+  - Bulletins (phase 6, `app/bulletins/`) : réponses du porteur du projet Q37 (préfixe de référence configurable par espace), Q38 (TLP par défaut porté par le modèle, AMBER sinon), Q39 (modèles livrés : générique FR par défaut et EN, « exploitée ou critique »). La double validation reste désactivée par défaut (Q4 ; ADR-019 corrigée en ce sens) ; le critère de sortie de la phase 6 (« un second analyste valide ») sera testé avec l'option activée. Les modèles livrés sont créés par `seed-workflows` avec les réglages d'espace (préfixe = slug). PDF et e-mail aux clients : phase 8 (Q11).
   - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
 
 ## Journal
+
+### 2026-10-22 — Session 12 (suite) : modèles de bulletins (merge request 6A)
+
+- Migration 0015 : modèles de bulletins versionnés (spécification validée, immuable), réglages d'espace (préfixe de référence, double validation, modèle par défaut).
+- Rendu sûr (ADR-029), sélection du modèle par règles et priorité avec explication, aperçu côté serveur sur une vraie vulnérabilité, trois modèles livrés.
+- CI rouge sur `Main` pour deux avis publiés le jour même (opentelemetry-api, dompurify) : correctifs embarqués dans la merge request 5D avec des exceptions ciblées au délai de publication (PROCEDURES §8).
+- Tests : 16 tests unitaires (spécification, rendu, sélection) ; 2 tests d'intégration (modèles livrés, sélection, aperçu, versions, activation, réglages, cloisonnement, permissions) ; matrice d'autorisation.
 
 ### 2026-10-22 — Session 12 (suite) : versions des workflows et fin de la phase 5 (merge request 5D)
 

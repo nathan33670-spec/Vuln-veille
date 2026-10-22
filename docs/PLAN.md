@@ -198,8 +198,8 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 6 — Modèles de bulletins et drafts
 
-- [ ] 6.1 Modèles versionnés : champs typés, consignes IA par champ, gabarit de rendu Liquid, guide de style, exemple, langue
-- [ ] 6.2 Règles de sélection par sujet (techno, éditeur, catégorie, sévérité, KEV…) avec priorités
+- [x] 6.1 Modèles versionnés : champs typés, consignes IA par champ, gabarit de rendu Liquid, guide de style, exemple, langue
+- [x] 6.2 Règles de sélection par sujet (techno, éditeur, catégorie, sévérité, KEV…) avec priorités
 - [ ] 6.3 Éditeur de modèle avec aperçu calculé côté serveur sur une vulnérabilité réelle
 - [ ] 6.4 Demande unitaire de draft (depuis une vulnérabilité, un CVE, des URL ou un texte libre), exécution asynchrone, progression en SSE
 - [ ] 6.5 Génération par sortie structurée avec le moteur IA de l'espace, puis rendu déterministe ; Markdown assaini en HTML

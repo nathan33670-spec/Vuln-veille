@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.agents.presets import seed_agents
+from app.bulletins.seeds import seed_templates
 from app.core.config import Settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.ids import uuid7
@@ -349,7 +350,8 @@ async def seed_workspace(db: AsyncSession, workspace_id: uuid.UUID, now: datetim
 
 async def seed_all(settings: Settings, now: datetime) -> dict[str, list[str]]:
     """``python -m app.cli seed-workflows`` (after migrations): app role, one workspace
-    context at a time. Preset agents first (spec 07 §5), then workflows."""
+    context at a time. Preset agents first (spec 07 §5), then workflows, then the
+    delivered bulletin templates and settings (spec 04)."""
     engine = create_engine(settings.database_url_app.get_secret_value())
     created: dict[str, list[str]] = {}
     try:
@@ -360,7 +362,8 @@ async def seed_all(settings: Settings, now: datetime) -> dict[str, list[str]]:
                 await set_context(db, workspace_ids=(workspace_id,))
                 agents = await seed_agents(db, workspace_id, now)
                 workflows = await seed_workspace(db, workspace_id, now)
-                created[slug] = [*(f"agent:{a}" for a in agents), *workflows]
+                templates = await seed_templates(db, workspace_id, slug, now)
+                created[slug] = [*(f"agent:{a}" for a in agents), *workflows, *templates]
                 await db.commit()
     finally:
         await engine.dispose()

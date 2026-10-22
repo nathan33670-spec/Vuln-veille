@@ -77,6 +77,8 @@ example: "…bulletin de référence pour guider le style (few-shot)…"
 Types de champs : `text`, `markdown`, `enum`, `list`, `cvss`, `date`, `references`, `products`, `boolean`.
 Modes de génération : `ai` (rempli par le LLM selon la consigne), `computed` (copié depuis les données de la vulnérabilité, sans LLM), `manual` (laissé vide pour l'analyste).
 
+État en phase 6 (merge request 6A) : modèles versionnés (`bulletin_templates`, `bulletin_template_versions`, une `spec` validée par version), `tlp` par modèle (AMBER par défaut, Q38), réglages d'espace (`bulletin_settings` : préfixe de référence Q37, double validation désactivée par défaut, modèle par défaut), trois modèles livrés (Q39). Sources des champs `computed` : liste fermée (`app/bulletins/spec.py`, `COMPUTED_SOURCES` : `vuln.*`, `evidence.references`, `synthesis.*`), compatible avec le type du champ. Conditions des règles : `technologies_any` (« éditeur » ou « éditeur/produit »), `severity_min`, `kev`, `exploitation_in`, `priority_in`, `cwe_any`, `epss_min`. Le gabarit reçoit `fields`, `tlp` et `language` ; filtres ajoutés : `severity_label` (langue en argument) et `tlp_label`. API : `/workspaces/{ws}/bulletin-templates` (versions, activation, `preview`, `match`) et `/workspaces/{ws}/bulletin-settings`. Rendu : ADR-029.
+
 ## 2. Sélection du modèle
 
 1. L'analyste choisit explicitement un modèle, **ou**

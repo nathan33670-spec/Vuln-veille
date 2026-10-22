@@ -252,7 +252,9 @@ async def test_seed_workflows(make_api: ApiFactory, database: Database) -> None:
     first = await seed_all(settings, datetime.now(UTC))
     agents = [f"agent:{k}" for k in PRESETS]
     workflows = ["new_cve", "rewatch", "daily_watch"]
-    assert first == {"voc": [*agents, *workflows], "cert": [*agents, *workflows]}
+    templates = [f"template:{k}" for k in ("generic_fr", "generic_en", "urgent_fr")]
+    delivered = [*agents, *workflows, *templates]
+    assert first == {"voc": delivered, "cert": delivered}
     assert await seed_all(settings, datetime.now(UTC)) == {"voc": [], "cert": []}
 
     # A newer delivery reaches the workflows nobody edited, as an inactive version.

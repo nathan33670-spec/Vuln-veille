@@ -3758,6 +3758,10 @@ export interface components {
       };
       /** Queue */
       queue: string;
+      /** Reference Fields */
+      reference_fields: {
+        [key: string]: components["schemas"]["ReferenceFieldOut"];
+      };
       /** Required Permissions */
       required_permissions: string[];
       /** Requires Approval Upstream */
@@ -3810,6 +3814,15 @@ export interface components {
       csrf_token: string;
       /** Recovery Codes */
       recovery_codes: string[];
+    };
+    /** ReferenceFieldOut */
+    ReferenceFieldOut: {
+      /** Connector Kinds */
+      connector_kinds: string[];
+      /** Family */
+      family: string | null;
+      /** Kind */
+      kind: string;
     };
     /** RssConfig */
     RssConfig: {

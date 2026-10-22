@@ -26,7 +26,7 @@ export function Button({
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  hint?: string;
+  hint?: string | undefined;
   error?: string | undefined;
 }
 
@@ -200,7 +200,7 @@ export function TextArea({
   hint,
   id,
   ...props
-}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; hint?: string }) {
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; hint?: string | undefined }) {
   const generated = useId();
   const fieldId = id ?? generated;
   return (

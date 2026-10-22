@@ -108,6 +108,9 @@ export function WorkflowPage() {
         actions={
           <span className="vv-actions">
             <StatusBadge status={w.status} />
+            <Link className="vv-button vv-button-secondary" to={`/workflows/${id}/edit`}>
+              {editable ? t("workflows.openEditor") : t("workflows.viewCanvas")}
+            </Link>
             {editable && w.latest_version_no && w.latest_version_no !== w.active_version_no ? (
               <Button onClick={() => activate(w.latest_version_no ?? 0)}>
                 {t("workflows.activateLatest", { version: w.latest_version_no })}

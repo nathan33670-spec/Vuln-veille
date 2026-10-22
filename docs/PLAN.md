@@ -186,13 +186,13 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 5 — Éditeur visuel de workflows
 
-- [ ] 5.1 Canvas React Flow : palette de nœuds issue du registre, glisser-déposer, connexions validées par type de port
-- [ ] 5.2 Panneau de paramètres généré depuis le JSON Schema, avec sélecteurs de secrets, connecteurs, agents et modèles
+- [x] 5.1 Canvas React Flow : palette de nœuds issue du registre, glisser-déposer, connexions validées par type de port
+- [x] 5.2 Panneau de paramètres généré depuis le JSON Schema, avec sélecteurs de secrets, connecteurs, agents et modèles
 - [ ] 5.3 Éditeur d'expressions (CodeMirror 6) avec aide JMESPath et aperçu sur des données d'exemple
 - [ ] 5.4 Exécution d'un nœud en test avec données épinglées (par exemple, une CVE NVD réelle), mode dry-run pour les nœuds de sortie
 - [ ] 5.5 Visualisation des exécutions : statut par nœud, entrées, sorties, erreurs, durées, coûts
 - [ ] 5.6 Gestion des versions : brouillon, publication, historique, diff, restauration ; import/export
-- [ ] 5.7 Verrou d'édition optimiste (détection d'édition concurrente)
+- [x] 5.7 Verrou d'édition optimiste (détection d'édition concurrente)
 
 **Critère de sortie** : un analyste modifie le workflow « Nouvelle CVE NVD → investigation » (ajout d'un agent, changement de filtre), le teste sur une CVE et publie la nouvelle version entièrement depuis l'interface.
 

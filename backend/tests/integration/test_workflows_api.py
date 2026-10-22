@@ -86,6 +86,12 @@ async def test_node_types_expose_parameter_schemas(
     assert types["vuln.scope_match"]["outputs"] == ["in_scope", "out_of_scope"]
     assert "condition" in types["transform.filter"]["params_schema"]["properties"]
     assert types["source.rss"]["queue"] == "collect"
+    # Parameters pointing to a workspace object, for the editor's selectors.
+    assert types["source.x"]["reference_fields"] == {
+        "connector_id": {"kind": "connector", "family": "source", "connector_kinds": ["x_reader"]}
+    }
+    assert types["ai.agent"]["reference_fields"]["agent_id"]["kind"] == "agent"
+    assert types["transform.filter"]["reference_fields"] == {}
 
 
 async def test_workflow_lifecycle(make_api: ApiFactory, database: Database) -> None:

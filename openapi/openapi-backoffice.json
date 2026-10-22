@@ -4250,6 +4250,13 @@
             "title": "Queue",
             "type": "string"
           },
+          "reference_fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceFieldOut"
+            },
+            "title": "Reference Fields",
+            "type": "object"
+          },
           "required_permissions": {
             "items": {
               "type": "string"
@@ -4297,7 +4304,8 @@
           "required_permissions",
           "uses_egress",
           "requires_approval_upstream",
-          "trigger_type"
+          "trigger_type",
+          "reference_fields"
         ],
         "title": "NodeTypeOut",
         "type": "object"
@@ -4442,6 +4450,39 @@
           "csrf_token"
         ],
         "title": "RecoveryCodesOut",
+        "type": "object"
+      },
+      "ReferenceFieldOut": {
+        "properties": {
+          "connector_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Connector Kinds",
+            "type": "array"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "family",
+          "connector_kinds"
+        ],
+        "title": "ReferenceFieldOut",
         "type": "object"
       },
       "RssConfig": {

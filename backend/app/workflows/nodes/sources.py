@@ -28,6 +28,7 @@ from app.workflows.base import (
     NodeType,
     Outputs,
     Reference,
+    ReferenceField,
     expect,
     item,
     register_node,
@@ -53,6 +54,12 @@ class RemoteSource(SourceNode):
         if connector_id is None:
             return []
         return [Reference("connector", connector_id, "source", ",".join(self.connector_kinds))]
+
+    @classmethod
+    def reference_fields(cls) -> dict[str, ReferenceField]:
+        if "connector_id" not in cls.Params.model_fields:
+            return {}
+        return {"connector_id": ReferenceField("connector", "source", cls.connector_kinds)}
 
     async def fetch(
         self,

@@ -5721,6 +5721,139 @@
         "title": "PrivateNetworkRequestOut",
         "type": "object"
       },
+      "ProbeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "model_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Model Id",
+            "type": "string"
+          },
+          "prompt": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_id",
+          "prompt"
+        ],
+        "title": "ProbeIn",
+        "type": "object"
+      },
+      "ProbeOut": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Tokens"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_served": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Served"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "probe_id": {
+            "format": "uuid",
+            "title": "Probe Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "probe_id",
+          "status",
+          "model_id"
+        ],
+        "title": "ProbeOut",
+        "type": "object"
+      },
+      "ProbeQueuedOut": {
+        "properties": {
+          "probe_id": {
+            "format": "uuid",
+            "title": "Probe Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "probe_id"
+        ],
+        "title": "ProbeQueuedOut",
+        "type": "object"
+      },
       "PushDetailOut": {
         "properties": {
           "attempt_log": {
@@ -11967,6 +12100,112 @@
         ]
       }
     },
+    "/api/v1/admin/connectors/ai_engine/{connector_id}/probe": {
+      "post": {
+        "operationId": "probe_global_engine_api_v1_admin_connectors_ai_engine__connector_id__probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeQueuedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Probe Global Engine",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/admin/connectors/ai_engine/{connector_id}/probe/{probe_id}": {
+      "get": {
+        "operationId": "read_global_probe_api_v1_admin_connectors_ai_engine__connector_id__probe__probe_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "probe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Probe Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Global Probe",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/admin/connectors/ai_engine/{connector_id}/usage": {
       "get": {
         "operationId": "usage_global_ai_engine_api_v1_admin_connectors_ai_engine__connector_id__usage_get",
@@ -18083,6 +18322,291 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/private-network": {
+      "delete": {
+        "operationId": "drop_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Drop Private Network Ai Engine",
+        "tags": [
+          "publication"
+        ]
+      },
+      "get": {
+        "operationId": "list_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                  },
+                  "title": "Response List Private Network Ai Engine Api V1 Workspaces  Workspace  Connectors Ai Engine  Connector Id  Private Network Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Private Network Ai Engine",
+        "tags": [
+          "publication"
+        ]
+      },
+      "post": {
+        "description": "Asks the platform administrators to let this connector reach private\nranges; nothing changes until one of them approves (Q41).",
+        "operationId": "request_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateNetworkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Private Network Ai Engine",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/probe": {
+      "post": {
+        "description": "Queues one question to a model of the connector (ai worker).",
+        "operationId": "probe_workspace_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeQueuedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Probe Workspace Engine",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/probe/{probe_id}": {
+      "get": {
+        "operationId": "read_workspace_probe_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe__probe_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "probe_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Probe Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Workspace Probe",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/usage": {
       "get": {
         "operationId": "usage_workspace_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__usage_get",
@@ -18440,7 +18964,7 @@
     },
     "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/private-network": {
       "delete": {
-        "operationId": "drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete",
+        "operationId": "drop_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete",
         "parameters": [
           {
             "in": "path",
@@ -18477,13 +19001,13 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Drop Private Network",
+        "summary": "Drop Private Network Publish",
         "tags": [
           "publication"
         ]
       },
       "get": {
-        "operationId": "list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get",
+        "operationId": "list_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get",
         "parameters": [
           {
             "in": "path",
@@ -18513,7 +19037,7 @@
                   "items": {
                     "$ref": "#/components/schemas/PrivateNetworkRequestOut"
                   },
-                  "title": "Response List Requests Api V1 Workspaces  Workspace  Connectors Publish  Connector Id  Private Network Get",
+                  "title": "Response List Private Network Publish Api V1 Workspaces  Workspace  Connectors Publish  Connector Id  Private Network Get",
                   "type": "array"
                 }
               }
@@ -18531,14 +19055,14 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Requests",
+        "summary": "List Private Network Publish",
         "tags": [
           "publication"
         ]
       },
       "post": {
         "description": "Asks the platform administrators to let this connector reach private\nranges; nothing changes until one of them approves (Q41).",
-        "operationId": "request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post",
+        "operationId": "request_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post",
         "parameters": [
           {
             "in": "path",
@@ -18592,7 +19116,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Request Private Network",
+        "summary": "Request Private Network Publish",
         "tags": [
           "publication"
         ]

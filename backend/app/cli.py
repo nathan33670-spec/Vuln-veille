@@ -6,6 +6,7 @@ import base64
 import json
 import os
 import sys
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -13,7 +14,13 @@ import asyncpg
 from pydantic import SecretStr
 
 from app.app_factory import create_app
-from app.connectors.egress_acl import connector_domains, render_acl, static_domains
+from app.connectors.egress_acl import (
+    approved_ranges,
+    connector_domains,
+    render_acl,
+    render_config,
+    static_domains,
+)
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.db_roles import RolePasswords, provision_roles
@@ -101,12 +108,27 @@ def _vault_rotate(purpose: SecretPurpose) -> None:
     print(f"{count} {purpose} secret(s) re-wrapped for the current key")  # noqa: T201
 
 
-def _egress_acl(output: Path, with_connectors: bool) -> None:
+def _egress_acl(output: Path, with_connectors: bool, config_output: Path | None) -> None:
     domains = static_domains()
     if with_connectors:
         domains |= asyncio.run(connector_domains(get_settings()))
     output.write_text(render_acl(domains))
     print(f"wrote {output} ({len(domains)} domains); restart smokescreen to apply")  # noqa: T201
+    if config_output is not None:
+        ranges = asyncio.run(approved_ranges(get_settings())) if with_connectors else set()
+        config_output.write_text(render_config(ranges))
+        print(f"wrote {config_output} ({len(ranges)} approved private ranges)")  # noqa: T201
+
+
+def _llm_check(connector_id: str, model: str | None, prompt: str) -> None:
+    from app.ai.probe import llm_check  # noqa: PLC0415 - loads the engine adapters
+
+    configure_logging("WARNING")
+    outcome = asyncio.run(llm_check(get_settings(), uuid.UUID(connector_id), model, prompt))
+    # The answer is printed for the operator; it is never logged.
+    print(json.dumps(outcome, ensure_ascii=False, indent=2))  # noqa: T201
+    if outcome.get("status") != "succeeded":
+        sys.exit(1)
 
 
 def _seed_workflows() -> None:
@@ -141,6 +163,16 @@ def main(argv: list[str] | None = None) -> None:
     acl.add_argument(
         "--static-only", action="store_true", help="only the domains declared by the types"
     )
+    acl.add_argument(
+        "--config-output",
+        type=Path,
+        help="also write smokescreen's config.yaml, with the approved private ranges",
+    )
+
+    check = sub.add_parser("llm-check", help="ask one question to an AI engine's model")
+    check.add_argument("--connector", required=True, help="the engine connector's id")
+    check.add_argument("--model", help="model id (default: the first enabled model)")
+    check.add_argument("--prompt", default="Réponds simplement « ok ».")
 
     sub.add_parser("seed-workflows", help="create the delivered workflows (disabled) per workspace")
 
@@ -156,7 +188,9 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "vault-rotate":
         _vault_rotate(SecretPurpose(args.purpose))
     elif args.command == "egress-acl":
-        _egress_acl(args.output, with_connectors=not args.static_only)
+        _egress_acl(args.output, not args.static_only, args.config_output)
+    elif args.command == "llm-check":
+        _llm_check(args.connector, args.model, args.prompt)
     elif args.command == "seed-workflows":
         _seed_workflows()
 

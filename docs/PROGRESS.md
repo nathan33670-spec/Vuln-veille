@@ -4,8 +4,15 @@
 
 - **Phase** : 8 (portail client) **terminée** : critère de sortie atteint et testé dans un navigateur. La phase 9 (abonnements et demandes de technos) est une fonctionnalité « à venir ».
 - **Dernière étape terminée** : écrans du portail (merge request 8C, fusionnée). Côté client : liste, recherche, filtres, détail, historique, exports PDF/HTML/Markdown, impression, préférence e-mail, en-tête aux couleurs de l'émetteur. Côté back-office : page de charte. Le critère de sortie est testé dans un navigateur. Les trois merge requests de la phase 8 (8A, 8B, 8C) sont fusionnées. Le guide de mise en service est rédigé : `docs/DEPLOYMENT.md`.
-- **Étape en cours** : aucune.
-- **Prochaine étape** : à décider avec le porteur du projet. La phase 9 (abonnements et demandes de technos, « à venir ») **ne doit pas être commencée** sans son accord. Les autres pistes : durcissement (tests navigateur en CI, rôles mTLS de smokescreen) et retours de la mise en service.
+- **Étape en cours** : merge request « modèle IA local » en revue (branche `claude/ai-engine-private-network`, ADR-032) :
+  - éditeur de moteur IA dans l'interface (modèles, données autorisées, secrets) ;
+  - réseau privé sur approbation pour les moteurs ;
+  - autorité de certification interne ;
+  - HTTP et port propre vers une plage approuvée ;
+  - carte « Interroger le modèle » ;
+  - `allow_ranges` de smokescreen générée ;
+  - étape LLM du test de fumée (`VV_SMOKE_LLM_CONNECTOR`).
+- **Prochaine étape** : phase 9 (abonnements et demandes de technos), demandée par le porteur du projet après cette merge request.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -64,6 +71,18 @@
   - Questions encore ouvertes : Q33 (LLMaaS), Q35 (quotas Gemini). Q34 est remplacée par Q46.
 
 ## Journal
+
+### 2026-10-23 — Session 13 (suite) : modèle IA local (ADR-032)
+
+- Les moteurs IA peuvent demander une plage privée (même file d'approbation que la publication).
+- Le connecteur compatible OpenAI accepte une autorité interne (`ca_bundle`), ainsi que le HTTP et son propre port vers une plage approuvée.
+- `app.cli egress-acl --config-output` génère `allow_ranges` pour smokescreen.
+- `app.cli llm-check` et l'étape facultative du test de fumée.
+- Interface : éditeur de moteur IA et carte « Interroger le modèle » (question au worker IA, réponse en texte brut).
+- Tests :
+  - `test_ai_engine_private.py` (refus avant approbation, réponse après, budget, cloisonnement, `allow_ranges`) ;
+  - `test_ai_engine_policy.py` ;
+  - vitest `engines.test.tsx`.
 
 ### 2026-10-23 — Session 13 (suite) : clôture de la phase 8 et guide de mise en service
 

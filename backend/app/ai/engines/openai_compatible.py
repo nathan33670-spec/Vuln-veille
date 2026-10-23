@@ -10,10 +10,17 @@ vary by server and model:
 - structured output ``native``: ``response_format`` JSON Schema; ``guided_json``:
   vLLM's guided decoding; ``none``: JSON asked for in the prompt (the runtime
   validates and retries once).
+
+A self-hosted server usually sits on a private network: the connector then needs a
+private range approved by a platform administrator (ADR-030, extended to engines by
+ADR-032). Plain HTTP is accepted only towards such a range, and an internal
+certificate authority can be given as an optional secret.
 """
 
 import json
 import uuid
+from collections.abc import Mapping
+from dataclasses import replace
 from decimal import Decimal
 from typing import Any
 from urllib.parse import urlsplit
@@ -45,7 +52,7 @@ from app.connectors.base import (
     register,
 )
 from app.core.narrow import expect
-from app.net.safe_http import EgressDeniedError, EgressError
+from app.net.safe_http import EgressDeniedError, EgressError, EgressPolicy
 
 EFFORT = {
     ReasoningLevel.LOW: "low",
@@ -75,15 +82,23 @@ JSON_ONLY = "\n\nRéponds uniquement par un objet JSON conforme à ce schéma JS
 
 
 class OpenAICompatibleConfig(EngineConfig):
-    base_url: HttpUrl = Field(description="URL de base de l'API, par ex. https://llm.interne/v1")
+    base_url: HttpUrl = Field(
+        description="URL de base de l'API, par ex. https://llm.interne/v1 "
+        "(http seulement vers une plage privée approuvée)"
+    )
     location: Location = "self_hosted"
 
     @field_validator("base_url")
     @classmethod
-    def _https(cls, value: HttpUrl) -> HttpUrl:
-        if value.scheme != "https" or not value.host:
-            raise ValueError("https only (spec 07 §4.7)")
+    def _scheme(cls, value: HttpUrl) -> HttpUrl:
+        # http is stored but only used once an administrator approved a private range
+        # (adjust_policy); anywhere else the request is refused (spec 07 §4.7).
+        if value.scheme not in ("https", "http") or not value.host:
+            raise ValueError("https (or http to an approved private range) only")
         return value
+
+    def uses_http(self) -> bool:
+        return self.base_url.scheme == "http"
 
 
 def _tool_catalog(tools: tuple[ToolSpec, ...]) -> str:
@@ -310,13 +325,34 @@ class OpenAICompatibleConnector(EngineConnectorType):
     label = "LLM compatible OpenAI (LLMaaS, vLLM, Ollama…)"
     cost_class = CostClass.AI_BILLED
     config_model = OpenAICompatibleConfig
-    secret_slots = (SecretSlot("api_key", "Jeton d'accès (Bearer)", required=False),)
+    secret_slots = (
+        SecretSlot("api_key", "Jeton d'accès (Bearer)", required=False),
+        SecretSlot("ca_bundle", "Autorité de certification PEM (serveur interne)", required=False),
+    )
     default_quotas = Quotas(requests_per_minute=60, monthly_budget_eur=Decimal("0"))
 
     @classmethod
     def egress_for(cls, config: ConnectorConfig) -> tuple[str, ...]:
         config = expect(config, OpenAICompatibleConfig)
         return ((urlsplit(str(config.base_url)).hostname or "").lower(),)
+
+    @classmethod
+    def adjust_policy(
+        cls, config: ConnectorConfig, secrets: Mapping[str, str], policy: EgressPolicy
+    ) -> EgressPolicy:
+        config = expect(config, OpenAICompatibleConfig)
+        approved = bool(policy.private_networks)
+        port = config.base_url.port
+        return replace(
+            policy,
+            # Plain HTTP, and the server's own port (Ollama 11434, vLLM 8000…), only
+            # towards a private range an administrator approved.
+            allow_http=config.uses_http() and approved,
+            allowed_ports=policy.allowed_ports | {port}
+            if approved and port
+            else policy.allowed_ports,
+            ca_bundle_pem=secrets.get("ca_bundle") or None,
+        )
 
     def engine(self, ctx: ConnectorContext) -> OpenAICompatibleEngine:
         return OpenAICompatibleEngine(ctx)

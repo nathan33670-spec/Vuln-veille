@@ -22,6 +22,7 @@ import { AgentPage } from "./pages/ai/AgentPage";
 import { AgentRunPage } from "./pages/ai/AgentRunPage";
 import { AgentsPage } from "./pages/ai/AgentsPage";
 import { AiEnginePage } from "./pages/ai/AiEnginePage";
+import { EngineConnectorPage } from "./pages/ai/EngineConnectorPage";
 import { EvaluationPage } from "./pages/ai/EvaluationPage";
 import { XCoveragePage } from "./pages/ai/XCoveragePage";
 import { CvesPage } from "./pages/catalog/CvesPage";
@@ -118,7 +119,10 @@ const pages: RouteObject[] = [
           },
           {
             element: <RequireWorkspacePermission permission="ai.engine.manage" />,
-            children: [{ path: "/ai-engine", element: <AiEnginePage /> }],
+            children: [
+              { path: "/ai-engine", element: <AiEnginePage /> },
+              { path: "/ai-engines/:id", element: <EngineConnectorPage scope="workspace" /> },
+            ],
           },
           {
             element: <RequireWorkspacePermission permission="watch_scope.manage" />,
@@ -145,6 +149,7 @@ const pages: RouteObject[] = [
                 element: <PublishConnectorPage scope="global" />,
               },
               { path: "/admin/secrets", element: <SecretsPage scope="global" /> },
+              { path: "/admin/ai-engines/:id", element: <EngineConnectorPage scope="global" /> },
             ],
           },
           {

@@ -13,6 +13,7 @@ from app.ai.agents.api import build_agent_router
 from app.ai.api import build_ai_router
 from app.ai.coverage import build_coverage_router
 from app.ai.evaluation.api import build_evaluation_router
+from app.ai.probe import build_probe_router
 from app.audit.api import build_audit_router
 from app.bulletins.api import build_bulletin_router
 from app.bulletins.bulletins_api import build_bulletins_router
@@ -107,6 +108,7 @@ def create_app(
         app.include_router(build_vulnerability_router(), prefix=prefix)
         app.include_router(build_workflow_router(), prefix=prefix)
         app.include_router(build_ai_router(), prefix=prefix)
+        app.include_router(build_probe_router(), prefix=prefix)
         app.include_router(build_agent_router(), prefix=prefix)
         app.include_router(build_evaluation_router(), prefix=prefix)
         app.include_router(build_coverage_router(), prefix=prefix)

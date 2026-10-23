@@ -53,8 +53,10 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
   const itemPath = `${prefix}/${family}/{connector_id}` as ItemPath;
   const checkPath = `${prefix}/${family}/{connector_id}/check` as CheckPath;
   const key = ["connectors", scope, workspace, family];
-  const editor = (id: string) =>
-    scope === "global" ? `/admin/publish-connectors/${id}` : `/publish-connectors/${id}`;
+  // Publication connectors and AI engines have nested configurations: their own editors.
+  const page = family === "publish" ? "publish-connectors" : "ai-engines";
+  const editor = (id: string) => (scope === "global" ? `/admin/${page}/${id}` : `/${page}/${id}`);
+  const ownEditor = family !== "source";
 
   const types = useQuery({
     queryKey: ["connector-types"],
@@ -90,7 +92,7 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
         }
         actions={
           available.length ? (
-            family === "publish" ? (
+            ownEditor ? (
               <Link to={editor("new")}>{t("connectors.add")}</Link>
             ) : (
               <Button onClick={() => setCreating(true)}>{t("connectors.add")}</Button>
@@ -124,9 +126,7 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
           {
             key: "name",
             header: t("admin.name"),
-            // Publication connectors have a nested configuration: their own editor.
-            render: (c) =>
-              family === "publish" ? <Link to={editor(c.id)}>{c.name}</Link> : c.name,
+            render: (c) => (ownEditor ? <Link to={editor(c.id)}>{c.name}</Link> : c.name),
           },
           {
             key: "kind",

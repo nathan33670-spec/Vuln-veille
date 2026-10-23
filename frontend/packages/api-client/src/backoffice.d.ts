@@ -309,6 +309,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/connectors/ai_engine/{connector_id}/probe": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Probe Global Engine */
+    post: operations["probe_global_engine_api_v1_admin_connectors_ai_engine__connector_id__probe_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/connectors/ai_engine/{connector_id}/probe/{probe_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read Global Probe */
+    get: operations["read_global_probe_api_v1_admin_connectors_ai_engine__connector_id__probe__probe_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/connectors/ai_engine/{connector_id}/usage": {
     parameters: {
       query?: never;
@@ -1931,6 +1965,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/private-network": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Private Network Ai Engine */
+    get: operations["list_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_get"];
+    put?: never;
+    /**
+     * Request Private Network Ai Engine
+     * @description Asks the platform administrators to let this connector reach private
+     *     ranges; nothing changes until one of them approves (Q41).
+     */
+    post: operations["request_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_post"];
+    /** Drop Private Network Ai Engine */
+    delete: operations["drop_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/probe": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Probe Workspace Engine
+     * @description Queues one question to a model of the connector (ai worker).
+     */
+    post: operations["probe_workspace_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/probe/{probe_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read Workspace Probe */
+    get: operations["read_workspace_probe_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe__probe_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/connectors/ai_engine/{connector_id}/usage": {
     parameters: {
       query?: never;
@@ -2009,17 +2103,17 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Requests */
-    get: operations["list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get"];
+    /** List Private Network Publish */
+    get: operations["list_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get"];
     put?: never;
     /**
-     * Request Private Network
+     * Request Private Network Publish
      * @description Asks the platform administrators to let this connector reach private
      *     ranges; nothing changes until one of them approves (Q41).
      */
-    post: operations["request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post"];
-    /** Drop Private Network */
-    delete: operations["drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete"];
+    post: operations["request_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post"];
+    /** Drop Private Network Publish */
+    delete: operations["drop_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete"];
     options?: never;
     head?: never;
     patch?: never;
@@ -5030,6 +5124,48 @@ export interface components {
       /** Workspace Slug */
       workspace_slug: string | null;
     };
+    /** ProbeIn */
+    ProbeIn: {
+      /** Model Id */
+      model_id: string;
+      /** Prompt */
+      prompt: string;
+    };
+    /** ProbeOut */
+    ProbeOut: {
+      /** Answer */
+      answer?: string | null;
+      /** Duration Ms */
+      duration_ms?: number | null;
+      /** Error */
+      error?: string | null;
+      /** Input Tokens */
+      input_tokens?: number | null;
+      /** Model Id */
+      model_id: string;
+      /** Model Served */
+      model_served?: string | null;
+      /** Output Tokens */
+      output_tokens?: number | null;
+      /**
+       * Probe Id
+       * Format: uuid
+       */
+      probe_id: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "queued" | "running" | "succeeded" | "failed";
+    };
+    /** ProbeQueuedOut */
+    ProbeQueuedOut: {
+      /**
+       * Probe Id
+       * Format: uuid
+       */
+      probe_id: string;
+    };
     /** PushDetailOut */
     PushDetailOut: {
       /** Attempt Log */
@@ -7615,6 +7751,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CheckQueuedOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  probe_global_engine_api_v1_admin_connectors_ai_engine__connector_id__probe_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProbeIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProbeQueuedOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  read_global_probe_api_v1_admin_connectors_ai_engine__connector_id__probe__probe_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        probe_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProbeOut"];
         };
       };
       /** @description Validation Error */
@@ -11460,6 +11663,173 @@ export interface operations {
       };
     };
   };
+  list_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  request_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PrivateNetworkIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  drop_private_network_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__private_network_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  probe_workspace_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProbeIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProbeQueuedOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  read_workspace_probe_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__probe__probe_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        probe_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProbeOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   usage_workspace_ai_engine_api_v1_workspaces__workspace__connectors_ai_engine__connector_id__usage_get: {
     parameters: {
       query?: never;
@@ -11688,7 +12058,7 @@ export interface operations {
       };
     };
   };
-  list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get: {
+  list_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get: {
     parameters: {
       query?: never;
       header?: never;
@@ -11720,7 +12090,7 @@ export interface operations {
       };
     };
   };
-  request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post: {
+  request_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post: {
     parameters: {
       query?: never;
       header?: never;
@@ -11756,7 +12126,7 @@ export interface operations {
       };
     };
   };
-  drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete: {
+  drop_private_network_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete: {
     parameters: {
       query?: never;
       header?: never;

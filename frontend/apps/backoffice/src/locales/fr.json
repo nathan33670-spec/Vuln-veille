@@ -781,7 +781,8 @@
     "invalid_path": "Le chemin de la requête est invalide.",
     "not_pending": "Cette demande a déjà été traitée.",
     "logo_format": "Le logo doit être une image PNG ou JPEG valide.",
-    "logo_too_large": "Le logo est trop grand (512 Ko et 4096 × 4096 pixels au plus)."
+    "logo_too_large": "Le logo est trop grand (512 Ko et 4096 × 4096 pixels au plus).",
+    "unknown_model": "Ce modèle n'est pas déclaré (ou pas actif) sur ce moteur."
   },
   "ai": {
     "invalidJson": "Le JSON saisi n'est pas un objet valide.",
@@ -1026,6 +1027,62 @@
       "urlsHint": "Une par ligne, posts X uniquement.",
       "record": "Enregistrer",
       "recorded": "Vérification enregistrée."
+    },
+    "engines": {
+      "defaultName": "LLM local",
+      "new": "Nouveau moteur IA",
+      "back": "← Connecteurs",
+      "server": "Serveur",
+      "baseUrl": "URL de base (compatible OpenAI)",
+      "location": "Emplacement",
+      "timeout": "Délai maximal d'une réponse (secondes)",
+      "localHint": "Serveur local (vLLM, Ollama, LM Studio…) : l'URL se termine en général par /v1, par exemple http://llm.interne:11434/v1. Une adresse privée, le HTTP et un port autre que 443 ne sont utilisables qu'après approbation de la plage réseau ci-dessous par un administrateur de la plateforme. Pour un certificat d'une autorité interne, enregistrez-la comme secret « llm » et choisissez-la ci-dessus.",
+      "dataClasses": "Données autorisées",
+      "dataClassesHint": "Les classes de données que ce moteur peut recevoir. Un modèle hébergé chez vous peut recevoir plus qu'un service externe ; les données des clients ne partent jamais vers un modèle.",
+      "classes": {
+        "public": "Public",
+        "tlp_clear": "TLP:CLEAR",
+        "tlp_green": "TLP:GREEN",
+        "tlp_amber": "TLP:AMBER",
+        "tlp_red": "TLP:RED"
+      },
+      "models": "Modèles",
+      "newModel": "Nouveau modèle",
+      "modelId": "Identifiant du modèle",
+      "modelIdHint": "Tel que le serveur le connaît, par exemple llama3.1:8b ou mistral-small.",
+      "displayName": "Nom affiché",
+      "tools": "Appel d'outils",
+      "toolModes": {
+        "native": "Natif",
+        "emulated": "Émulé (JSON)",
+        "none": "Aucun"
+      },
+      "structured": "Sortie structurée",
+      "structuredModes": {
+        "native": "Native (JSON Schema)",
+        "guided_json": "Décodage guidé (vLLM)",
+        "none": "Demandée dans le prompt"
+      },
+      "contextWindow": "Fenêtre de contexte (jetons)",
+      "maxOutput": "Réponse maximale (jetons)",
+      "modelEnabled": "Modèle actif",
+      "addModel": "Ajouter un modèle",
+      "removeModel": "Retirer ce modèle",
+      "save": "Enregistrer",
+      "create": "Créer le moteur",
+      "saved": "Moteur enregistré.",
+      "probe": "Interroger le modèle",
+      "probeHint": "Envoie une question au modèle depuis le worker IA, par le même chemin que les agents (coffre, proxy de sortie, réseau privé approuvé). La question et la réponse ne sont conservées que quelques minutes. N'y mettez que des données que ce moteur peut recevoir.",
+      "probeModel": "Modèle",
+      "probePrompt": "Question",
+      "probeDefault": "Réponds en une phrase : qu'est-ce qu'une CVE ?",
+      "probeSend": "Envoyer",
+      "probeRunning": "En attente de la réponse…",
+      "probeOk": "Réponse reçue",
+      "probeMeta": "{{model}} · {{input}} jetons envoyés, {{output}} reçus · {{ms}} ms",
+      "probeAnswer": "Réponse du modèle",
+      "probeFailed": "Le modèle n'a pas répondu : {{error}}.",
+      "probeEgressHint": "Pour un serveur sur le réseau interne, demandez l'accès à sa plage privée ci-dessous ; un administrateur de la plateforme doit l'approuver."
     }
   },
   "bulletins": {

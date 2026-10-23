@@ -699,3 +699,30 @@ h1 {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Issuer's logo in the portal header (platform branding, Q46). */
+.vv-brand-logo {
+  max-height: 2rem;
+  max-width: 10rem;
+}
+
+.vv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+/* Printing a bulletin: the content only. */
+@media print {
+  .vv-header,
+  .vv-no-print {
+    display: none;
+  }
+
+  .vv-main {
+    padding: 0;
+    max-width: none;
+  }
+}

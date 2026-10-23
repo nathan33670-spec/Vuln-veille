@@ -42,6 +42,16 @@ API : `/api/portal/v1/bulletins`, `/api/portal/v1/bulletins/{id}`, `/api/portal/
   - champs en liste blanche ;
   - droits du rôle portail.
 
+État en phase 8 (merge request 8C) :
+- **Écrans du portail** :
+  - liste des bulletins : recherche, filtres sévérité, techno et période, pagination ; les filtres sont dans l'URL ;
+  - détail : HTML assaini par le serveur puis par DOMPurify, CVE, technos, historique ;
+  - exports PDF, HTML et Markdown (téléchargements sur la même origine) et impression : la feuille de style d'impression masque l'en-tête et les boutons ;
+  - page « Notifications » pour la réception par e-mail ;
+  - en-tête aux couleurs de l'émetteur : nom et logo.
+- **Back-office** : page « Charte du portail » (permission `platform.branding.manage`). Le logo s'envoie en PNG ou JPEG, avec authentification renforcée.
+- **Critère de sortie** : `tests/integration/test_phase8_exit.py` (Chromium, portail construit, CSP de production).
+
 ## 3. Abonnements aux technos (phase 9, « à venir »)
 
 - Un client (ou son organisation) s'abonne à des technos du catalogue global, avec une sévérité minimale et des canaux (e-mail d'abord).

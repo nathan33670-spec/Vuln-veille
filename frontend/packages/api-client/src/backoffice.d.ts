@@ -1697,6 +1697,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/push": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Push Bulletin
+     * @description Queues a push of the validated bulletin; the first push of a bulletin to a
+     *     connector needs a recent second factor (Q43).
+     */
+    post: operations["push_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__push_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/regenerate": {
     parameters: {
       query?: never;
@@ -2111,6 +2132,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Pushes */
+    get: operations["list_pushes_api_v1_workspaces__workspace__publications_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/publications/{publication_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Push */
+    get: operations["get_push_api_v1_workspaces__workspace__publications__publication_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/publish-mapping/preview": {
     parameters: {
       query?: never;
@@ -2163,6 +2218,26 @@ export interface paths {
      * @description The exact request for a bulletin, credentials masked; nothing is sent.
      */
     post: operations["dry_run_api_v1_workspaces__workspace__publish_targets__connector_id__dry_run_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/publish-targets/{connector_id}/test": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Test Target
+     * @description Sends the fictitious example bulletin, marked « TEST », to the target.
+     */
+    post: operations["test_target_api_v1_workspaces__workspace__publish_targets__connector_id__test_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3486,6 +3561,28 @@ export interface components {
       version: number;
       /** Workspace */
       workspace: string;
+    };
+    /** AttemptOut */
+    AttemptOut: {
+      /** Attempt No */
+      attempt_no: number;
+      /** Duration Ms */
+      duration_ms: number | null;
+      /** Error */
+      error: string | null;
+      /** Request */
+      request: {
+        [key: string]: unknown;
+      };
+      /** Response Excerpt */
+      response_excerpt: string | null;
+      /** Response Status */
+      response_status: number | null;
+      /**
+       * Started At
+       * Format: date-time
+       */
+      started_at: string;
     };
     /** AudienceOut */
     AudienceOut: {
@@ -4872,6 +4969,116 @@ export interface components {
       status: string;
       /** Workspace Slug */
       workspace_slug: string | null;
+    };
+    /** PushDetailOut */
+    PushDetailOut: {
+      /** Attempt Log */
+      attempt_log: components["schemas"]["AttemptOut"][];
+      /** Attempts */
+      attempts: number;
+      /** Bulletin Id */
+      bulletin_id: string | null;
+      /** Bulletin Ref */
+      bulletin_ref: string | null;
+      /**
+       * Connector Id
+       * Format: uuid
+       */
+      connector_id: string;
+      /** Connector Name */
+      connector_name: string;
+      /** Connector Version */
+      connector_version: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Is Test */
+      is_test: boolean;
+      /** Mode */
+      mode: string | null;
+      /** Next Attempt At */
+      next_attempt_at: string | null;
+      /** Origin */
+      origin: string;
+      /** Remote Id */
+      remote_id: string | null;
+      /** Requested By */
+      requested_by: string | null;
+      /** Response Status */
+      response_status: number | null;
+      /** Rev No */
+      rev_no: number | null;
+      /** Status */
+      status: string;
+    };
+    /** PushIn */
+    PushIn: {
+      /**
+       * Connector Id
+       * Format: uuid
+       */
+      connector_id: string;
+    };
+    /** PushOut */
+    PushOut: {
+      /** Attempts */
+      attempts: number;
+      /** Bulletin Id */
+      bulletin_id: string | null;
+      /** Bulletin Ref */
+      bulletin_ref: string | null;
+      /**
+       * Connector Id
+       * Format: uuid
+       */
+      connector_id: string;
+      /** Connector Name */
+      connector_name: string;
+      /** Connector Version */
+      connector_version: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Error */
+      error: string | null;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Is Test */
+      is_test: boolean;
+      /** Mode */
+      mode: string | null;
+      /** Next Attempt At */
+      next_attempt_at: string | null;
+      /** Origin */
+      origin: string;
+      /** Remote Id */
+      remote_id: string | null;
+      /** Requested By */
+      requested_by: string | null;
+      /** Response Status */
+      response_status: number | null;
+      /** Rev No */
+      rev_no: number | null;
+      /** Status */
+      status: string;
     };
     /** Quotas */
     Quotas: {
@@ -10575,6 +10782,42 @@ export interface operations {
       };
     };
   };
+  push_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__push_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PushIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PushOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   regenerate_field_api_v1_workspaces__workspace__bulletins__bulletin_id__regenerate_post: {
     parameters: {
       query?: never;
@@ -11736,6 +11979,73 @@ export interface operations {
       };
     };
   };
+  list_pushes_api_v1_workspaces__workspace__publications_get: {
+    parameters: {
+      query?: {
+        bulletin_id?: string | null;
+        connector_id?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PushOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_push_api_v1_workspaces__workspace__publications__publication_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        publication_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PushDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   preview_mapping_api_v1_workspaces__workspace__publish_mapping_preview_post: {
     parameters: {
       query?: never;
@@ -11825,6 +12135,38 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PreparedOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  test_target_api_v1_workspaces__workspace__publish_targets__connector_id__test_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PushOut"];
         };
       };
       /** @description Validation Error */

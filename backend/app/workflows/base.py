@@ -123,6 +123,8 @@ class NodeContext:
     logs: list[dict[str, Any]] = field(default_factory=list)
     # E-mails are sent after the node's transaction commits (at-least-once, idempotent).
     mails: list[tuple[str, str, str]] = field(default_factory=list)
+    # Worker tasks queued after the node's transaction commits (never in a test).
+    tasks: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
     dry_run: bool = False
     agents: AgentAccess | None = None
     node_run_id: uuid.UUID | None = None

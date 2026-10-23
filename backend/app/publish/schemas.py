@@ -84,3 +84,43 @@ class DecisionIn(_In):
 
 class RevokeIn(_In):
     note: str = Field(default="", max_length=1000)
+
+
+class PushIn(_In):
+    connector_id: uuid.UUID
+
+
+class AttemptOut(BaseModel):
+    attempt_no: int
+    request: dict[str, Any]
+    response_status: int | None
+    response_excerpt: str | None
+    error: str | None
+    duration_ms: int | None
+    started_at: datetime
+
+
+class PushOut(BaseModel):
+    id: uuid.UUID
+    bulletin_id: uuid.UUID | None
+    bulletin_ref: str | None
+    connector_id: uuid.UUID
+    connector_name: str
+    connector_version: int
+    rev_no: int | None
+    is_test: bool
+    origin: str
+    requested_by: uuid.UUID | None
+    status: str
+    mode: str | None
+    attempts: int
+    next_attempt_at: datetime | None
+    remote_id: str | None
+    response_status: int | None
+    error: str | None
+    created_at: datetime
+    finished_at: datetime | None
+
+
+class PushDetailOut(PushOut):
+    attempt_log: list[AttemptOut]

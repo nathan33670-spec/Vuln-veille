@@ -112,6 +112,13 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
         "viewer": 403,
         "no_workspace": 404,
     },
+    "/workspaces/cert/publications": {
+        ANON: 401,
+        "voc": 404,
+        "cert": 200,
+        "viewer": 404,
+        "no_workspace": 404,
+    },
     "/admin/private-network-requests": {
         ANON: 401,
         "voc": 200,

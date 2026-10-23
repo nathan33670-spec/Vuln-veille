@@ -753,6 +753,9 @@ async def _run_node(
         else:
             for to, subject, body in ctx.mails:
                 deps.tasks.send(MAIL_TASK, {"to": to, "subject": subject, "body": body})
+            if not testing:
+                for name, kwargs in ctx.tasks:
+                    deps.tasks.send(name, kwargs)
             return "succeeded"
 
     await db.rollback()  # the node's own database effects are undone

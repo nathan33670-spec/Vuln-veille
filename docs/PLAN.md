@@ -229,11 +229,11 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 8.1 Application portail séparée (bundle distinct, aucun code back-office), connexion, MFA (selon la décision) — livré en phase 1
 - [x] 8.2 Vue PostgreSQL `portal_bulletins_v` et rôle `vv_portal` limité à cette vue et aux tables du portail
 - [x] 8.3 Liste, recherche, filtres (techno, sévérité, date) et détail des bulletins publiés destinés à l'organisation
-- [ ] 8.4 Export Markdown, HTML et **PDF**, impression ; **envoi par e-mail** (SMTP) au choix de chaque utilisateur — serveur livré (8B) ; boutons d'export, impression et préférence dans les écrans du portail (8C)
+- [x] 8.4 Export Markdown, HTML et **PDF**, impression ; **envoi par e-mail** (SMTP) au choix de chaque utilisateur
 - [x] 8.4 bis Référent client `client_admin` : invitation et gestion des utilisateurs de son organisation — livré en phase 1
 - [x] 8.5 Tests de non-fuite : aucun champ interne, aucune vulnérabilité non publiée, aucune donnée d'une autre organisation
 
-**Critère de sortie** : un client consulte les bulletins qui lui sont destinés, et les tests prouvent qu'il ne peut rien voir d'autre.
+**Critère de sortie** : un client consulte les bulletins qui lui sont destinés, et les tests prouvent qu'il ne peut rien voir d'autre. **Atteint** (2026-10-23) : `tests/integration/test_phase8_exit.py` pilote Chromium contre le portail construit et l'API réelle (CSP de production). Le client y consulte la liste, la recherche, les filtres, le détail et l'historique, exporte en PDF, imprime et choisit l'e-mail. Le bulletin d'une autre organisation, un RED, un brouillon et une mise à jour non republiée n'apparaissent nulle part, même par lien direct. Les tests de non-fuite de l'API et de la base (`test_portal_bulletins.py`) complètent la preuve.
 
 ### Phase 9 — Abonnements et demandes de technos (fonctionnalité à venir)
 

@@ -27,7 +27,8 @@
     "bulletins": "Bulletins",
     "bulletinTemplates": "Modèles de bulletins",
     "publishing": "Publication",
-    "privateNetwork": "Réseau privé"
+    "privateNetwork": "Réseau privé",
+    "branding": "Charte du portail"
   },
   "home": {
     "title": "Bonjour {{name}}",
@@ -778,7 +779,9 @@
     "invalid_config": "La configuration contient des erreurs : voir le détail.",
     "mapping_failed": "Le mapping n'a pas pu être appliqué : voir le détail.",
     "invalid_path": "Le chemin de la requête est invalide.",
-    "not_pending": "Cette demande a déjà été traitée."
+    "not_pending": "Cette demande a déjà été traitée.",
+    "logo_format": "Le logo doit être une image PNG ou JPEG valide.",
+    "logo_too_large": "Le logo est trop grand (512 Ko et 4096 × 4096 pixels au plus)."
   },
   "ai": {
     "invalidJson": "Le JSON saisi n'est pas un objet valide.",
@@ -1436,5 +1439,22 @@
       "rejected": "Demande refusée.",
       "revoked": "Accès révoqué."
     }
+  },
+  "branding": {
+    "title": "Charte du portail",
+    "explain": "Le nom de l'émetteur et le logo apparaissent dans l'en-tête du portail client, dans les PDF des bulletins et dans les e-mails envoyés aux clients.",
+    "issuer": "Émetteur",
+    "issuerName": "Nom de l'émetteur",
+    "save": "Enregistrer",
+    "saved": "Nom de l'émetteur enregistré.",
+    "logo": "Logo",
+    "currentLogo": "Logo actuel",
+    "noLogo": "Aucun logo.",
+    "chooseLogo": "Choisir un logo (PNG ou JPEG)",
+    "logoHint": "512 Ko au plus. L'image est redimensionnée (600 × 200 au plus) et réenregistrée en PNG par le serveur ; le SVG n'est pas accepté. Une authentification renforcée est demandée.",
+    "tooLarge": "Le fichier dépasse 512 Ko.",
+    "logoSaved": "Logo enregistré.",
+    "removeLogo": "Retirer le logo",
+    "logoRemoved": "Logo retiré."
   }
 }

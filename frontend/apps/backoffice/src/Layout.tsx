@@ -63,6 +63,7 @@ function Shell() {
           {can("connector.allow_private_network")
             ? link("/admin/private-network", t("nav.privateNetwork"))
             : null}
+          {can("platform.branding.manage") ? link("/admin/branding", t("nav.branding")) : null}
           {can("audit.read_global") ? link("/admin/audit", t("nav.audit")) : null}
           {link("/account", t("nav.account"))}
         </>

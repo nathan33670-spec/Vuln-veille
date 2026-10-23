@@ -12,7 +12,9 @@ import {
 import type { RouteObject } from "react-router";
 
 import { Layout, RequirePermission } from "./Layout";
-import { HomePage } from "./pages/HomePage";
+import { BulletinPage } from "./pages/bulletins/BulletinPage";
+import { BulletinsPage } from "./pages/bulletins/BulletinsPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { OrgUsersPage } from "./pages/OrgUsersPage";
 
 const pages: RouteObject[] = [
@@ -28,7 +30,9 @@ const pages: RouteObject[] = [
       {
         element: <Layout />,
         children: [
-          { path: "/", element: <HomePage /> },
+          { path: "/", element: <BulletinsPage /> },
+          { path: "/bulletins/:id", element: <BulletinPage /> },
+          { path: "/notifications", element: <NotificationsPage /> },
           { path: "/account", element: <AccountPage /> },
           {
             element: <RequirePermission permission="portal.org_users.manage" />,

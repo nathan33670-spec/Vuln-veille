@@ -6,11 +6,49 @@
   "nav": {
     "bulletins": "Bulletins",
     "organization": "Mon organisation",
-    "account": "Mon compte"
+    "account": "Mon compte",
+    "notifications": "Notifications"
   },
   "bulletins": {
     "title": "Bulletins de sécurité",
-    "empty": "Aucun bulletin publié pour le moment. Les bulletins de sécurité de vos équipes VOC et CERT apparaîtront ici."
+    "empty": "Aucun bulletin publié pour le moment. Les bulletins de sécurité de vos équipes VOC et CERT apparaîtront ici.",
+    "search": "Recherche",
+    "searchHint": "Titre, contenu, référence ou CVE",
+    "severityLabel": "Sévérité",
+    "any": "Toutes",
+    "technology": "Techno",
+    "since": "Publié depuis le",
+    "until": "Publié jusqu'au",
+    "apply": "Rechercher",
+    "reset": "Réinitialiser",
+    "titleLabel": "Bulletin",
+    "team": "Émis par",
+    "updated": "Mis à jour",
+    "pagination": "Pages",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{pages}} ({{total}} bulletins)",
+    "back": "← Tous les bulletins",
+    "exportPdf": "PDF",
+    "exportHtml": "HTML",
+    "exportMarkdown": "Markdown",
+    "print": "Imprimer",
+    "issuedBy": "Émis par {{team}}",
+    "publishedOn": "publié le {{date}}",
+    "updatedOn": "mis à jour le {{date}}",
+    "cves": "CVE",
+    "technologies": "Technologies",
+    "history": "Historique",
+    "kinds": {
+      "published": "Publication",
+      "updated": "Mise à jour"
+    },
+    "severity": {
+      "critical": "Critique",
+      "high": "Élevée",
+      "medium": "Moyenne",
+      "low": "Faible"
+    }
   },
   "roles": {
     "client_user": "Utilisateur",
@@ -36,5 +74,12 @@
     "enable": "Réactiver",
     "saved": "Modification enregistrée.",
     "more": "Afficher plus"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "emailBulletins": "Recevoir les bulletins par e-mail",
+    "explain": "À chaque publication et mise à jour d'un bulletin destiné à votre organisation, vous recevez le bulletin complet avec le PDF joint. Respectez la consigne TLP indiquée dans chaque message. Un retrait vous est signalé par un court avis.",
+    "on": "Vous recevrez les bulletins par e-mail.",
+    "off": "Vous ne recevrez plus les bulletins par e-mail."
   }
 }

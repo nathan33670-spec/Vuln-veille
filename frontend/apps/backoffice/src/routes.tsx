@@ -13,6 +13,7 @@ import type { RouteObject } from "react-router";
 
 import { Layout, RequirePermission, RequireWorkspacePermission } from "./Layout";
 import { AuditPage } from "./pages/admin/AuditPage";
+import { BrandingPage } from "./pages/admin/BrandingPage";
 import { ClientDetailPage, ClientsPage } from "./pages/admin/ClientsPage";
 import { UserDetailPage } from "./pages/admin/UserDetailPage";
 import { UsersPage } from "./pages/admin/UsersPage";
@@ -167,6 +168,10 @@ const pages: RouteObject[] = [
           {
             element: <RequirePermission permission="connector.allow_private_network" />,
             children: [{ path: "/admin/private-network", element: <PrivateNetworkPage /> }],
+          },
+          {
+            element: <RequirePermission permission="platform.branding.manage" />,
+            children: [{ path: "/admin/branding", element: <BrandingPage /> }],
           },
           {
             element: <RequirePermission permission="audit.read_global" />,

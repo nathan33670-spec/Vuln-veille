@@ -1,8 +1,10 @@
-"""Shared by the browser tests (phase exit criteria): the built back-office and the real
-API served on localhost with the production CSP, and the skip condition.
+"""Shared by the browser tests (phase exit criteria): a built front-end (back-office or
+portal) and the real API served on localhost with the production CSP, and the skip
+conditions.
 
 Needs a Chromium and the Playwright Node package, given by VV_E2E_CHROMIUM and
-VV_E2E_PLAYWRIGHT, and the built front-end (pnpm --filter @vv/backoffice build).
+VV_E2E_PLAYWRIGHT, and the built front-end (pnpm --filter @vv/backoffice build, or
+@vv/portal for the portal).
 """
 
 import asyncio
@@ -12,7 +14,8 @@ import shutil
 import socket
 from collections.abc import AsyncIterator, Awaitable, Callable, MutableMapping
 from contextlib import asynccontextmanager
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 
 import pytest
 import uvicorn
@@ -29,6 +32,7 @@ from tests.integration.conftest import BACKEND_DIR, PASSWORDS, Database
 CHROMIUM = os.environ.get("VV_E2E_CHROMIUM", "")
 PLAYWRIGHT = os.environ.get("VV_E2E_PLAYWRIGHT", "")
 DIST = BACKEND_DIR.parent / "frontend" / "apps" / "backoffice" / "dist"
+PORTAL_DIST = BACKEND_DIR.parent / "frontend" / "apps" / "portal" / "dist"
 # The production policy (deploy/caddy/Caddyfile), without upgrade-insecure-requests.
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
@@ -41,14 +45,22 @@ NEEDS_BROWSER = pytest.mark.skipif(
     not (CHROMIUM and PLAYWRIGHT and shutil.which("node") and (DIST / "index.html").exists()),
     reason="browser test: set VV_E2E_CHROMIUM, VV_E2E_PLAYWRIGHT and build the back-office",
 )
+NEEDS_PORTAL_BROWSER = pytest.mark.skipif(
+    not (
+        CHROMIUM and PLAYWRIGHT and shutil.which("node") and (PORTAL_DIST / "index.html").exists()
+    ),
+    reason="browser test: set VV_E2E_CHROMIUM, VV_E2E_PLAYWRIGHT and build the portal",
+)
 
+Audience = Literal["backoffice", "portal"]
 Scope = MutableMapping[str, Any]
 Receive = Callable[[], Awaitable[MutableMapping[str, Any]]]
 Send = Callable[[MutableMapping[str, Any]], Awaitable[None]]
 
 
-def site(api: FastAPI) -> Callable[[Scope, Receive, Send], Awaitable[None]]:
+def site(api: FastAPI, dist: Path = DIST) -> Callable[[Scope, Receive, Send], Awaitable[None]]:
     """The API under /api, the built single-page app elsewhere, with the CSP."""
+    root = dist.resolve()
 
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -57,9 +69,9 @@ def site(api: FastAPI) -> Callable[[Scope, Receive, Send], Awaitable[None]]:
             await api(scope, receive, send)
             return
         relative = scope["path"].lstrip("/")
-        target = (DIST / relative).resolve()
-        if not relative or not target.is_file() or DIST.resolve() not in target.parents:
-            target = DIST / "index.html"
+        target = (dist / relative).resolve()
+        if not relative or not target.is_file() or root not in target.parents:
+            target = dist / "index.html"
 
         async def with_csp(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
@@ -81,18 +93,26 @@ def free_port() -> int:
 
 
 @asynccontextmanager
-async def served(database: Database, redis_url: str, port: int) -> AsyncIterator[FastAPI]:
+async def served(
+    database: Database, redis_url: str, port: int, audience: Audience = "backoffice"
+) -> AsyncIterator[FastAPI]:
+    here, elsewhere = f"http://localhost:{port}", "http://localhost:1"
+    portal = audience == "portal"
     settings = make_settings(
         database_url_app=SecretStr(database.dsn("vv_app", PASSWORDS.app)),
         database_url_portal=SecretStr(database.dsn("vv_portal", PASSWORDS.portal)),
         redis_url=SecretStr(redis_url),
-        backoffice_origin=f"http://localhost:{port}",
-        portal_origin="http://localhost:1",
+        backoffice_origin=elsewhere if portal else here,
+        portal_origin=here if portal else elsewhere,
     )
-    api = create_app("backoffice", settings, mailer=MemoryMailer(), tasks=MemoryTaskQueue())
+    api = create_app(audience, settings, mailer=MemoryMailer(), tasks=MemoryTaskQueue())
     async with api.router.lifespan_context(api):
         config = uvicorn.Config(
-            site(api), host="127.0.0.1", port=port, lifespan="off", log_level="warning"
+            site(api, PORTAL_DIST if portal else DIST),
+            host="127.0.0.1",
+            port=port,
+            lifespan="off",
+            log_level="warning",
         )
         server = uvicorn.Server(config)
         serving = asyncio.create_task(server.serve())

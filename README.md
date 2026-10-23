@@ -2,7 +2,7 @@
 
 Plateforme multi-utilisateur d'orchestration de la veille vulnérabilités. Elle réunit des workflows visuels (type n8n), des agents IA de collecte et de synthèse, la qualification des vulnérabilités par les analystes VOC et CERT, la rédaction assistée de bulletins selon des modèles paramétrables, et la publication vers un portail client et des API distantes.
 
-> **Statut** : phase 0 (fondations) terminée. Voir [docs/PROGRESS.md](docs/PROGRESS.md).
+> **Statut** : phases 0 à 8 terminées (veille, workflows, agents IA, bulletins, publication, portail client). Voir [docs/PROGRESS.md](docs/PROGRESS.md). Mise en service : [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Démarrage rapide
 
@@ -30,6 +30,7 @@ Back-office : https://backoffice.localhost — portail : https://portal.localhos
 | [docs/SECURITY.md](docs/SECURITY.md) | Modèle de menace, mesures de sécurité, checklist |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Décisions d'architecture (ADR) |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Questions ouvertes et hypothèses par défaut |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Mise en service sur un hôte (Docker Compose), configuration, sauvegardes, mises à jour |
 | [docs/PROCEDURES.md](docs/PROCEDURES.md) | Procédures de développement, conventions, Definition of Done |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Journal d'avancement |
 | [docs/specs/](docs/specs/) | Spécifications détaillées par domaine |

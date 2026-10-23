@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 8 (portail client) **terminée** : critère de sortie atteint et testé dans un navigateur. La phase 9 (abonnements et demandes de technos) est une fonctionnalité « à venir ».
-- **Dernière étape terminée** : écrans du portail (merge request 8C). Côté client : liste, recherche, filtres, détail, historique, exports PDF/HTML/Markdown, impression, préférence e-mail, en-tête aux couleurs de l'émetteur. Côté back-office : page de charte. Test navigateur du critère de sortie. Les merge requests 8A (vues et API du portail) et 8B (PDF, e-mails, charte) sont fusionnées.
-- **Étape en cours** : merge request 8C en revue (branche `claude/phase-8-portal-ui`).
-- **Prochaine étape** : relire `docs/PLAN.md` avec le porteur du projet pour décider de la suite (phase 9 « à venir », durcissement, mise en production).
+- **Dernière étape terminée** : écrans du portail (merge request 8C, fusionnée). Côté client : liste, recherche, filtres, détail, historique, exports PDF/HTML/Markdown, impression, préférence e-mail, en-tête aux couleurs de l'émetteur. Côté back-office : page de charte. Le critère de sortie est testé dans un navigateur. Les trois merge requests de la phase 8 (8A, 8B, 8C) sont fusionnées. Le guide de mise en service est rédigé : `docs/DEPLOYMENT.md`.
+- **Étape en cours** : aucune.
+- **Prochaine étape** : à décider avec le porteur du projet. La phase 9 (abonnements et demandes de technos, « à venir ») **ne doit pas être commencée** sans son accord. Les autres pistes : durcissement (tests navigateur en CI, rôles mTLS de smokescreen) et retours de la mise en service.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -64,6 +64,11 @@
   - Questions encore ouvertes : Q33 (LLMaaS), Q35 (quotas Gemini). Q34 est remplacée par Q46.
 
 ## Journal
+
+### 2026-10-23 — Session 13 (suite) : clôture de la phase 8 et guide de mise en service
+
+- Merge request 8C fusionnée : la phase 8 est terminée.
+- `docs/DEPLOYMENT.md` : prérequis, `.env` de production, démarrage, premier administrateur, configuration dans l'interface, liste blanche de sortie, sauvegardes, mises à jour, limites connues.
 
 ### 2026-10-23 — Session 13 (suite) : écrans du portail et fin de la phase 8 (merge request 8C)
 

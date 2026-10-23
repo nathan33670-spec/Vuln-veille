@@ -38,6 +38,9 @@ function Shell() {
           {canInWorkspace("bulletin.draft")
             ? link("/bulletin-templates", t("nav.bulletinTemplates"))
             : null}
+          {canInWorkspace("connector.publish.push")
+            ? link("/publish-connectors", t("nav.publishing"))
+            : null}
           {canInWorkspace("workflow.read") ? link("/workflows", t("nav.workflows")) : null}
           {canInWorkspace("workflow.read") ? link("/agents", t("nav.agents")) : null}
           {canInWorkspace("ai.engine.manage") ? link("/ai-engine", t("nav.aiEngine")) : null}
@@ -57,6 +60,9 @@ function Shell() {
             ? link("/admin/connectors", t("nav.globalConnectors"))
             : null}
           {can("connector.global.manage") ? link("/admin/secrets", t("nav.globalSecrets")) : null}
+          {can("connector.allow_private_network")
+            ? link("/admin/private-network", t("nav.privateNetwork"))
+            : null}
           {can("audit.read_global") ? link("/admin/audit", t("nav.audit")) : null}
           {link("/account", t("nav.account"))}
         </>

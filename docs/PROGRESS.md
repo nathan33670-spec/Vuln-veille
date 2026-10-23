@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 7 (connecteurs de publication API) **en cours**. La phase 6 est terminée (critère de sortie atteint et testé dans un navigateur).
-- **Dernière étape terminée** : envoi des publications (merge request 7B) : worker `publish` (création puis mise à jour par l'identifiant distant, idempotence, reprises avec délai, débit), journal des envois et des tentatives expurgé, action « Pousser » (MFA au premier envoi, Q43), test de connexion sur un bulletin d'exemple, nœud `publish.api` derrière une approbation (7.3 à 7.5, 7.8). Le connecteur HTTP générique (7A) est fusionné.
-- **Étape en cours** : merge request 7B en revue (branche `claude/phase-7-push`).
-- **Prochaine étape** : merge request 7C : interfaces (connecteurs de publication, éditeur de mapping avec aperçu, envoi depuis un bulletin, historique, file d'approbation du réseau privé, réglages CSAF) et critère de sortie de la phase 7 (7.9).
+- **Phase** : 7 (connecteurs de publication API) **terminée** : critère de sortie atteint et testé dans un navigateur (`tests/integration/test_phase7_exit.py`). Prochaine phase : 8 (portail client), voir `docs/PLAN.md`.
+- **Dernière étape terminée** : interfaces de publication (merge request 7C, 7.9) : connecteurs de publication et leur éditeur (aperçu serveur du mapping et de la requête, test d'envoi, journal, demande de réseau privé), « Pousser vers… » et exports sur un bulletin validé, file d'approbation des administrateurs, réglages CSAF. Le connecteur générique (7A) et l'envoi (7B) sont fusionnés.
+- **Étape en cours** : merge request 7C en revue (branche `claude/phase-7-ui`).
+- **Prochaine étape** : phase 8 (portail client). Lire sa section du plan et `docs/specs/06-client-portal.md`, et les questions ouvertes (Q11 PDF et e-mail, Q34 charte PDF) avant de commencer.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).

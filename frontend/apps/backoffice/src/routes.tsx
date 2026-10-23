@@ -30,6 +30,9 @@ import { BulletinsPage } from "./pages/bulletins/BulletinsPage";
 import { TemplatePage } from "./pages/bulletins/TemplatePage";
 import { TemplatesPage } from "./pages/bulletins/TemplatesPage";
 import { HomePage } from "./pages/HomePage";
+import { PrivateNetworkPage } from "./pages/publish/PrivateNetworkPage";
+import { PublishConnectorPage } from "./pages/publish/PublishConnectorPage";
+import { PublishConnectorsPage } from "./pages/publish/PublishConnectorsPage";
 import { SecretsPage } from "./pages/secrets/SecretsPage";
 import { TechnologiesPage } from "./pages/technologies/TechnologiesPage";
 import { VulnerabilitiesPage } from "./pages/vulns/VulnerabilitiesPage";
@@ -100,6 +103,19 @@ const pages: RouteObject[] = [
             ],
           },
           {
+            element: <RequireWorkspacePermission permission="connector.publish.push" />,
+            children: [{ path: "/publish-connectors", element: <PublishConnectorsPage /> }],
+          },
+          {
+            element: <RequireWorkspacePermission permission="connector.publish.manage" />,
+            children: [
+              {
+                path: "/publish-connectors/:id",
+                element: <PublishConnectorPage scope="workspace" />,
+              },
+            ],
+          },
+          {
             element: <RequireWorkspacePermission permission="ai.engine.manage" />,
             children: [{ path: "/ai-engine", element: <AiEnginePage /> }],
           },
@@ -123,6 +139,10 @@ const pages: RouteObject[] = [
             element: <RequirePermission permission="connector.global.manage" />,
             children: [
               { path: "/admin/connectors", element: <ConnectorsPage scope="global" /> },
+              {
+                path: "/admin/publish-connectors/:id",
+                element: <PublishConnectorPage scope="global" />,
+              },
               { path: "/admin/secrets", element: <SecretsPage scope="global" /> },
             ],
           },
@@ -143,6 +163,10 @@ const pages: RouteObject[] = [
               { path: "/admin/clients", element: <ClientsPage /> },
               { path: "/admin/clients/:orgId", element: <ClientDetailPage /> },
             ],
+          },
+          {
+            element: <RequirePermission permission="connector.allow_private_network" />,
+            children: [{ path: "/admin/private-network", element: <PrivateNetworkPage /> }],
           },
           {
             element: <RequirePermission permission="audit.read_global" />,

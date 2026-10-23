@@ -82,7 +82,17 @@ Le payload est **construit comme un objet JSON** puis sérialisé : aucune injec
 - **Nœud `publish.api`** (file `publish`) : il exige une approbation sur chaque chemin qui y mène. Il ne pousse qu'un bulletin validé, et en test il rend la requête masquée sans rien mettre en file.
 - **Point non couvert** : le « serveur d'écho intégré » de développement n'est pas livré. Le test de connexion vise la cible réelle avec le bulletin d'exemple, et les tests automatisés utilisent un serveur simulé.
 
-Les interfaces arrivent en 7C.
+État en 7C (interfaces) :
+- `/publish-connectors` : connecteurs de l'équipe et connecteurs globaux, journal des envois ;
+- éditeur `/publish-connectors/{id}`, et `/admin/publish-connectors/{id}` pour les connecteurs globaux, accessible aussi depuis l'onglet « Publication » des connecteurs. Il comporte :
+  - les sections Requête, Authentification (champs selon le type, secrets du coffre de type « connecteur », exigés selon l'authentification), Corps (mapping en JSON), Réponse et Reprises ;
+  - un aperçu calculé par le serveur, sur le bulletin d'exemple ou un bulletin validé (corps construit, requête exacte masquée, chemins disponibles) ;
+  - le test d'envoi du bulletin d'exemple, le journal du connecteur et la demande d'accès au réseau privé ;
+- sur un bulletin validé : bloc « Diffusion » avec « Pousser vers… » (choix de la cible, requête exacte masquée, confirmation, suivi), les exports CSAF 2.0, JSON et Markdown, et le journal des envois du bulletin (tentatives, requête expurgée, extrait de réponse) ;
+- `/admin/private-network` : file de décision des administrateurs (approuver ou refuser avec une note, révoquer) ;
+- réglages des bulletins : éditeur CSAF (nom, espace de noms, catégorie).
+
+Écart assumé : l'éditeur de mapping est un champ JSON avec aperçu et liste des chemins disponibles, plutôt qu'un éditeur arborescent avec autocomplétion (§6).
 
 ## 3. Authentifications prises en charge
 

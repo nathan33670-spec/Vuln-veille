@@ -205,7 +205,11 @@ Mise en œuvre (phase 4, `app/ai/evaluation/`) : `/workspaces/{espace}/ai-evalua
 
 ### 4.7 Sécurité d'un moteur auto-hébergé
 
-- Accès en TLS avec jeton, sur un réseau privé ; l'exception réseau privé est autorisée par un admin et auditée.
+- Accès en TLS avec jeton, sur un réseau privé ; l'exception réseau privé est autorisée par un admin et auditée (ADR-032) :
+  - la demande se fait depuis l'éditeur du moteur ;
+  - la plage approuvée passe aussi dans `allow_ranges` de smokescreen ;
+  - une autorité de certification interne peut être fournie (secret `ca_bundle`) ;
+  - le HTTP en clair et un port autre que 443 ne sont acceptés que vers une plage approuvée (à éviter hors d'un segment dédié).
 - Jamais exposé sur Internet ; débit limité.
 - Modèles chargés au format `safetensors`, depuis une source vérifiée (empreinte notée dans la configuration).
 

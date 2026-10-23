@@ -307,3 +307,26 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
 - **Conséquences** :
   - l'historique « mis à jour le … » et les envois par e-mail (8B) partent de ces instantanés ;
   - les bulletins déjà publiés reçoivent un premier instantané à la migration.
+
+## ADR-032 — Moteur IA auto-hébergé sur le réseau interne et interrogation depuis l'interface
+
+- **Statut** : Proposée (2026-10-23).
+- **Contexte** : le connecteur « LLM compatible OpenAI » existait, mais il était inutilisable pour un modèle hébergé en interne (vLLM, Ollama, LM Studio) :
+  - le client HTTP sortant refuse les adresses privées ;
+  - smokescreen refuse lui aussi les plages privées ;
+  - seuls HTTPS et le port 443 étaient acceptés, et seules les autorités de certification publiques étaient reconnues.
+
+  Par ailleurs, l'interface ne permettait pas de déclarer les modèles d'un moteur ni de vérifier qu'il répond.
+- **Décision** :
+  - **Réseau privé** : la demande de plage privée d'ADR-030 s'étend aux moteurs IA d'un espace (`/workspaces/{espace}/connectors/ai_engine/{id}/private-network`, permission `ai.engine.manage`). Un administrateur de la plateforme décide dans la même file que pour la publication, et le worker n'applique la plage que si la dernière décision couvre exactement les hôtes et les plages actuels du connecteur.
+  - **Connecteur** : sur une plage approuvée seulement, le HTTP en clair et le port de l'URL (11434, 8000…) sont acceptés. Un secret facultatif `ca_bundle` (usage `llm`) porte l'autorité de certification interne. L'emplacement par défaut reste « auto-hébergé ».
+  - **smokescreen** : `app.cli egress-acl --config-output` écrit aussi `config.yaml`, dont `allow_ranges` contient exactement les plages approuvées des connecteurs actifs. Les deux barrières restent alignées.
+  - **Interroger le modèle** : depuis l'éditeur du moteur, une question part au worker `ai`, seul détenteur du trousseau `llm`, par le même chemin que les agents (coffre, quotas, budget de l'espace, proxy). La question et la réponse restent 15 minutes dans Redis et ne sont lisibles que par le même connecteur ; la question est effacée dès la réponse. Le journal d'audit n'en garde que la taille, et la réponse s'affiche en texte brut.
+  - **Test de fumée** : `VV_SMOKE_LLM_CONNECTOR` fait exécuter `app.cli llm-check` dans le conteneur du worker IA. Cela vérifie, sur la pile réelle, le trousseau, la plage approuvée, `allow_ranges` et l'autorité interne.
+- **Alternatives écartées** :
+  - autoriser globalement les plages privées dans smokescreen : cela ouvrirait le réseau interne à tous les connecteurs ;
+  - interroger le modèle depuis l'API : l'API n'a pas le trousseau `llm` (ADR-013) ;
+  - accepter `127.0.0.1` ou `localhost` : le bouclage reste toujours refusé. Un modèle sur l'hôte se joint par son adresse sur le réseau local ou par la passerelle Docker.
+- **Conséquences** :
+  - un moteur auto-hébergé devient utilisable de bout en bout, sans exposer le serveur à Internet ;
+  - régénérer `config.yaml` puis reconstruire smokescreen après chaque approbation (`docs/DEPLOYMENT.md` §7 bis).

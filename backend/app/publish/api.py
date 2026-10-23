@@ -472,14 +472,43 @@ async def _supersede(db: AsyncSession, connector_id: uuid.UUID) -> None:
     )
 
 
-def _routes_private_network(router: APIRouter) -> None:
-    base = "/workspaces/{workspace}/connectors/publish/{connector_id}/private-network"
+async def _own_connector(
+    db: AsyncSession, access: WorkspaceAccess, connector_id: uuid.UUID, family: Family
+) -> Connector:
+    """A connector of the family, of this workspace or global (readable by the team)."""
+    if family == Family.PUBLISH:
+        return await _target(db, access, connector_id)
+    connector = await db.get(Connector, connector_id)
+    if (
+        connector is None
+        or connector.family != family
+        or connector.workspace_id not in (access.workspace.id, None)
+    ):
+        raise HTTPException(status_code=404, detail="not_found")
+    return connector
 
-    @router.get(base, response_model=list[PrivateNetworkRequestOut])
+
+PRIVATE_NETWORK_FAMILIES = {
+    Family.PUBLISH: Permission.CONNECTOR_PUBLISH_MANAGE,
+    Family.AI_ENGINE: Permission.AI_ENGINE_MANAGE,
+}
+
+
+def _routes_private_network(router: APIRouter, family: Family, permission: Permission) -> None:
+    """The same request flow for publication connectors (ADR-030) and AI engines on a
+    private network, a self-hosted LLM (ADR-032); one family, one permission."""
+    access_dep = Annotated[WorkspaceAccess, Depends(require_workspace(permission))]
+    base = f"/workspaces/{{workspace}}/connectors/{family}/{{connector_id}}/private-network"
+
+    @router.get(
+        base,
+        response_model=list[PrivateNetworkRequestOut],
+        name=f"list_private_network_{family}",
+    )
     async def list_requests(
-        connector_id: uuid.UUID, access: Manager, db: DB
+        connector_id: uuid.UUID, access: access_dep, db: DB
     ) -> list[PrivateNetworkRequestOut]:
-        connector = await _target(db, access, connector_id)
+        connector = await _own_connector(db, access, connector_id, family)
         rows = await db.execute(
             select(PrivateNetworkRequest)
             .where(PrivateNetworkRequest.connector_id == connector.id)
@@ -488,19 +517,24 @@ def _routes_private_network(router: APIRouter) -> None:
         )
         return [await _request_out(db, r) for r in rows.scalars()]
 
-    @router.post(base, response_model=PrivateNetworkRequestOut, status_code=201)
+    @router.post(
+        base,
+        response_model=PrivateNetworkRequestOut,
+        status_code=201,
+        name=f"request_private_network_{family}",
+    )
     async def request_private_network(
         connector_id: uuid.UUID,
         body: PrivateNetworkIn,
         request: Request,
-        access: Manager,
+        access: access_dep,
         settings: SettingsDep,
         db: DB,
     ) -> PrivateNetworkRequestOut:
         """Asks the platform administrators to let this connector reach private
         ranges; nothing changes until one of them approves (Q41)."""
         ensure_recent_step_up(access.principal, settings)
-        connector = await _target(db, access, connector_id)
+        connector = await _own_connector(db, access, connector_id, family)
         if connector.workspace_id != access.workspace.id:
             raise HTTPException(status_code=404, detail="not_found")
         cidrs = _networks(body.cidrs)
@@ -527,16 +561,16 @@ def _routes_private_network(router: APIRouter) -> None:
         await db.commit()
         return await _request_out(db, row)
 
-    @router.delete(base, status_code=204)
+    @router.delete(base, status_code=204, name=f"drop_private_network_{family}")
     async def drop_private_network(
         connector_id: uuid.UUID,
         request: Request,
-        access: Manager,
+        access: access_dep,
         settings: SettingsDep,
         db: DB,
     ) -> None:
         ensure_recent_step_up(access.principal, settings)
-        connector = await _target(db, access, connector_id)
+        connector = await _own_connector(db, access, connector_id, family)
         if connector.workspace_id != access.workspace.id:
             raise HTTPException(status_code=404, detail="not_found")
         await _supersede(db, connector.id)
@@ -627,6 +661,7 @@ def build_publish_router() -> APIRouter:
     router = APIRouter(tags=["publication"])
     _routes_publication(router)
     _routes_push(router)
-    _routes_private_network(router)
+    for family, permission in PRIVATE_NETWORK_FAMILIES.items():
+        _routes_private_network(router, family, permission)
     _routes_admin(router)
     return router

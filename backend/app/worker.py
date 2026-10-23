@@ -152,6 +152,21 @@ def agent_run(run_id: str, workspace_id: str) -> None:
     asyncio.run(run_entry(get_settings(), uuid.UUID(run_id), uuid.UUID(workspace_id)))
 
 
+@app.task(name="ai.engine_probe")
+def engine_probe(probe_id: str, connector_id: str, workspace_id: str | None) -> None:
+    """A question asked from the interface to an engine's model (ADR-032)."""
+    from app.ai.probe import run_probe  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(
+        run_probe(
+            get_settings(),
+            uuid.UUID(probe_id),
+            uuid.UUID(connector_id),
+            uuid.UUID(workspace_id) if workspace_id else None,
+        )
+    )
+
+
 @app.task(name="ai.evaluation_run")
 def evaluation_run(run_id: str, workspace_id: str) -> None:
     """Engine evaluation bench: an agent version on the reference cases (spec 07 §4.6)."""

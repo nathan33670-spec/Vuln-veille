@@ -7,6 +7,7 @@ private range only once an administrator approved it.
 
 import contextlib
 import uuid
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
 
@@ -31,7 +32,13 @@ from app.core.db import create_engine, create_sessionmaker
 from app.core.logging import get_logger
 from app.core.rls import init_context, set_context
 from app.net.addresses import IPNetwork
-from app.net.safe_http import EgressDeniedError, EgressError, EgressPolicy, egress_client
+from app.net.safe_http import (
+    EgressDeniedError,
+    EgressError,
+    EgressPolicy,
+    SafeHttpClient,
+    egress_client,
+)
 from app.net.safe_http import private_networks as parse_networks
 from app.publish.models import PrivateNetworkRequest
 from app.vault.crypto import VaultError
@@ -41,12 +48,17 @@ log = get_logger(__name__)
 MAX_ERROR_LENGTH = 500
 
 
+# Tests replace the HTTP client (a mock transport) while keeping the connector's policy.
+HttpFactory = Callable[[EgressPolicy], SafeHttpClient]
+
+
 async def build_context(
     db: AsyncSession,
     settings: Settings,
     vault: Vault,
     connector: Connector,
     redis: Redis | None = None,
+    http_factory: HttpFactory | None = None,
 ) -> tuple[ConnectorType, ConnectorContext]:
     type_ = get_type(connector.kind)
     config = type_.config_model.model_validate(connector.config)
@@ -82,7 +94,7 @@ async def build_context(
         workspace_id=connector.workspace_id,
         config=config,
         secrets=secrets,
-        http=egress_client(settings, policy),
+        http=http_factory(policy) if http_factory else egress_client(settings, policy),
         quotas=quotas,
     )
     return type_(), context

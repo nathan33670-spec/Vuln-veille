@@ -2,7 +2,6 @@ import { ApiError, type Schemas, unwrap } from "@vv/api-client";
 import { errorMessage, useStepUp } from "@vv/auth";
 import {
   Alert,
-  Badge,
   Button,
   Card,
   Checkbox,
@@ -17,9 +16,9 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
 import { client } from "../../api";
-import { formatDate } from "../../lib";
 import { useWorkspace } from "../../workspace";
 import { apiDetail } from "../ai/shared";
+import { PrivateNetwork } from "../connectors/PrivateNetwork";
 import {
   AUTH_TYPES,
   type AuthType,
@@ -742,92 +741,8 @@ function Operations({
         <PushJournal workspace={workspace} connectorId={connector.id} />
       </Card>
       {scope === "workspace" ? (
-        <PrivateNetwork workspace={workspace} connector={connector} />
+        <PrivateNetwork family="publish" workspace={workspace} connectorId={connector.id} />
       ) : null}
     </>
-  );
-}
-
-function PrivateNetwork({ workspace, connector }: { workspace: string; connector: Connector }) {
-  const { t } = useTranslation();
-  const withStepUp = useStepUp();
-  const queryClient = useQueryClient();
-  const [message, setMessage] = useState<Message>();
-  const path = { workspace, connector_id: connector.id };
-  const key = ["private-network", workspace, connector.id];
-  const requests = useQuery({
-    queryKey: key,
-    queryFn: async () =>
-      unwrap(
-        await client.GET(
-          "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/private-network",
-          { params: { path } },
-        ),
-      ),
-  });
-
-  async function request(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    try {
-      await withStepUp(async () =>
-        unwrap(
-          await client.POST(
-            "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/private-network",
-            {
-              params: { path },
-              body: {
-                cidrs: String(form.get("cidrs") ?? "")
-                  .split(/[\s,]+/)
-                  .filter(Boolean),
-                reason: String(form.get("reason") ?? ""),
-              },
-            },
-          ),
-        ),
-      );
-      setMessage({ tone: "success", text: t("publish.network.requested") });
-      await queryClient.invalidateQueries({ queryKey: key });
-    } catch (err) {
-      setMessage({ tone: "error", text: apiDetail(t, err) });
-    }
-  }
-
-  return (
-    <Card title={t("publish.network.title")}>
-      <p className="vv-muted">{t("publish.network.hint")}</p>
-      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
-      <ul className="vv-change-list">
-        {(requests.data ?? []).map((r) => (
-          <li key={r.id}>
-            <Badge
-              tone={r.status === "approved" ? "ok" : r.status === "pending" ? "warn" : "neutral"}
-            >
-              {t(`publish.network.status.${r.status}`, r.status)}
-            </Badge>{" "}
-            {r.cidrs.join(", ")} · {formatDate(r.requested_at)} · {r.reason}
-            {r.decision_note ? ` · ${r.decision_note}` : ""}
-          </li>
-        ))}
-      </ul>
-      <form className="vv-form" onSubmit={request}>
-        <TextField
-          name="cidrs"
-          label={t("publish.network.cidrs")}
-          placeholder="10.20.0.0/16"
-          required
-        />
-        <TextArea
-          name="reason"
-          label={t("publish.network.reason")}
-          rows={2}
-          required
-          maxLength={1000}
-        />
-        <Button type="submit" variant="secondary">
-          {t("publish.network.submit")}
-        </Button>
-      </form>
-    </Card>
   );
 }

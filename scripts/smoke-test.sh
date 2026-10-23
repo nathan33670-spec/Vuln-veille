@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # Smoke test of a running stack (make up): TLS front, both APIs, security headers,
 # back-office API absent from the portal host. Exits non-zero on the first failure.
+#
+# Optional: VV_SMOKE_LLM_CONNECTOR=<engine connector id> (and VV_SMOKE_LLM_MODEL) asks
+# that AI engine one question from the ai worker's container, through the egress proxy:
+# it proves the vault keyring, the approved private range, smokescreen's allow_ranges
+# and the internal CA of a self-hosted model (docs/DEPLOYMENT.md §7 bis).
 set -eu
 
 BO="${VV_BACKOFFICE_HOST:-backoffice.localhost}"
@@ -21,5 +26,14 @@ for header in content-security-policy strict-transport-security x-content-type-o
   echo "$headers" | grep -qi "^$header:" || fail "missing $header"
 done
 echo "$headers" | grep -qi "^server:" && fail "server header exposed"
+
+if [ -n "${VV_SMOKE_LLM_CONNECTOR:-}" ]; then
+  COMPOSE="docker compose -f deploy/docker-compose.yml --env-file .env"
+  set -- --connector "$VV_SMOKE_LLM_CONNECTOR"
+  [ -n "${VV_SMOKE_LLM_MODEL:-}" ] && set -- "$@" --model "$VV_SMOKE_LLM_MODEL"
+  $COMPOSE run --rm --no-deps -T worker-ai python -m app.cli llm-check "$@" \
+    || fail "AI engine $VV_SMOKE_LLM_CONNECTOR did not answer"
+  echo "AI engine answered"
+fi
 
 echo "smoke test passed"

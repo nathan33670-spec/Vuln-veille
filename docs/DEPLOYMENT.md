@@ -108,6 +108,47 @@ docker compose -f deploy/docker-compose.yml --env-file .env up -d --build smokes
 
 Relire le diff de `acl.yaml` avant de reconstruire.
 
+## 7 bis. Modèle IA local (compatible OpenAI)
+
+Pour un serveur hébergé en interne, par exemple vLLM, Ollama ou LM Studio (ADR-032) :
+
+1. **Exposer l'API** compatible OpenAI sur une adresse du réseau local, par exemple `http://10.20.0.5:11434/v1` pour Ollama ou `http://10.20.0.5:8000/v1` pour vLLM :
+   - de préférence avec un nom DNS interne que l'hôte Docker sait résoudre ;
+   - `localhost` et `127.0.0.1` sont toujours refusés. Un modèle installé sur le même hôte se joint par son adresse sur le réseau local.
+2. **Déclarer le moteur** dans le back-office : Connecteurs, onglet « Moteurs IA », puis « Ajouter un connecteur » et « LLM compatible OpenAI ».
+   - Renseigner :
+     - l'URL de base ;
+     - les modèles, avec l'identifiant connu du serveur (par exemple `llama3.1:8b`) ; laisser l'appel d'outils sur « Émulé » si le serveur ne le gère pas ;
+     - les classes de données autorisées.
+   - Facultatif : un jeton Bearer et l'autorité de certification interne, à enregistrer d'abord comme secrets d'usage `llm`.
+3. **Demander l'accès au réseau privé** dans la carte « Réseau privé » de l'éditeur, avec la plage la plus étroite possible, par exemple `10.20.0.5/32`, et un motif. Un administrateur de la plateforme approuve dans « Réseau privé ».
+4. **Ouvrir smokescreen** à cette plage, puis le reconstruire :
+
+   ```sh
+   docker compose -f deploy/docker-compose.yml --env-file .env run --rm -T api-backoffice \
+     sh -c 'python -m app.cli egress-acl --output /tmp/acl.yaml --config-output /tmp/config.yaml >&2 \
+            && cat /tmp/config.yaml' > deploy/smokescreen/config.yaml.new
+   mv deploy/smokescreen/config.yaml.new deploy/smokescreen/config.yaml   # relire allow_ranges
+   docker compose -f deploy/docker-compose.yml --env-file .env up -d --build smokescreen
+   ```
+
+   La commande ne lit que des données de configuration (connecteurs et approbations), pas les secrets.
+
+   Mettre aussi à jour `acl.yaml` comme indiqué au §7, pour ajouter le nom DNS du serveur.
+5. **Interroger le modèle** depuis l'éditeur du moteur, carte « Interroger le modèle » :
+   - la réponse s'affiche avec le modèle servi, les jetons et la durée ;
+   - une erreur `egress: …` signale une plage non approuvée ou smokescreen non régénéré.
+6. **L'ajouter au test de fumée** :
+
+   ```sh
+   VV_SMOKE_LLM_CONNECTOR=<identifiant du connecteur> ./scripts/smoke-test.sh
+   ```
+
+   L'identifiant figure dans l'URL de l'éditeur. Le test pose une question depuis le conteneur du worker IA, par le proxy de sortie : il vérifie le trousseau, la plage approuvée, smokescreen et l'autorité interne.
+
+   `VV_SMOKE_LLM_MODEL` choisit le modèle (par défaut : le premier actif).
+7. **En faire le moteur préféré** de l'espace (page « Moteurs IA »), de préférence après un passage sur le banc d'évaluation.
+
 ## 8. Exploitation
 
 - **Mise à jour** :

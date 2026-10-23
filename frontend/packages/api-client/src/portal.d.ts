@@ -262,6 +262,64 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/portal/v1/bulletins": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Bulletins
+     * @description Bulletins published for the organisation, most recently updated first.
+     */
+    get: operations["list_bulletins_api_portal_v1_bulletins_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/portal/v1/bulletins/{bulletin_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Bulletin */
+    get: operations["get_bulletin_api_portal_v1_bulletins__bulletin_id__get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/portal/v1/bulletins/{bulletin_id}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export Bulletin
+     * @description The published bulletin as a file; the HTML is the server-sanitised rendering
+     *     in a minimal document that loads nothing and runs nothing.
+     */
+    get: operations["export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/portal/v1/org/users": {
     parameters: {
       query?: never;
@@ -420,6 +478,16 @@ export interface components {
        */
       status: "ok";
     };
+    /** HistoryOut */
+    HistoryOut: {
+      /**
+       * At
+       * Format: date-time
+       */
+      at: string;
+      /** Kind */
+      kind: string;
+    };
     /** LoginIn */
     LoginIn: {
       /**
@@ -527,6 +595,89 @@ export interface components {
       /** New Password */
       new_password: string;
     };
+    /** PortalBulletinDetailOut */
+    PortalBulletinDetailOut: {
+      /** Cves */
+      cves: string[];
+      /** History */
+      history: components["schemas"]["HistoryOut"][];
+      /** Html */
+      html: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /**
+       * Published At
+       * Format: date-time
+       */
+      published_at: string;
+      /** Ref */
+      ref: string;
+      /** Severity */
+      severity: string | null;
+      /** Team */
+      team: string;
+      /** Technologies */
+      technologies: components["schemas"]["TechnologyOut"][];
+      /** Title */
+      title: string;
+      /** Tlp */
+      tlp: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /** PortalBulletinOut */
+    PortalBulletinOut: {
+      /** Cves */
+      cves: string[];
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Language */
+      language: string;
+      /**
+       * Published At
+       * Format: date-time
+       */
+      published_at: string;
+      /** Ref */
+      ref: string;
+      /** Severity */
+      severity: string | null;
+      /** Team */
+      team: string;
+      /** Technologies */
+      technologies: components["schemas"]["TechnologyOut"][];
+      /** Title */
+      title: string;
+      /** Tlp */
+      tlp: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /** PortalBulletinPage */
+    PortalBulletinPage: {
+      /** Items */
+      items: components["schemas"]["PortalBulletinOut"][];
+      /** Page */
+      page: number;
+      /** Page Size */
+      page_size: number;
+      /** Total */
+      total: number;
+    };
     /** ReadinessOut */
     ReadinessOut: {
       /**
@@ -572,6 +723,15 @@ export interface components {
       code?: string | null;
       /** Password */
       password?: string | null;
+    };
+    /** TechnologyOut */
+    TechnologyOut: {
+      /** Name */
+      name: string;
+      /** Product */
+      product: string;
+      /** Vendor */
+      vendor: string;
     };
     /** TokenPasswordIn */
     TokenPasswordIn: {
@@ -1003,6 +1163,106 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CsrfOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_bulletins_api_portal_v1_bulletins_get: {
+    parameters: {
+      query?: {
+        q?: string | null;
+        severity?: ("critical" | "high" | "medium" | "low")[];
+        technology?: string | null;
+        since?: string | null;
+        until?: string | null;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PortalBulletinPage"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_bulletin_api_portal_v1_bulletins__bulletin_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulletin_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PortalBulletinDetailOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get: {
+    parameters: {
+      query?: {
+        format?: "markdown" | "html";
+      };
+      header?: never;
+      path: {
+        bulletin_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */

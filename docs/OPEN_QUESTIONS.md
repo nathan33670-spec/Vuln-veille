@@ -50,13 +50,15 @@ Les questions de cadrage ont été posées en interactif le 2026-10-20 (session 
 | Q41 | Approbation d'une cible sur réseau privé alors que l'admin ne voit pas les connecteurs de l'autre équipe ? | **File d'approbation** : l'équipe demande (plages, motif), l'admin voit la demande seule (nom, hôtes, plages, demandeur) et approuve ou refuse, avec audit (2026-10-23). | ADR-030 |
 | Q42 | Éditeur des exports CSAF 2.0 ? | **Réglage par espace** (nom, catégorie, espace de noms) ; export refusé tant qu'il est vide ; rien dans le dépôt (2026-10-23). | spec 05, ADR-030 |
 | Q43 | MFA à chaque envoi ? | **Au premier envoi** d'un bulletin vers un connecteur seulement, comme la spec ; les mises à jour suivantes ne la redemandent pas (2026-10-23). | spec 05 §5 |
+| Q44 | Quand un client reçoit-il un bulletin par e-mail ? | **À la publication et à chaque mise à jour publiée** (e-mail « mis à jour ») ; au retrait, une courte notice (2026-10-23). | spec 06, 8B |
+| Q45 | Un bulletin TLP:AMBER peut-il partir en clair par e-mail ? | **Oui, contenu complet et PDF pour tous les TLP diffusés sur le portail**, aux seuls destinataires autorisés (organisations ciblées pour AMBER) ; jamais RED, qui n'est pas diffusé (2026-10-23, décision du porteur contre la recommandation « lien seul pour AMBER »). | spec 06, 8B |
+| Q46 | Charte des PDF (remplace l'hypothèse de Q34) ? | **Réglage plateforme** : un admin dépose un logo (PNG ou JPEG contrôlé, taille bornée) et le nom de l'émetteur ; l'équipe émettrice est indiquée sur chaque bulletin ; gabarit sobre sans logo par défaut (2026-10-23). | spec 06, 8B |
 
 ## Questions encore ouvertes
 
 | # | Question | Hypothèse par défaut |
 |---|---|---|
 | Q33 | Nom du LLMaaS prévu et date de disponibilité ? | Adaptateur compatible OpenAI prêt ; bascule par configuration |
-| Q34 | Charte graphique pour les PDF clients (logo, couleurs) ? | Gabarit sobre, logo configurable |
 | Q35 | Quotas exacts du palier gratuit Gemini (requêtes par minute et par jour, recherche Google intégrée) sur votre compte ? | Vérifiés dans AI Studio en phase 4 ; limiteur de débit configurable |
 
 ## Historique des consignes

@@ -23,6 +23,20 @@
 
 API : `/api/portal/v1/bulletins`, `/api/portal/v1/bulletins/{id}`, `/api/portal/v1/me`. Les schémas de sortie sont des listes blanches.
 
+État en phase 8 (merge request 8A, ADR-031) :
+- **Instantanés et vues** : chaque publication ou retrait enregistre un instantané (`bulletin_publication_events`). Le portail lit `portal_bulletins_v` et `portal_bulletin_history_v`, seules relations accessibles à `vv_portal`.
+- **API `/api/portal/v1/bulletins`** :
+  - liste paginée (20 par page), triée par dernière mise à jour ;
+  - recherche plein texte sur le titre et le contenu, ainsi que par référence ou identifiant CVE ;
+  - filtres sévérité, techno (éditeur, produit ou nom) et période de publication.
+- **Détail** : HTML assaini, CVE, technos et historique des publications et mises à jour.
+- **Exports** : `…/export?format=markdown|html` (document HTML autonome dont la CSP n'autorise ni script ni ressource externe). PDF et e-mail : 8B.
+- **Tests de non-fuite** (`tests/integration/test_portal_bulletins.py`) :
+  - règles TLP et audiences ;
+  - brouillon, mise à jour non republiée, retrait, autre organisation ;
+  - champs en liste blanche ;
+  - droits du rôle portail.
+
 ## 3. Abonnements aux technos (phase 9, « à venir »)
 
 - Un client (ou son organisation) s'abonne à des technos du catalogue global, avec une sévérité minimale et des canaux (e-mail d'abord).

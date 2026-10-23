@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -179,3 +179,28 @@ class DraftRequest(UUIDPrimaryKeyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PublicationEvent(Base):
+    """What was published, as approved: the only bulletin data the portal reads."""
+
+    __tablename__ = "bulletin_publication_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"))
+    bulletin_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("bulletins.id", ondelete="CASCADE"))
+    revision_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("bulletin_revisions.id"))
+    rev_no: Mapped[int | None] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(Text)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ref: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(Text)
+    team: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    severity: Mapped[str | None] = mapped_column(Text)
+    tlp: Mapped[str] = mapped_column(Text)
+    audience_type: Mapped[str] = mapped_column(Text)
+    audience_org_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)))
+    cves: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    technologies: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -141,6 +141,25 @@
         "title": "HealthOut",
         "type": "object"
       },
+      "HistoryOut": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "at"
+        ],
+        "title": "HistoryOut",
+        "type": "object"
+      },
       "LoginIn": {
         "additionalProperties": false,
         "properties": {
@@ -449,6 +468,208 @@
         "title": "PasswordChangeIn",
         "type": "object"
       },
+      "PortalBulletinDetailOut": {
+        "properties": {
+          "cves": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cves",
+            "type": "array"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryOut"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "html": {
+            "title": "Html",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "technologies": {
+            "items": {
+              "$ref": "#/components/schemas/TechnologyOut"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tlp": {
+            "title": "Tlp",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "severity",
+          "tlp",
+          "language",
+          "team",
+          "cves",
+          "technologies",
+          "published_at",
+          "updated_at",
+          "html",
+          "history"
+        ],
+        "title": "PortalBulletinDetailOut",
+        "type": "object"
+      },
+      "PortalBulletinOut": {
+        "properties": {
+          "cves": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cves",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "technologies": {
+            "items": {
+              "$ref": "#/components/schemas/TechnologyOut"
+            },
+            "title": "Technologies",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tlp": {
+            "title": "Tlp",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "severity",
+          "tlp",
+          "language",
+          "team",
+          "cves",
+          "technologies",
+          "published_at",
+          "updated_at"
+        ],
+        "title": "PortalBulletinOut",
+        "type": "object"
+      },
+      "PortalBulletinPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PortalBulletinOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "PortalBulletinPage",
+        "type": "object"
+      },
       "ReadinessOut": {
         "properties": {
           "status": {
@@ -573,6 +794,29 @@
           }
         },
         "title": "StepUpIn",
+        "type": "object"
+      },
+      "TechnologyOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendor",
+          "product",
+          "name"
+        ],
+        "title": "TechnologyOut",
         "type": "object"
       },
       "TokenPasswordIn": {
@@ -1132,6 +1376,238 @@
         "summary": "Step Up",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/portal/v1/bulletins": {
+      "get": {
+        "description": "Bulletins published for the organisation, most recently updated first.",
+        "operationId": "list_bulletins_api_portal_v1_bulletins_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "default": [],
+              "items": {
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "type": "string"
+              },
+              "title": "Severity",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "technology",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Technology"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalBulletinPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Bulletins",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/portal/v1/bulletins/{bulletin_id}": {
+      "get": {
+        "operationId": "get_bulletin_api_portal_v1_bulletins__bulletin_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalBulletinDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Bulletin",
+        "tags": [
+          "bulletins"
+        ]
+      }
+    },
+    "/api/portal/v1/bulletins/{bulletin_id}/export": {
+      "get": {
+        "description": "The published bulletin as a file; the HTML is the server-sanitised rendering\nin a minimal document that loads nothing and runs nothing.",
+        "operationId": "export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "markdown",
+              "enum": [
+                "markdown",
+                "html"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Bulletin",
+        "tags": [
+          "bulletins"
         ]
       }
     },

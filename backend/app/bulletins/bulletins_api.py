@@ -44,6 +44,7 @@ from app.bulletins.models import (
     BulletinVulnerability,
     DraftRequest,
 )
+from app.bulletins.publication_events import record_publication
 from app.bulletins.runner import DRAFT_TASK
 from app.bulletins.schemas import (
     AudienceOut,
@@ -746,7 +747,9 @@ def _routes_bulletins(router: APIRouter) -> None:
         """Publication needs a recent second factor; the published revision is frozen."""
         ensure_recent_step_up(access.principal, settings)
         bulletin = await _locked(db, access, bulletin_id, body.version)
-        publish(bulletin, await _actor(db, access), now())
+        moment = now()
+        publish(bulletin, await _actor(db, access), moment)
+        await record_publication(db, bulletin, "publish", moment)
         current = await db.get(BulletinRevision, bulletin.current_revision_id)
         return await _transition(
             db, request, access, bulletin, "published",
@@ -764,7 +767,9 @@ def _routes_bulletins(router: APIRouter) -> None:
     ) -> BulletinDetailOut:
         ensure_recent_step_up(access.principal, settings)
         bulletin = await _locked(db, access, bulletin_id, body.version)
-        withdraw(bulletin, body.reason, now())
+        moment = now()
+        withdraw(bulletin, body.reason, moment)
+        await record_publication(db, bulletin, "withdrawn", moment)
         return await _transition(db, request, access, bulletin, "withdrawn", reason=body.reason)
 
 

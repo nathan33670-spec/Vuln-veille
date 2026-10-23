@@ -229,7 +229,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 8.1 Application portail séparée (bundle distinct, aucun code back-office), connexion, MFA (selon la décision) — livré en phase 1
 - [x] 8.2 Vue PostgreSQL `portal_bulletins_v` et rôle `vv_portal` limité à cette vue et aux tables du portail
 - [x] 8.3 Liste, recherche, filtres (techno, sévérité, date) et détail des bulletins publiés destinés à l'organisation
-- [ ] 8.4 Export Markdown, HTML et **PDF**, impression ; **envoi par e-mail** (SMTP) au choix de chaque utilisateur
+- [ ] 8.4 Export Markdown, HTML et **PDF**, impression ; **envoi par e-mail** (SMTP) au choix de chaque utilisateur — serveur livré (8B) ; boutons d'export, impression et préférence dans les écrans du portail (8C)
 - [x] 8.4 bis Référent client `client_admin` : invitation et gestion des utilisateurs de son organisation — livré en phase 1
 - [x] 8.5 Tests de non-fuite : aucun champ interne, aucune vulnérabilité non publiée, aucune donnée d'une autre organisation
 

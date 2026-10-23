@@ -96,6 +96,11 @@ async def clean_state(database: Database, redis_url: str) -> None:
         )
         # Not owned by a column, so RESTART IDENTITY leaves it: reset for stable refs.
         await admin.execute("ALTER SEQUENCE vulnerability_ref_seq RESTART")
+        # The single branding row goes with ``users`` (CASCADE): put it back, blank.
+        await admin.execute(
+            "INSERT INTO platform_branding (id) VALUES (1) ON CONFLICT (id) DO UPDATE "
+            "SET issuer_name = '', logo_png = NULL, updated_by = NULL, version = 1"
+        )
     finally:
         await admin.close()
     redis = Redis.from_url(redis_url)

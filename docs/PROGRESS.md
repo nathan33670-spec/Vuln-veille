@@ -3,9 +3,9 @@
 ## État courant
 
 - **Phase** : 8 (portail client) **en cours**. La phase 7 est terminée (critère de sortie atteint et testé dans un navigateur).
-- **Dernière étape terminée** : bulletins du portail, côté serveur (merge request 8A) : instantanés de publication, vues `portal_bulletins_v` et `portal_bulletin_history_v` seules lisibles par `vv_portal`, API de liste, recherche, filtres, détail, historique et exports Markdown et HTML, tests de non-fuite (8.2, 8.3, 8.5 ; 8.1 et 8.4 bis datent de la phase 1). Réponses du porteur Q44 à Q46, ADR-031.
-- **Étape en cours** : merge request 8A en revue (branche `claude/phase-8-portal-api`).
-- **Prochaine étape** : merge request 8B : export PDF (worker isolé), réception par e-mail à la publication et aux mises à jour (Q44, Q45), préférence de chaque utilisateur, charte plateforme (nom de l'émetteur et logo, Q46) ; puis 8C : écrans du portail et critère de sortie.
+- **Dernière étape terminée** : bulletins du portail, côté serveur (merge request 8A, fusionnée) : instantanés de publication, vues du portail, API de liste, recherche, filtres, détail, historique et exports, tests de non-fuite (8.2, 8.3, 8.5). ADR-031, réponses Q44 à Q46.
+- **Étape en cours** : merge request 8B en revue (branche `claude/phase-8-pdf-mail`) : export PDF, réception par e-mail à la publication, aux mises à jour et au retrait, préférence de chaque utilisateur, charte plateforme (nom de l'émetteur et logo). Le PDF de l'export est rendu dans un fil de l'API, pas dans un worker isolé : écart noté dans la spec 06.
+- **Prochaine étape** : merge request 8C : écrans du portail (liste, recherche, filtres, détail, historique, exports et impression, préférence e-mail, charte), page de charte dans le back-office, critère de sortie de la phase 8 testé dans un navigateur.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -64,6 +64,12 @@
   - Questions encore ouvertes : Q33 (LLMaaS), Q35 (quotas Gemini). Q34 est remplacée par Q46.
 
 ## Journal
+
+### 2026-10-23 — Session 13 (suite) : PDF, e-mails et charte (merge request 8B)
+
+- Migration 0020 : `platform_branding` (ligne unique) et `portal_notification_preferences` (RLS sur l'utilisateur, `vv_app` sans accès).
+- PDF WeasyPrint sans aucune ressource externe ; logo réencodé par Pillow ; e-mails HTML + texte + PDF joint, un par destinataire, avis de retrait, idempotents. Dépendances système (Pango, HarfBuzz-Subset, polices DejaVu) dans l'image et la CI.
+- Tests : 16 tests unitaires (logo, PDF, règle d'adressage, messages) ; 1 test d'intégration (charte, préférences, destinataires par organisation, TLP et choix, mise à jour, retrait, idempotence, export PDF) ; matrice d'autorisation.
 
 ### 2026-10-22 — Session 12 (suite) : modèles de bulletins (merge request 6A)
 

@@ -35,7 +35,9 @@ from app.core.tasks import CeleryTaskQueue, TaskQueue
 from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
 from app.iam.portal_org_api import build_portal_org_router
+from app.portal.branding import build_admin_branding_router, build_portal_branding_router
 from app.portal.bulletins import build_portal_bulletin_router
+from app.portal.preferences import build_preferences_router
 from app.publish.api import build_publish_router
 from app.technologies.api import build_technology_router
 from app.vault.api import build_vault_router
@@ -110,9 +112,12 @@ def create_app(
         app.include_router(build_coverage_router(), prefix=prefix)
         app.include_router(build_bulletin_router(), prefix=prefix)
         app.include_router(build_bulletins_router(), prefix=prefix)
+        app.include_router(build_admin_branding_router(), prefix=prefix)
     else:
         app.include_router(build_portal_org_router(), prefix=prefix)
         app.include_router(build_portal_bulletin_router(), prefix=prefix)
+        app.include_router(build_portal_branding_router(), prefix=prefix)
+        app.include_router(build_preferences_router(), prefix=prefix)
 
     # Starlette runs the last-added middleware first.
     # Order (outermost first): request id, security headers, origin check, catch-all errors,

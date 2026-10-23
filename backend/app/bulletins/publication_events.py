@@ -25,6 +25,9 @@ from app.iam.models import Workspace
 from app.technologies.models import Technology
 from app.vulns.models import Vulnerability
 
+# Sent by the API after the commit; run by the default worker (app.portal.mailing).
+PUBLICATION_MAIL_TASK = "default.publication_mail"
+
 
 async def record_publication(
     db: AsyncSession, bulletin: Bulletin, kind: str, now: datetime

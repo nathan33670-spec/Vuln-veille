@@ -197,7 +197,7 @@ class GeminiEngine:
         return types.GenerateContentConfig(**config)
 
     async def complete(self, request: AIRequest) -> AIResponse:
-        contents = [
+        contents: list[types.ContentUnion] = [
             types.Content(
                 role="user" if m.role == "user" else "model",
                 parts=_user_parts(m) if m.role == "user" else _assistant_parts(m),

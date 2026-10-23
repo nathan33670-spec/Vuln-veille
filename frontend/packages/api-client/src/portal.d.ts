@@ -262,6 +262,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/portal/v1/branding": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Portal Branding */
+    get: operations["portal_branding_api_portal_v1_branding_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/portal/v1/branding/logo": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Portal Logo */
+    get: operations["portal_logo_api_portal_v1_branding_logo_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/portal/v1/bulletins": {
     parameters: {
       query?: never;
@@ -309,10 +343,33 @@ export interface paths {
     /**
      * Export Bulletin
      * @description The published bulletin as a file; the HTML is the server-sanitised rendering
-     *     in a minimal document that loads nothing and runs nothing.
+     *     in a minimal document that loads nothing and runs nothing; the PDF is rendered
+     *     in a thread, bounded in time, and fetches nothing either (``app.portal.pdf``).
      */
     get: operations["export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get"];
     put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/portal/v1/me/notifications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Preferences */
+    get: operations["get_preferences_api_portal_v1_me_notifications_get"];
+    /**
+     * Put Preferences
+     * @description Bulletins by e-mail: at each publication and each published update (Q44),
+     *     with the PDF attached (Q45).
+     */
+    put: operations["put_preferences_api_portal_v1_me_notifications_put"];
     post?: never;
     delete?: never;
     options?: never;
@@ -413,6 +470,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** BrandingOut */
+    BrandingOut: {
+      /** Has Logo */
+      has_logo: boolean;
+      /** Issuer Name */
+      issuer_name: string;
+      /** Version */
+      version: number;
+    };
     /** ClientOrgOut */
     ClientOrgOut: {
       /**
@@ -677,6 +743,16 @@ export interface components {
       page_size: number;
       /** Total */
       total: number;
+    };
+    /** PreferencesIn */
+    PreferencesIn: {
+      /** Email Bulletins */
+      email_bulletins: boolean;
+    };
+    /** PreferencesOut */
+    PreferencesOut: {
+      /** Email Bulletins */
+      email_bulletins: boolean;
     };
     /** ReadinessOut */
     ReadinessOut: {
@@ -1176,6 +1252,46 @@ export interface operations {
       };
     };
   };
+  portal_branding_api_portal_v1_branding_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BrandingOut"];
+        };
+      };
+    };
+  };
+  portal_logo_api_portal_v1_branding_logo_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
   list_bulletins_api_portal_v1_bulletins_get: {
     parameters: {
       query?: {
@@ -1246,7 +1362,7 @@ export interface operations {
   export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get: {
     parameters: {
       query?: {
-        format?: "markdown" | "html";
+        format?: "markdown" | "html" | "pdf";
       };
       header?: never;
       path: {
@@ -1263,6 +1379,59 @@ export interface operations {
         };
         content: {
           "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_preferences_api_portal_v1_me_notifications_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PreferencesOut"];
+        };
+      };
+    };
+  };
+  put_preferences_api_portal_v1_me_notifications_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PreferencesIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PreferencesOut"];
         };
       };
       /** @description Validation Error */

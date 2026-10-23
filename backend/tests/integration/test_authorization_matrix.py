@@ -211,6 +211,7 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
 
 PORTAL_MATRIX: dict[str, dict[str, int]] = {
     "/org/users": {ANON: 401, "client_user": 403, "client_admin": 200},
+    "/bulletins": {ANON: 401, "client_user": 200, "client_admin": 200},
     "/account/sessions": {ANON: 401, "client_user": 200, "client_admin": 200},
 }
 

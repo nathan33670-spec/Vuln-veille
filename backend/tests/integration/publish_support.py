@@ -34,8 +34,17 @@ async def seed_all_templates(database: Database, redis_url: str) -> None:
                 await db.commit()
 
 
-async def validated_bulletin(database: Database, workspace: uuid.UUID, status: str) -> uuid.UUID:
-    """A bulletin of the delivered generic template, with one revision."""
+async def validated_bulletin(
+    database: Database,
+    workspace: uuid.UUID,
+    status: str,
+    *,
+    title: str = "RCE dans Exemple",
+    tlp: str = "GREEN",
+    audience: list[uuid.UUID] | None = None,
+) -> uuid.UUID:
+    """A bulletin of the delivered generic template, with one revision; ``audience``
+    chooses the client organisations (else every client)."""
     version = (
         await sql(
             database,
@@ -46,7 +55,7 @@ async def validated_bulletin(database: Database, workspace: uuid.UUID, status: s
     )[0]["id"]
     bulletin, revision = uuid.uuid4(), uuid.uuid4()
     fields = {
-        "title": "RCE dans Exemple",
+        "title": title,
         "summary": "Une faille.",
         "recommendations": "Mettre à jour.",
         "affected_products": [{"vendor": "exemple", "product": "serveur", "versions": "< 2"}],
@@ -55,20 +64,29 @@ async def validated_bulletin(database: Database, workspace: uuid.UUID, status: s
     await sql(
         database,
         "INSERT INTO bulletins (id, workspace_id, ref, language, title, status, tlp, "
-        "template_version_id, approved_at) VALUES ($1, $2, $3, 'fr', 'RCE', $4, 'GREEN', $5, "
-        "now())",
-        bulletin, workspace, f"CERT-2026-{uuid.uuid4().int % 10000:04d}", status, version,
+        "audience_type, template_version_id, approved_at) "
+        "VALUES ($1, $2, $3, 'fr', $4, $5, $6, $7, $8, now())",
+        bulletin, workspace, f"CERT-2026-{uuid.uuid4().int % 10000:04d}", title, status, tlp,
+        "selected" if audience else "all_clients", version,
     )  # fmt: skip
     await sql(
         database,
         "INSERT INTO bulletin_revisions (id, workspace_id, bulletin_id, rev_no, fields, "
         "rendered_markdown, rendered_html, content_hash, created_by_type) "
-        "VALUES ($1, $2, $3, 1, $4, '# RCE dans Exemple', '<h1>RCE</h1>', $5, 'user')",
-        revision, workspace, bulletin, json.dumps(fields), "b" * 64,
+        "VALUES ($1, $2, $3, 1, $4, $5, $6, $7, 'user')",
+        revision, workspace, bulletin, json.dumps(fields), f"# {title}",
+        f"<h1>{title}</h1>", "b" * 64,
     )  # fmt: skip
     await sql(
         database, "UPDATE bulletins SET current_revision_id = $1 WHERE id = $2", revision, bulletin
     )
+    for org in audience or []:
+        await sql(
+            database,
+            "INSERT INTO bulletin_audiences (bulletin_id, client_org_id, workspace_id) "
+            "VALUES ($1, $2, $3)",
+            bulletin, org, workspace,
+        )  # fmt: skip
     return bulletin
 
 

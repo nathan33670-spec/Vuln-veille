@@ -2,10 +2,10 @@
 
 ## État courant
 
-- **Phase** : 7 (connecteurs de publication API) **terminée** : critère de sortie atteint et testé dans un navigateur (`tests/integration/test_phase7_exit.py`). Prochaine phase : 8 (portail client), voir `docs/PLAN.md`.
-- **Dernière étape terminée** : interfaces de publication (merge request 7C, 7.9) : connecteurs de publication et leur éditeur (aperçu serveur du mapping et de la requête, test d'envoi, journal, demande de réseau privé), « Pousser vers… » et exports sur un bulletin validé, file d'approbation des administrateurs, réglages CSAF. Le connecteur générique (7A) et l'envoi (7B) sont fusionnés.
-- **Étape en cours** : merge request 7C en revue (branche `claude/phase-7-ui`).
-- **Prochaine étape** : phase 8 (portail client). Lire sa section du plan et `docs/specs/06-client-portal.md`, et les questions ouvertes (Q11 PDF et e-mail, Q34 charte PDF) avant de commencer.
+- **Phase** : 8 (portail client) **en cours**. La phase 7 est terminée (critère de sortie atteint et testé dans un navigateur).
+- **Dernière étape terminée** : bulletins du portail, côté serveur (merge request 8A) : instantanés de publication, vues `portal_bulletins_v` et `portal_bulletin_history_v` seules lisibles par `vv_portal`, API de liste, recherche, filtres, détail, historique et exports Markdown et HTML, tests de non-fuite (8.2, 8.3, 8.5 ; 8.1 et 8.4 bis datent de la phase 1). Réponses du porteur Q44 à Q46, ADR-031.
+- **Étape en cours** : merge request 8A en revue (branche `claude/phase-8-portal-api`).
+- **Prochaine étape** : merge request 8B : export PDF (worker isolé), réception par e-mail à la publication et aux mises à jour (Q44, Q45), préférence de chaque utilisateur, charte plateforme (nom de l'émetteur et logo, Q46) ; puis 8C : écrans du portail et critère de sortie.
 - **Points d'attention** :
   - Moteurs IA (ADR-026) : seuls `app/ai/engines/*` importent un SDK de fournisseur, et seul `app/ai/engines/transport.py` importe une bibliothèque HTTP ; deux tests bloquants le vérifient. Ajouter un moteur : sous-classer `EngineConnectorType` (catalogue des modèles et vérification des capacités fournis), écrire l'adaptateur, le tester contre un serveur simulé (`tests/unit/test_ai_engines.py`). Le SDK Gemini envoie certains champs en snake_case (`thinking_level`) : c'est accepté par l'API.
   - Les modèles par défaut des connecteurs (Gemini `gemini-2.5-flash`, Claude `claude-opus-5-5`) sont des valeurs de départ : vérifier la liste du palier gratuit dans AI Studio (Q35).
@@ -60,7 +60,8 @@
   - Bulletins, 6C : les modèles livrés utilisent `{% if x and x != blank %}` : dans la bibliothèque Liquid utilisée, `nil != blank` est vrai (contrairement à Shopify), et un champ facultatif absent laissait son titre de section. Le test navigateur de la phase 6 simule le moteur IA (`tests/integration/bulletin_support.py`) et fait tourner les demandes de draft en processus ; la connexion compte comme MFA récente, donc la publication ne redemande pas de code.
   - Publication (7A, ADR-030) : l'API ne déchiffre jamais un secret, donc le dry-run masque chaque identifiant ; l'envoi réel sera fait par le worker `publish`. Le CSAF produit a été vérifié contre le schéma JSON OASIS (validation ponctuelle hors dépôt ; le test unitaire vérifie la structure). Les secrets globaux acceptent maintenant le type « connecteur » (Q40). Le client mTLS charge certificat et clé par `memfd` (Linux).
   - Publication (7B) : le harnais de workflows garde les tâches d'autres workers dans `Harness.others` ; `NodeContext.tasks` met des tâches en file après la validation du nœud (jamais en test). Le nœud `publish.api` ne pousse rien lui-même : il crée l'envoi et le worker `publish` l'exécute.
-  - Questions encore ouvertes : Q33 (LLMaaS), Q34 (charte PDF), Q35 (quotas Gemini).
+  - Portail (8A, ADR-031) : le portail ne lit jamais les colonnes du bulletin, seulement le dernier instantané de publication ; la mise à jour d'un bulletin publié n'atteint les clients qu'à sa republication. Une nouvelle relation lisible par le portail doit être accordée explicitement à `vv_portal` (rien par défaut), et retirée à `vv_app` et `vv_worker` si c'est une vue sans RLS.
+  - Questions encore ouvertes : Q33 (LLMaaS), Q35 (quotas Gemini). Q34 est remplacée par Q46.
 
 ## Journal
 

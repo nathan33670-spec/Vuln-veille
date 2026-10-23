@@ -285,3 +285,25 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - les cibles connues plus tard (MISP, OpenCTI, TheHive…) seront des préréglages de configuration ;
   - le jeton OAuth2 n'est conservé que dans la mémoire du worker, jusqu'à peu avant son expiration ;
   - les secrets de connecteur peuvent être globaux, pour les connecteurs de publication communs.
+
+## ADR-031 — Portail client : instantanés de publication et vues dédiées
+
+- **Statut** : Proposée (2026-10-23).
+- **Contexte** : une mise à jour en cours modifie les colonnes du bulletin (titre, TLP, audience, sévérité) avant toute validation. Lire ces colonnes pour le portail ferait fuir du contenu non publié, et un passage en RED ou un changement d'audience ne prendrait pas effet au bon moment. Le rôle `vv_portal` ne doit lire aucune table interne (8.2).
+- **Décision** :
+  - **Instantanés** : chaque publication, mise à jour publiée ou retrait enregistre un instantané dans `bulletin_publication_events` (révision publiée, titre, sévérité, TLP, audience, CVE, technos et équipe émettrice, tels qu'approuvés). Il est écrit dans la même transaction que la transition. Le portail ne lit que le dernier instantané : une modification n'atteint les clients qu'à la republication, et un retrait les retire immédiatement.
+  - **Vues** : `portal_bulletins_v` et `portal_bulletin_history_v` sont des vues `security_barrier` appartenant au rôle de migration, qui lisent sans RLS et filtrent elles-mêmes sur l'organisation de la requête (`app.client_org_id`, organisation active) et sur les règles de Q22 :
+    - CLEAR et GREEN : tous les clients ou les organisations choisies ;
+    - AMBER et AMBER+STRICT : uniquement les organisations choisies ;
+    - RED : jamais.
+  - **Droits** :
+    - `vv_portal` ne reçoit que la lecture de ces deux vues ;
+    - `vv_app` et `vv_worker` perdent leurs privilèges par défaut sur elles et sur la vue intermédiaire `portal_published_v` ;
+    - un test vérifie que le rôle portail ne lit aucune table interne.
+  - **API** : l'API du portail (`/api/portal/v1/bulletins`) répond par des schémas en liste blanche (référence, titre, sévérité, TLP, langue, équipe, CVE, technos, dates, HTML assaini, historique).
+- **Alternatives écartées** :
+  - une RLS sur `bulletins` pour `vv_portal` : elle exposerait les colonnes courantes et toute la table au rôle portail ;
+  - figer les colonnes du bulletin pendant une mise à jour : cela casserait l'édition et la relecture.
+- **Conséquences** :
+  - l'historique « mis à jour le … » et les envois par e-mail (8B) partent de ces instantanés ;
+  - les bulletins déjà publiés reçoivent un premier instantané à la migration.

@@ -2010,6 +2010,49 @@
         "title": "BlueskyAccountConfig",
         "type": "object"
       },
+      "BrandingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "issuer_name": {
+            "maxLength": 120,
+            "title": "Issuer Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "issuer_name",
+          "version"
+        ],
+        "title": "BrandingIn",
+        "type": "object"
+      },
+      "BrandingOut": {
+        "properties": {
+          "has_logo": {
+            "title": "Has Logo",
+            "type": "boolean"
+          },
+          "issuer_name": {
+            "title": "Issuer Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "issuer_name",
+          "has_logo",
+          "version"
+        ],
+        "title": "BrandingOut",
+        "type": "object"
+      },
       "BudgetIn": {
         "additionalProperties": false,
         "properties": {
@@ -4804,6 +4847,26 @@
           "csrf_token"
         ],
         "title": "LoginOut",
+        "type": "object"
+      },
+      "LogoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "data_base64": {
+            "maxLength": 699058,
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_base64",
+          "version"
+        ],
+        "title": "LogoIn",
         "type": "object"
       },
       "MappingPreviewIn": {
@@ -11227,6 +11290,164 @@
         "summary": "Verify Audit",
         "tags": [
           "audit"
+        ]
+      }
+    },
+    "/api/v1/admin/branding": {
+      "get": {
+        "operationId": "get_branding_api_v1_admin_branding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Branding",
+        "tags": [
+          "branding"
+        ]
+      },
+      "put": {
+        "operationId": "put_branding_api_v1_admin_branding_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Branding",
+        "tags": [
+          "branding"
+        ]
+      }
+    },
+    "/api/v1/admin/branding/logo": {
+      "delete": {
+        "operationId": "delete_logo_api_v1_admin_branding_logo_delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Logo",
+        "tags": [
+          "branding"
+        ]
+      },
+      "get": {
+        "operationId": "get_logo_api_v1_admin_branding_logo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Logo",
+        "tags": [
+          "branding"
+        ]
+      },
+      "put": {
+        "operationId": "put_logo_api_v1_admin_branding_logo_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Logo",
+        "tags": [
+          "branding"
         ]
       }
     },

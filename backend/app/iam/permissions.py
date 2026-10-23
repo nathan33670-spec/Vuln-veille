@@ -21,6 +21,7 @@ class Permission(StrEnum):
     CONNECTOR_GLOBAL_MANAGE = "connector.global.manage"
     AI_DEFAULT_ENGINE_MANAGE = "ai.default_engine.manage"
     CONNECTOR_ALLOW_PRIVATE_NETWORK = "connector.allow_private_network"
+    PLATFORM_BRANDING_MANAGE = "platform.branding.manage"
     VULN_READ = "vuln.read"  # shared vulnerability records (ADR-024)
 
     # Workspace
@@ -68,6 +69,7 @@ PLATFORM_ADMIN: frozenset[Permission] = frozenset(
         P.CONNECTOR_GLOBAL_MANAGE,
         P.AI_DEFAULT_ENGINE_MANAGE,
         P.CONNECTOR_ALLOW_PRIVATE_NETWORK,
+        P.PLATFORM_BRANDING_MANAGE,
     }
 )
 

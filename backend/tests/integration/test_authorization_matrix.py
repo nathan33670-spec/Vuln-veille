@@ -128,6 +128,7 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
     },
     "/ai-models": {ANON: 401, "voc": 200, "cert": 200, "viewer": 200, "no_workspace": 403},
     "/admin/ai-engine": {ANON: 401, "voc": 200, "cert": 403, "viewer": 403, "no_workspace": 403},
+    "/admin/branding": {ANON: 401, "voc": 200, "cert": 403, "viewer": 403, "no_workspace": 403},
     "/workspaces/cert/ai-engine": {
         ANON: 401,
         "voc": 404,
@@ -212,6 +213,8 @@ BACKOFFICE_MATRIX: dict[str, dict[str, int]] = {
 PORTAL_MATRIX: dict[str, dict[str, int]] = {
     "/org/users": {ANON: 401, "client_user": 403, "client_admin": 200},
     "/bulletins": {ANON: 401, "client_user": 200, "client_admin": 200},
+    "/branding": {ANON: 401, "client_user": 200, "client_admin": 200},
+    "/me/notifications": {ANON: 401, "client_user": 200, "client_admin": 200},
     "/account/sessions": {ANON: 401, "client_user": 200, "client_admin": 200},
 }
 

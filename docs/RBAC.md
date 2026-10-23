@@ -64,6 +64,7 @@ Correspondance avec les profils exprimés :
 | `connector.publish.manage` | Espace | Créer et modifier des connecteurs de publication |
 | `connector.publish.push` | Espace | Pousser un bulletin approuvé via un connecteur de publication |
 | `connector.allow_private_network` | Global | Autoriser un connecteur à joindre une adresse privée (admin uniquement) |
+| `platform.branding.manage` | Global | Nom de l'émetteur et logo du portail et des PDF clients (Q46) |
 | `portal.bulletins.read` | Organisation | Bulletins publiés destinés à l'organisation |
 | `portal.subscriptions.manage` | Organisation | Abonnements aux technos (phase 9) |
 | `portal.technology_request.create` | Organisation | Demander une techno absente (phase 9) |
@@ -80,6 +81,7 @@ Correspondance avec les profils exprimés :
 | `technology.merge_delete` | ✅ | | |
 | `technology_request.review` | ✅ | ✅ (espaces désignés, par défaut VOC) | |
 | `connector.allow_private_network` | ✅ | | |
+| `platform.branding.manage` | ✅ | | |
 | `connector.global.manage`, `ai.default_engine.manage` | ✅ | | |
 | `workspace.settings.manage`, `workspace.audit.read` | | ✅ espace | |
 | `watch_scope.manage`, `connector.source.manage`, `source.manage`, `secret.manage` | | ✅ espace | |

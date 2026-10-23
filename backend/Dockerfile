@@ -19,6 +19,11 @@ COPY app ./app
 
 FROM python:3.13-slim-bookworm@sha256:a1165e272e578941b84abc79e4ab38a0305cd12803a5c4247979ac7655f4d641 AS runtime
 # pip (and the libraries it vendors) is not needed at runtime: remove it to shrink the attack surface.
+# PDF rendering (WeasyPrint, plan 8.4): Pango, HarfBuzz and one font family.
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends \
+      libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
 RUN rm -rf /usr/local/lib/python3.13/site-packages/pip /usr/local/lib/python3.13/site-packages/pip-* \
            /usr/local/lib/python3.13/ensurepip /usr/local/bin/pip /usr/local/bin/pip3* \
  && groupadd --system --gid 10001 vv \

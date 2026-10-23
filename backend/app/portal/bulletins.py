@@ -6,6 +6,7 @@ published (never a draft, never an update in progress). Responses are allow-list
 schemas; nothing internal (author, workspace, fields, vulnerabilities) exists in them.
 """
 
+import asyncio
 import json
 import uuid
 from datetime import date, datetime, time, timedelta
@@ -22,9 +23,12 @@ from sqlalchemy.sql.elements import TextClause
 from app.iam.deps import DB, require
 from app.iam.permissions import Permission
 from app.iam.principal import Principal
+from app.portal.branding import load_branding
+from app.portal.pdf import PdfBulletin, render_pdf
 
 Reader = Annotated[Principal, Depends(require(Permission.PORTAL_BULLETINS_READ))]
 PAGE_SIZE = 20
+PDF_TIMEOUT_S = 30
 MAX_QUERY = 200
 
 BULLETINS = table(
@@ -173,6 +177,22 @@ def _filters(
     return conditions
 
 
+def pdf_bulletin(row: Any) -> PdfBulletin:
+    return PdfBulletin(
+        ref=row.ref,
+        title=row.title,
+        severity=row.severity,
+        tlp=row.tlp,
+        team=row.team,
+        language=row.language,
+        published_at=row.published_at,
+        updated_at=row.updated_at,
+        cves=list(row.cves or []),
+        technologies=[t.name for t in _technologies(row.technologies)],
+        html=row.html,
+    )
+
+
 def _like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
@@ -242,12 +262,32 @@ def build_portal_bulletin_router() -> APIRouter:
         bulletin_id: uuid.UUID,
         principal: Reader,
         db: DB,
-        format: Annotated[Literal["markdown", "html"], Query()] = "markdown",
+        format: Annotated[Literal["markdown", "html", "pdf"], Query()] = "markdown",
     ) -> Response:
         """The published bulletin as a file; the HTML is the server-sanitised rendering
-        in a minimal document that loads nothing and runs nothing."""
+        in a minimal document that loads nothing and runs nothing; the PDF is rendered
+        in a thread, bounded in time, and fetches nothing either (``app.portal.pdf``)."""
         del principal
         row = await _detail(db, bulletin_id)
+        if format == "pdf":
+            branding = await load_branding(db)
+            issuer = branding.issuer_name if branding else ""
+            logo = branding.logo_png if branding else None
+            try:
+                data = await asyncio.wait_for(
+                    asyncio.to_thread(render_pdf, pdf_bulletin(row), issuer, logo),
+                    PDF_TIMEOUT_S,
+                )
+            except TimeoutError:
+                raise HTTPException(status_code=503, detail="pdf_unavailable") from None
+            return Response(
+                data,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{row.ref}.pdf"',
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
         if format == "markdown":
             content, media, extension = row.markdown, "text/markdown; charset=utf-8", "md"
         else:

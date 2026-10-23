@@ -1,6 +1,29 @@
 {
   "components": {
     "schemas": {
+      "BrandingOut": {
+        "properties": {
+          "has_logo": {
+            "title": "Has Logo",
+            "type": "boolean"
+          },
+          "issuer_name": {
+            "title": "Issuer Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "issuer_name",
+          "has_logo",
+          "version"
+        ],
+        "title": "BrandingOut",
+        "type": "object"
+      },
       "ClientOrgOut": {
         "properties": {
           "id": {
@@ -668,6 +691,33 @@
           "page_size"
         ],
         "title": "PortalBulletinPage",
+        "type": "object"
+      },
+      "PreferencesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email_bulletins": {
+            "title": "Email Bulletins",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email_bulletins"
+        ],
+        "title": "PreferencesIn",
+        "type": "object"
+      },
+      "PreferencesOut": {
+        "properties": {
+          "email_bulletins": {
+            "title": "Email Bulletins",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email_bulletins"
+        ],
+        "title": "PreferencesOut",
         "type": "object"
       },
       "ReadinessOut": {
@@ -1379,6 +1429,46 @@
         ]
       }
     },
+    "/api/portal/v1/branding": {
+      "get": {
+        "operationId": "portal_branding_api_portal_v1_branding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Portal Branding",
+        "tags": [
+          "branding"
+        ]
+      }
+    },
+    "/api/portal/v1/branding/logo": {
+      "get": {
+        "operationId": "portal_logo_api_portal_v1_branding_logo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Portal Logo",
+        "tags": [
+          "branding"
+        ]
+      }
+    },
     "/api/portal/v1/bulletins": {
       "get": {
         "description": "Bulletins published for the organisation, most recently updated first.",
@@ -1557,7 +1647,7 @@
     },
     "/api/portal/v1/bulletins/{bulletin_id}/export": {
       "get": {
-        "description": "The published bulletin as a file; the HTML is the server-sanitised rendering\nin a minimal document that loads nothing and runs nothing.",
+        "description": "The published bulletin as a file; the HTML is the server-sanitised rendering\nin a minimal document that loads nothing and runs nothing; the PDF is rendered\nin a thread, bounded in time, and fetches nothing either (``app.portal.pdf``).",
         "operationId": "export_bulletin_api_portal_v1_bulletins__bulletin_id__export_get",
         "parameters": [
           {
@@ -1578,7 +1668,8 @@
               "default": "markdown",
               "enum": [
                 "markdown",
-                "html"
+                "html",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -1608,6 +1699,67 @@
         "summary": "Export Bulletin",
         "tags": [
           "bulletins"
+        ]
+      }
+    },
+    "/api/portal/v1/me/notifications": {
+      "get": {
+        "operationId": "get_preferences_api_portal_v1_me_notifications_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Preferences",
+        "tags": [
+          "account"
+        ]
+      },
+      "put": {
+        "description": "Bulletins by e-mail: at each publication and each published update (Q44),\nwith the PDF attached (Q45).",
+        "operationId": "put_preferences_api_portal_v1_me_notifications_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Preferences",
+        "tags": [
+          "account"
         ]
       }
     },

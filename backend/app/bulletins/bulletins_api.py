@@ -43,8 +43,9 @@ from app.bulletins.models import (
     BulletinTemplateVersion,
     BulletinVulnerability,
     DraftRequest,
+    PublicationEvent,
 )
-from app.bulletins.publication_events import record_publication
+from app.bulletins.publication_events import PUBLICATION_MAIL_TASK, record_publication
 from app.bulletins.runner import DRAFT_TASK
 from app.bulletins.schemas import (
     AudienceOut,
@@ -109,6 +110,15 @@ async def _audit(
             workspace_id=access.workspace.id,
             details=data,
         ),
+    )
+
+
+def _notify(request: Request, event: PublicationEvent) -> None:
+    """Clients who asked for it receive the bulletin by e-mail (after the commit)."""
+    tasks: TaskQueue = request.app.state.tasks
+    tasks.send(
+        PUBLICATION_MAIL_TASK,
+        {"event_id": str(event.id), "workspace_id": str(event.workspace_id)},
     )
 
 
@@ -749,12 +759,14 @@ def _routes_bulletins(router: APIRouter) -> None:
         bulletin = await _locked(db, access, bulletin_id, body.version)
         moment = now()
         publish(bulletin, await _actor(db, access), moment)
-        await record_publication(db, bulletin, "publish", moment)
+        event = await record_publication(db, bulletin, "publish", moment)
         current = await db.get(BulletinRevision, bulletin.current_revision_id)
-        return await _transition(
+        out = await _transition(
             db, request, access, bulletin, "published",
             content_hash=current.content_hash if current else None,
         )  # fmt: skip
+        _notify(request, event)
+        return out
 
     @router.post("/bulletins/{bulletin_id}/withdraw", response_model=BulletinDetailOut)
     async def withdraw_bulletin(
@@ -769,8 +781,10 @@ def _routes_bulletins(router: APIRouter) -> None:
         bulletin = await _locked(db, access, bulletin_id, body.version)
         moment = now()
         withdraw(bulletin, body.reason, moment)
-        await record_publication(db, bulletin, "withdrawn", moment)
-        return await _transition(db, request, access, bulletin, "withdrawn", reason=body.reason)
+        event = await record_publication(db, bulletin, "withdrawn", moment)
+        out = await _transition(db, request, access, bulletin, "withdrawn", reason=body.reason)
+        _notify(request, event)
+        return out
 
 
 def build_bulletins_router() -> APIRouter:

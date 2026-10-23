@@ -168,6 +168,16 @@ def bulletin_draft(request_id: str, workspace_id: str) -> None:
     asyncio.run(draft_entry(get_settings(), uuid.UUID(request_id), uuid.UUID(workspace_id)))
 
 
+@app.task(name="default.publication_mail")
+def publication_mail(event_id: str, workspace_id: str) -> None:
+    """Bulletins by e-mail to the client users who asked for them (Q44, Q45)."""
+    from app.portal.mailing import publication_mail_entry  # noqa: PLC0415 - worker-only
+
+    asyncio.run(
+        publication_mail_entry(get_settings(), uuid.UUID(event_id), uuid.UUID(workspace_id))
+    )
+
+
 @app.task(name="publish.push")
 def publish_push(publication_id: str, workspace_id: str) -> None:
     """One attempt of a push to a publication connector (spec 05 §4)."""

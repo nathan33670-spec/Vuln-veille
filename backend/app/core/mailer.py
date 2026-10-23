@@ -13,10 +13,20 @@ log = get_logger(__name__)
 
 
 @dataclass(frozen=True)
+class Attachment:
+    filename: str
+    content_type: str  # "application/pdf"
+    data: bytes = field(repr=False)
+
+
+@dataclass(frozen=True)
 class Mail:
     to: str
     subject: str
     body: str
+    # Sanitised HTML alternative (bulletins); the text body always comes first.
+    html: str | None = field(default=None, repr=False)
+    attachments: tuple[Attachment, ...] = ()
 
 
 class Mailer(Protocol):
@@ -57,6 +67,13 @@ def deliver_smtp(settings: Settings, mail: Mail) -> None:
     message["To"] = mail.to
     message["Subject"] = mail.subject
     message.set_content(mail.body)
+    if mail.html is not None:
+        message.add_alternative(mail.html, subtype="html")
+    for attachment in mail.attachments:
+        maintype, _, subtype = attachment.content_type.partition("/")
+        message.add_attachment(
+            attachment.data, maintype=maintype, subtype=subtype, filename=attachment.filename
+        )
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
         if settings.smtp_starttls:
             smtp.starttls(context=ssl.create_default_context())

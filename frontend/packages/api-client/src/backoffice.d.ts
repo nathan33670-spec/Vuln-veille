@@ -164,6 +164,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/branding": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Branding */
+    get: operations["get_branding_api_v1_admin_branding_get"];
+    /** Put Branding */
+    put: operations["put_branding_api_v1_admin_branding_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/branding/logo": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Logo */
+    get: operations["get_logo_api_v1_admin_branding_logo_get"];
+    /** Put Logo */
+    put: operations["put_logo_api_v1_admin_branding_logo_put"];
+    post?: never;
+    /** Delete Logo */
+    delete: operations["delete_logo_api_v1_admin_branding_logo_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/clients": {
     parameters: {
       query?: never;
@@ -3652,6 +3689,22 @@ export interface components {
        */
       type: "bluesky_account";
     };
+    /** BrandingIn */
+    BrandingIn: {
+      /** Issuer Name */
+      issuer_name: string;
+      /** Version */
+      version: number;
+    };
+    /** BrandingOut */
+    BrandingOut: {
+      /** Has Logo */
+      has_logo: boolean;
+      /** Issuer Name */
+      issuer_name: string;
+      /** Version */
+      version: number;
+    };
     /** BudgetIn */
     BudgetIn: {
       /**
@@ -4653,6 +4706,13 @@ export interface components {
        * @enum {string}
        */
       status: "authenticated" | "mfa_required" | "mfa_enrollment_required";
+    };
+    /** LogoIn */
+    LogoIn: {
+      /** Data Base64 */
+      data_base64: string;
+      /** Version */
+      version: number;
     };
     /** MappingPreviewIn */
     MappingPreviewIn: {
@@ -7060,6 +7120,143 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditVerifyOut"];
+        };
+      };
+    };
+  };
+  get_branding_api_v1_admin_branding_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BrandingOut"];
+        };
+      };
+    };
+  };
+  put_branding_api_v1_admin_branding_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BrandingIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BrandingOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_logo_api_v1_admin_branding_logo_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  put_logo_api_v1_admin_branding_logo_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LogoIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BrandingOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_logo_api_v1_admin_branding_logo_delete: {
+    parameters: {
+      query: {
+        version: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BrandingOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
     };

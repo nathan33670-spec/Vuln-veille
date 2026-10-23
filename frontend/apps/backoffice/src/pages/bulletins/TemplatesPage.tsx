@@ -258,6 +258,9 @@ function SettingsForm({
   const [prefix, setPrefix] = useState(settings.ref_prefix);
   const [review, setReview] = useState(settings.review_required);
   const [defaultId, setDefaultId] = useState(settings.default_template_id ?? "");
+  const [publisher, setPublisher] = useState(settings.csaf_publisher_name);
+  const [namespace, setNamespace] = useState(settings.csaf_publisher_namespace);
+  const [category, setCategory] = useState(settings.csaf_publisher_category);
   return (
     <Card title={t("bulletins.settings.title")}>
       <form
@@ -268,6 +271,11 @@ function SettingsForm({
             ref_prefix: prefix,
             review_required: review,
             default_template_id: defaultId || null,
+            csaf_publisher_name: publisher,
+            csaf_publisher_namespace: namespace,
+            csaf_publisher_category: category as NonNullable<
+              Schemas["SettingsIn"]["csaf_publisher_category"]
+            >,
             version: settings.version,
           });
         }}
@@ -294,6 +302,30 @@ function SettingsForm({
               .filter((tpl) => tpl.status === "active")
               .map((tpl) => ({ value: tpl.id, label: tpl.name })),
           ]}
+        />
+        <h3>{t("bulletins.settings.csaf")}</h3>
+        <p className="vv-muted">{t("bulletins.settings.csafHint")}</p>
+        <TextField
+          label={t("bulletins.settings.csafName")}
+          value={publisher}
+          maxLength={200}
+          onChange={(e) => setPublisher(e.target.value)}
+        />
+        <TextField
+          label={t("bulletins.settings.csafNamespace")}
+          type="url"
+          placeholder="https://"
+          pattern="https://.+"
+          value={namespace}
+          onChange={(e) => setNamespace(e.target.value)}
+        />
+        <SelectField
+          label={t("bulletins.settings.csafCategory")}
+          value={category}
+          onChange={setCategory}
+          options={["coordinator", "discoverer", "other", "translator", "user", "vendor"].map(
+            (value) => ({ value, label: t(`bulletins.settings.csafCategories.${value}`) }),
+          )}
         />
         <Button type="submit">{t("common.save")}</Button>
       </form>

@@ -21,6 +21,8 @@ import { client } from "../../api";
 import { formatDate } from "../../lib";
 import { useWorkspace } from "../../workspace";
 import { apiDetail } from "../ai/shared";
+import { PushDialog } from "../publish/PushDialog";
+import { PushJournal } from "../publish/shared";
 import { lineDiff } from "../workflows/editor/diff";
 import {
   type BulletinDetail,
@@ -142,6 +144,9 @@ export function BulletinPage() {
           onDone={refresh}
         />
       ) : null}
+      {b.own && (b.status === "approved" || b.status === "published") ? (
+        <Distribution bulletin={b} workspace={workspace} canPush={can("connector.publish.push")} />
+      ) : null}
       <Links bulletin={b} />
       {editable && b.current && b.template_spec ? (
         <Editor
@@ -159,6 +164,53 @@ export function BulletinPage() {
       {b.own && editable ? <Marking bulletin={b} workspace={workspace} act={act} /> : null}
       {b.own && b.revisions.length ? <Revisions bulletin={b} workspace={workspace} /> : null}
     </>
+  );
+}
+
+/** A validated bulletin leaves the platform: pushed to an API (journalled) or
+ * exported as a file (CSAF 2.0, JSON, Markdown). */
+function Distribution({
+  bulletin: b,
+  workspace,
+  canPush,
+}: {
+  bulletin: BulletinDetail;
+  workspace: string;
+  canPush: boolean;
+}) {
+  const { t } = useTranslation();
+  const [pushing, setPushing] = useState(false);
+  const exportUrl = (format: string) =>
+    `/api/v1/workspaces/${encodeURIComponent(workspace)}/bulletins/${encodeURIComponent(b.id)}/export?format=${format}`;
+  return (
+    <Card title={t("publish.distribution.title")}>
+      <div className="vv-actions">
+        {canPush ? (
+          <Button onClick={() => setPushing(true)}>{t("publish.push.open")}</Button>
+        ) : null}
+        <span className="vv-muted">{t("publish.distribution.export")}</span>
+        <a href={exportUrl("csaf")} download>
+          CSAF 2.0
+        </a>
+        <a href={exportUrl("json")} download>
+          JSON
+        </a>
+        <a href={exportUrl("markdown")} download>
+          Markdown
+        </a>
+      </div>
+      {canPush ? (
+        <>
+          <PushJournal workspace={workspace} bulletinId={b.id} />
+          <PushDialog
+            workspace={workspace}
+            bulletinId={b.id}
+            open={pushing}
+            onClose={() => setPushing(false)}
+          />
+        </>
+      ) : null}
+    </Card>
   );
 }
 

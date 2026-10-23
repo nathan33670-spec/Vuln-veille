@@ -15,6 +15,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 import { client } from "../../api";
 import { formatDate } from "../../lib";
@@ -52,6 +53,8 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
   const itemPath = `${prefix}/${family}/{connector_id}` as ItemPath;
   const checkPath = `${prefix}/${family}/{connector_id}/check` as CheckPath;
   const key = ["connectors", scope, workspace, family];
+  const editor = (id: string) =>
+    scope === "global" ? `/admin/publish-connectors/${id}` : `/publish-connectors/${id}`;
 
   const types = useQuery({
     queryKey: ["connector-types"],
@@ -87,7 +90,11 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
         }
         actions={
           available.length ? (
-            <Button onClick={() => setCreating(true)}>{t("connectors.add")}</Button>
+            family === "publish" ? (
+              <Link to={editor("new")}>{t("connectors.add")}</Link>
+            ) : (
+              <Button onClick={() => setCreating(true)}>{t("connectors.add")}</Button>
+            )
           ) : null
         }
       />
@@ -114,7 +121,13 @@ export function ConnectorsPage({ scope }: { scope: "workspace" | "global" }) {
               : t("connectors.noType")
         }
         columns={[
-          { key: "name", header: t("admin.name"), render: (c) => c.name },
+          {
+            key: "name",
+            header: t("admin.name"),
+            // Publication connectors have a nested configuration: their own editor.
+            render: (c) =>
+              family === "publish" ? <Link to={editor(c.id)}>{c.name}</Link> : c.name,
+          },
           {
             key: "kind",
             header: t("connectors.kind"),

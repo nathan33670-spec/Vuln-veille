@@ -220,7 +220,7 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 - [x] 7.6 Réseau privé autorisé uniquement par décision admin, tracée dans l'audit
 - [x] 7.7 Export CSAF 2.0 et Markdown/JSON
 - [x] 7.8 Nœud `publish.api` (avec approbation obligatoire) et action « Pousser » sur un bulletin
-- [ ] 7.9 Interfaces : liste et édition des connecteurs de publication, éditeur de mapping avec aperçu, historique des envois
+- [x] 7.9 Interfaces : liste et édition des connecteurs de publication, éditeur de mapping avec aperçu, historique des envois
 
 **Critère de sortie** : sans connaître l'API cible à l'avance, un analyste configure un connecteur depuis l'interface et pousse un bulletin validé, avec un journal complet.
 

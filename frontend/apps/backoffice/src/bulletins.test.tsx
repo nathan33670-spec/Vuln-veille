@@ -414,6 +414,9 @@ describe("bulletin screens", () => {
           ref_prefix: "VOC",
           review_required: false,
           default_template_id: "t1",
+          csaf_publisher_name: "",
+          csaf_publisher_namespace: "",
+          csaf_publisher_category: "coordinator",
           updated_at: "2026-10-22T08:00:00Z",
           version: 1,
           ...(method === "PUT" ? { review_required: true, version: 2 } : {}),
@@ -429,6 +432,9 @@ describe("bulletin screens", () => {
       ref_prefix: "VOC",
       review_required: true,
       default_template_id: "t1",
+      csaf_publisher_name: "",
+      csaf_publisher_namespace: "",
+      csaf_publisher_category: "coordinator",
       version: 1,
     });
   });

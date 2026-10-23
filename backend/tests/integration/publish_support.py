@@ -6,12 +6,16 @@ from datetime import UTC, datetime
 from typing import Any
 
 import asyncpg
+import httpx
 
 from app.bulletins.seeds import seed_templates
 from tests.integration.conftest import Api, ApiFactory, Database
 from tests.integration.helpers import sign_in
 from tests.integration.seed import WORKSPACE_IDS, SeededUser
 from tests.integration.workflow_harness import harness
+from tests.web_fakes import FakeWeb
+
+BASE = "https://api.partner.example"
 
 
 async def sql(database: Database, query: str, *args: object) -> list[asyncpg.Record]:
@@ -83,3 +87,31 @@ class Client:
 async def login(make_api: ApiFactory, user: SeededUser) -> Client:
     api = await make_api("backoffice")
     return Client(api, await sign_in(api, user))
+
+
+class Partner(FakeWeb):
+    """The remote API: answers by method and path, echoes the token back (to check it
+    never reaches the journal), and can fail on demand."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.failures: list[int] = []
+        self.received: list[tuple[str, str, dict[str, str], Any]] = []
+        self.routes[f"{BASE}/v2/advisories"] = self._create
+        self.routes[f"{BASE}/v2/advisories/ADV-1"] = self._update
+
+    def _record(self, request: httpx.Request) -> int | None:
+        body = json.loads(request.content) if request.content else None
+        self.received.append((request.method, request.url.path, dict(request.headers), body))
+        return self.failures.pop(0) if self.failures else None
+
+    def _create(self, request: httpx.Request) -> tuple[Any, ...]:
+        failure = self._record(request)
+        if failure:
+            return failure, {"error": "unavailable"}
+        echoed = request.headers.get("authorization", "")
+        return 201, {"data": {"id": "ADV-1", "echo": echoed}}
+
+    def _update(self, request: httpx.Request) -> tuple[Any, ...]:
+        failure = self._record(request)
+        return (failure, {"error": "x"}) if failure else (200, {"data": {"id": "ADV-1"}})

@@ -54,6 +54,19 @@ rate_limit_per_minute: 30
 
 Le payload est **construit comme un objet JSON** puis sérialisé : aucune injection possible par concaténation de chaînes. Le contexte du mapping ne contient que des données publiables (bulletin, révision, technos, CVE), jamais de secret ni de donnée interne non prévue.
 
+État en phase 7 (merge request 7A, ADR-030) :
+- type `http_generic` (`app/publish/config.py`, `app/connectors/types/http_generic.py`) ;
+- mapping (`app/publish/mapping.py`) ;
+- requête exacte et authentifications (`app/publish/request.py`, `oauth.py`) ;
+- contexte publiable (`app/publish/context.py`) ;
+- export CSAF 2.0 (`app/publish/csaf.py`) ;
+- routes `GET /workspaces/{ws}/publish-targets`, `POST …/publish-targets/{id}/dry-run`, `POST /workspaces/{ws}/publish-mapping/preview` (configuration non enregistrée, bulletin réel ou exemple fictif, chemins disponibles), `GET /workspaces/{ws}/bulletins/{id}/export?format=csaf|json|markdown` ;
+- demandes de réseau privé `…/connectors/publish/{id}/private-network` et file des admins `/admin/private-network-requests`.
+
+Écarts avec le modèle YAML ci-dessus : les noms de champs ne doivent pas ressembler à un identifiant (règle du cadre de connecteurs), d'où `endpoint_url` (et non `token_url`), `key_name` et `key_location` pour la clé d'API, `signed_header`, `digest_prefix` et `timestamp_header` pour HMAC, `idempotency_header` au premier niveau, et `retry.retry_network` pour les erreurs réseau. Les secrets vont dans les emplacements du connecteur : `credential`, `username`, `password`, `client_id`, `client_secret`, `client_certificate`, `client_key`, `signing_key`, `ca_bundle`.
+
+L'envoi réel, le journal `publications` et le nœud `publish.api` arrivent en 7B, les interfaces en 7C.
+
 ## 3. Authentifications prises en charge
 
 | Type | Détail |

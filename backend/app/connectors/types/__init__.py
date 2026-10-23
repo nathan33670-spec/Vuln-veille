@@ -8,6 +8,7 @@ from app.connectors.types import (  # noqa: F401
     github,
     hackernews,
     http_api,
+    http_generic,
     mastodon,
     nvd,
     osv,

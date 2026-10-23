@@ -184,7 +184,7 @@ async def test_writes_need_step_up_and_valid_input(
 
     bad_purpose = await api.client.post(
         api.url("/admin/secrets"),
-        json={"name": "publish-key", "purpose": "connector", "value": VALUE},
+        json={"name": "hook-key", "purpose": "webhook", "value": VALUE},
         headers=headers,
     )
     assert bad_purpose.status_code == 422

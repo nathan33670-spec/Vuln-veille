@@ -429,6 +429,9 @@ def _settings_out(settings: BulletinSettings) -> SettingsOut:
         ref_prefix=settings.ref_prefix,
         review_required=settings.review_required,
         default_template_id=settings.default_template_id,
+        csaf_publisher_name=settings.csaf_publisher_name or "",
+        csaf_publisher_namespace=settings.csaf_publisher_namespace or "",
+        csaf_publisher_category=settings.csaf_publisher_category or "coordinator",
         updated_at=settings.updated_at,
         version=settings.version,
     )
@@ -457,6 +460,10 @@ def _routes_settings(router: APIRouter) -> None:
         settings.ref_prefix = body.ref_prefix
         settings.review_required = body.review_required
         settings.default_template_id = body.default_template_id
+        for field in ("csaf_publisher_name", "csaf_publisher_namespace", "csaf_publisher_category"):
+            value = getattr(body, field)
+            if value is not None:
+                setattr(settings, field, value.strip())
         settings.updated_by = access.principal.user_id
         settings.updated_at = now()
         settings.version = (settings.version or 0) + 1

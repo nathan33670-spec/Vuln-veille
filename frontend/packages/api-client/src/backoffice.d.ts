@@ -431,6 +431,60 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/admin/private-network-requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Admin Requests
+     * @description Every workspace's requests: name, hosts, ranges and reason only.
+     */
+    get: operations["admin_requests_api_v1_admin_private_network_requests_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/private-network-requests/{request_id}/decision": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Decide */
+    post: operations["decide_api_v1_admin_private_network_requests__request_id__decision_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/admin/private-network-requests/{request_id}/revoke": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Revoke */
+    post: operations["revoke_api_v1_admin_private_network_requests__request_id__revoke_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/admin/secrets": {
     parameters: {
       query?: never;
@@ -1602,6 +1656,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export Bulletin
+     * @description A validated bulletin as a file: CSAF 2.0, JSON (its publication data) or
+     *     Markdown. Drafts are never exported.
+     */
+    get: operations["export_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__export_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/publish": {
     parameters: {
       query?: never;
@@ -1869,6 +1944,29 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/private-network": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Requests */
+    get: operations["list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get"];
+    put?: never;
+    /**
+     * Request Private Network
+     * @description Asks the platform administrators to let this connector reach private
+     *     ranges; nothing changes until one of them approves (Q41).
+     */
+    post: operations["request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post"];
+    /** Drop Private Network */
+    delete: operations["drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/usage": {
     parameters: {
       query?: never;
@@ -2007,6 +2105,64 @@ export interface paths {
     get: operations["draft_events_api_v1_workspaces__workspace__draft_requests__request_id__events_get"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/publish-mapping/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Preview Mapping
+     * @description The payload (and request) of a configuration being edited, on a real
+     *     validated bulletin or on a fictitious example.
+     */
+    post: operations["preview_mapping_api_v1_workspaces__workspace__publish_mapping_preview_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/publish-targets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Targets */
+    get: operations["list_targets_api_v1_workspaces__workspace__publish_targets_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace}/publish-targets/{connector_id}/dry-run": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Dry Run
+     * @description The exact request for a bulletin, credentials masked; nothing is sent.
+     */
+    post: operations["dry_run_api_v1_workspaces__workspace__publish_targets__connector_id__dry_run_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3695,6 +3851,11 @@ export interface components {
       last_success_at: string | null;
       /** Name */
       name: string;
+      /**
+       * Private Network Cidrs
+       * @description Plages demandées ; actives après approbation
+       */
+      private_network_cidrs?: string[];
       quotas: components["schemas"]["Quotas"];
       /** Secret Refs */
       secret_refs: {
@@ -3911,6 +4072,16 @@ export interface components {
         [key: string]: unknown;
       };
     };
+    /** DecisionIn */
+    DecisionIn: {
+      /** Approve */
+      approve: boolean;
+      /**
+       * Note
+       * @default
+       */
+      note: string;
+    };
     /** DraftIn */
     DraftIn: {
       /**
@@ -4015,6 +4186,19 @@ export interface components {
       template_name: string | null;
       /** Template Version No */
       template_version_no: number | null;
+    };
+    /** DryRunIn */
+    DryRunIn: {
+      /**
+       * Bulletin Id
+       * Format: uuid
+       */
+      bulletin_id: string;
+      /**
+       * Remote Id
+       * @description Simule une mise à jour (identifiant distant)
+       */
+      remote_id?: string | null;
     };
     /** EngineChoiceIn */
     EngineChoiceIn: {
@@ -4373,6 +4557,37 @@ export interface components {
        */
       status: "authenticated" | "mfa_required" | "mfa_enrollment_required";
     };
+    /** MappingPreviewIn */
+    MappingPreviewIn: {
+      /**
+       * Bulletin Id
+       * @description Bulletin validé ou publié ; sinon un exemple fictif
+       */
+      bulletin_id?: string | null;
+      /**
+       * Config
+       * @description Configuration du connecteur, même non enregistrée
+       */
+      config: {
+        [key: string]: unknown;
+      };
+    };
+    /** MappingPreviewOut */
+    MappingPreviewOut: {
+      /** Errors */
+      errors: {
+        [key: string]: unknown;
+      }[];
+      /** Paths */
+      paths: string[];
+      /** Payload */
+      payload?: unknown;
+      request?: components["schemas"]["PreparedOut"] | null;
+      /** Sample */
+      sample: boolean;
+      /** Valid */
+      valid: boolean;
+    };
     /** MastodonAccountConfig */
     MastodonAccountConfig: {
       /** Account */
@@ -4595,6 +4810,69 @@ export interface components {
       /** New Password */
       new_password: string;
     };
+    /**
+     * PreparedOut
+     * @description A request as it would be sent: credentials masked.
+     */
+    PreparedOut: {
+      /** Body */
+      body: string;
+      /** Headers */
+      headers: {
+        [key: string]: string;
+      };
+      /** Method */
+      method: string;
+      /** Mode */
+      mode: string;
+      /** Url */
+      url: string;
+    };
+    /** PrivateNetworkIn */
+    PrivateNetworkIn: {
+      /** Cidrs */
+      cidrs: string[];
+      /** Reason */
+      reason: string;
+    };
+    /** PrivateNetworkRequestOut */
+    PrivateNetworkRequestOut: {
+      /** Cidrs */
+      cidrs: string[];
+      /**
+       * Connector Id
+       * Format: uuid
+       */
+      connector_id: string;
+      /** Connector Name */
+      connector_name: string;
+      /** Decided At */
+      decided_at: string | null;
+      /** Decided By */
+      decided_by: string | null;
+      /** Decision Note */
+      decision_note: string;
+      /** Hosts */
+      hosts: string[];
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Reason */
+      reason: string;
+      /**
+       * Requested At
+       * Format: date-time
+       */
+      requested_at: string;
+      /** Requested By */
+      requested_by: string | null;
+      /** Status */
+      status: string;
+      /** Workspace Slug */
+      workspace_slug: string | null;
+    };
     /** Quotas */
     Quotas: {
       /** Max Requests Per Run */
@@ -4711,6 +4989,14 @@ export interface components {
       created_by_type: string;
       /** Rev No */
       rev_no: number;
+    };
+    /** RevokeIn */
+    RevokeIn: {
+      /**
+       * Note
+       * @default
+       */
+      note: string;
     };
     /** RssConfig */
     RssConfig: {
@@ -4962,6 +5248,13 @@ export interface components {
     };
     /** SettingsIn */
     SettingsIn: {
+      /** Csaf Publisher Category */
+      csaf_publisher_category?:
+        ("coordinator" | "discoverer" | "other" | "translator" | "user" | "vendor") | null;
+      /** Csaf Publisher Name */
+      csaf_publisher_name?: string | null;
+      /** Csaf Publisher Namespace */
+      csaf_publisher_namespace?: string | null;
       /** Default Template Id */
       default_template_id: string | null;
       /** Ref Prefix */
@@ -4973,6 +5266,12 @@ export interface components {
     };
     /** SettingsOut */
     SettingsOut: {
+      /** Csaf Publisher Category */
+      csaf_publisher_category: string;
+      /** Csaf Publisher Name */
+      csaf_publisher_name: string;
+      /** Csaf Publisher Namespace */
+      csaf_publisher_namespace: string;
       /** Default Template Id */
       default_template_id: string | null;
       /** Ref Prefix */
@@ -5040,6 +5339,32 @@ export interface components {
       position: {
         [key: string]: unknown;
       };
+    };
+    /**
+     * TargetOut
+     * @description A connector a bulletin can be pushed to (the workspace's, or a global one).
+     */
+    TargetOut: {
+      /** Body Format */
+      body_format: string | null;
+      /** Enabled */
+      enabled: boolean;
+      /** Health */
+      health: string;
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Kind */
+      kind: string;
+      /** Name */
+      name: string;
+      /**
+       * Scope
+       * @enum {string}
+       */
+      scope: "workspace" | "global";
     };
     /** TechnologyCreate */
     TechnologyCreate: {
@@ -7337,6 +7662,107 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["UsageOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  admin_requests_api_v1_admin_private_network_requests_get: {
+    parameters: {
+      query?: {
+        status?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  decide_api_v1_admin_private_network_requests__request_id__decision_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        request_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DecisionIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  revoke_api_v1_admin_private_network_requests__request_id__revoke_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        request_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RevokeIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"];
         };
       };
       /** @description Validation Error */
@@ -10079,6 +10505,40 @@ export interface operations {
       };
     };
   };
+  export_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__export_get: {
+    parameters: {
+      query?: {
+        format?: "csaf" | "json" | "markdown";
+      };
+      header?: never;
+      path: {
+        bulletin_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   publish_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__publish_post: {
     parameters: {
       query?: never;
@@ -10788,6 +11248,104 @@ export interface operations {
       };
     };
   };
+  list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PrivateNetworkIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivateNetworkRequestOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   usage_workspace_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__usage_get: {
     parameters: {
       query?: never;
@@ -11165,6 +11723,108 @@ export interface operations {
         };
         content: {
           "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  preview_mapping_api_v1_workspaces__workspace__publish_mapping_preview_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MappingPreviewIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MappingPreviewOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_targets_api_v1_workspaces__workspace__publish_targets_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TargetOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  dry_run_api_v1_workspaces__workspace__publish_targets__connector_id__dry_run_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        connector_id: string;
+        workspace: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DryRunIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PreparedOut"];
         };
       };
       /** @description Validation Error */

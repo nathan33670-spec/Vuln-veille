@@ -2848,6 +2848,14 @@
             "title": "Name",
             "type": "string"
           },
+          "private_network_cidrs": {
+            "description": "Plages demand\u00e9es ; actives apr\u00e8s approbation",
+            "items": {
+              "type": "string"
+            },
+            "title": "Private Network Cidrs",
+            "type": "array"
+          },
           "quotas": {
             "$ref": "#/components/schemas/Quotas"
           },
@@ -3558,6 +3566,26 @@
         "title": "CveSampleOut",
         "type": "object"
       },
+      "DecisionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approve"
+        ],
+        "title": "DecisionIn",
+        "type": "object"
+      },
       "DraftIn": {
         "additionalProperties": false,
         "properties": {
@@ -3864,6 +3892,34 @@
           "finished_at"
         ],
         "title": "DraftRequestOut",
+        "type": "object"
+      },
+      "DryRunIn": {
+        "additionalProperties": false,
+        "properties": {
+          "bulletin_id": {
+            "format": "uuid",
+            "title": "Bulletin Id",
+            "type": "string"
+          },
+          "remote_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Simule une mise \u00e0 jour (identifiant distant)",
+            "title": "Remote Id"
+          }
+        },
+        "required": [
+          "bulletin_id"
+        ],
+        "title": "DryRunIn",
         "type": "object"
       },
       "EngineChoiceIn": {
@@ -4677,6 +4733,83 @@
         "title": "LoginOut",
         "type": "object"
       },
+      "MappingPreviewIn": {
+        "additionalProperties": false,
+        "properties": {
+          "bulletin_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bulletin valid\u00e9 ou publi\u00e9 ; sinon un exemple fictif",
+            "title": "Bulletin Id"
+          },
+          "config": {
+            "additionalProperties": true,
+            "description": "Configuration du connecteur, m\u00eame non enregistr\u00e9e",
+            "title": "Config",
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "title": "MappingPreviewIn",
+        "type": "object"
+      },
+      "MappingPreviewOut": {
+        "properties": {
+          "errors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Paths",
+            "type": "array"
+          },
+          "payload": {
+            "title": "Payload"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreparedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sample": {
+            "title": "Sample",
+            "type": "boolean"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "errors",
+          "paths",
+          "sample"
+        ],
+        "title": "MappingPreviewOut",
+        "type": "object"
+      },
       "MastodonAccountConfig": {
         "properties": {
           "account": {
@@ -5276,6 +5409,182 @@
         "title": "PasswordChangeIn",
         "type": "object"
       },
+      "PreparedOut": {
+        "description": "A request as it would be sent: credentials masked.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Headers",
+            "type": "object"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "url",
+          "headers",
+          "body",
+          "mode"
+        ],
+        "title": "PreparedOut",
+        "type": "object"
+      },
+      "PrivateNetworkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cidrs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Cidrs",
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cidrs",
+          "reason"
+        ],
+        "title": "PrivateNetworkIn",
+        "type": "object"
+      },
+      "PrivateNetworkRequestOut": {
+        "properties": {
+          "cidrs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cidrs",
+            "type": "array"
+          },
+          "connector_id": {
+            "format": "uuid",
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "connector_name": {
+            "title": "Connector Name",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "decision_note": {
+            "title": "Decision Note",
+            "type": "string"
+          },
+          "hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hosts",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workspace_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Slug"
+          }
+        },
+        "required": [
+          "id",
+          "connector_id",
+          "workspace_slug",
+          "connector_name",
+          "hosts",
+          "cidrs",
+          "reason",
+          "status",
+          "requested_by",
+          "requested_at",
+          "decided_by",
+          "decided_at",
+          "decision_note"
+        ],
+        "title": "PrivateNetworkRequestOut",
+        "type": "object"
+      },
       "Quotas": {
         "additionalProperties": false,
         "properties": {
@@ -5610,6 +5919,19 @@
           "created_at"
         ],
         "title": "RevisionSummaryOut",
+        "type": "object"
+      },
+      "RevokeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "RevokeIn",
         "type": "object"
       },
       "RssConfig": {
@@ -6252,6 +6574,50 @@
       "SettingsIn": {
         "additionalProperties": false,
         "properties": {
+          "csaf_publisher_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "coordinator",
+                  "discoverer",
+                  "other",
+                  "translator",
+                  "user",
+                  "vendor"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csaf Publisher Category"
+          },
+          "csaf_publisher_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csaf Publisher Name"
+          },
+          "csaf_publisher_namespace": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "pattern": "^(https://[^\\s]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csaf Publisher Namespace"
+          },
           "default_template_id": {
             "anyOf": [
               {
@@ -6289,6 +6655,18 @@
       },
       "SettingsOut": {
         "properties": {
+          "csaf_publisher_category": {
+            "title": "Csaf Publisher Category",
+            "type": "string"
+          },
+          "csaf_publisher_name": {
+            "title": "Csaf Publisher Name",
+            "type": "string"
+          },
+          "csaf_publisher_namespace": {
+            "title": "Csaf Publisher Namespace",
+            "type": "string"
+          },
           "default_template_id": {
             "anyOf": [
               {
@@ -6323,6 +6701,9 @@
           "ref_prefix",
           "review_required",
           "default_template_id",
+          "csaf_publisher_name",
+          "csaf_publisher_namespace",
+          "csaf_publisher_category",
           "updated_at",
           "version"
         ],
@@ -6487,6 +6868,62 @@
           "position"
         ],
         "title": "SyncStatusOut",
+        "type": "object"
+      },
+      "TargetOut": {
+        "description": "A connector a bulletin can be pushed to (the workspace's, or a global one).",
+        "properties": {
+          "body_format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Format"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "health": {
+            "title": "Health",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "workspace",
+              "global"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "scope",
+          "enabled",
+          "health",
+          "body_format"
+        ],
+        "title": "TargetOut",
         "type": "object"
       },
       "TechnologyCreate": {
@@ -11452,6 +11889,168 @@
         ]
       }
     },
+    "/api/v1/admin/private-network-requests": {
+      "get": {
+        "description": "Every workspace's requests: name, hosts, ranges and reason only.",
+        "operationId": "admin_requests_api_v1_admin_private_network_requests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "pending",
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                  },
+                  "title": "Response Admin Requests Api V1 Admin Private Network Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Requests",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
+    "/api/v1/admin/private-network-requests/{request_id}/decision": {
+      "post": {
+        "operationId": "decide_api_v1_admin_private_network_requests__request_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
+    "/api/v1/admin/private-network-requests/{request_id}/revoke": {
+      "post": {
+        "operationId": "revoke_api_v1_admin_private_network_requests__request_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
     "/api/v1/admin/secrets": {
       "get": {
         "operationId": "list_global_secrets_api_v1_admin_secrets_get",
@@ -15878,6 +16477,72 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/export": {
+      "get": {
+        "description": "A validated bulletin as a file: CSAF 2.0, JSON (its publication data) or\nMarkdown. Drafts are never exported.",
+        "operationId": "export_bulletin_api_v1_workspaces__workspace__bulletins__bulletin_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bulletin_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Bulletin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "csaf",
+                "json",
+                "markdown"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Bulletin",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/bulletins/{bulletin_id}/publish": {
       "post": {
         "description": "Publication needs a recent second factor; the published revision is frozen.",
@@ -17033,6 +17698,166 @@
         ]
       }
     },
+    "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/private-network": {
+      "delete": {
+        "operationId": "drop_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Drop Private Network",
+        "tags": [
+          "publication"
+        ]
+      },
+      "get": {
+        "operationId": "list_requests_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                  },
+                  "title": "Response List Requests Api V1 Workspaces  Workspace  Connectors Publish  Connector Id  Private Network Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Requests",
+        "tags": [
+          "publication"
+        ]
+      },
+      "post": {
+        "description": "Asks the platform administrators to let this connector reach private\nranges; nothing changes until one of them approves (Q41).",
+        "operationId": "request_private_network_api_v1_workspaces__workspace__connectors_publish__connector_id__private_network_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateNetworkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateNetworkRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Private Network",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
     "/api/v1/workspaces/{workspace}/connectors/publish/{connector_id}/usage": {
       "get": {
         "operationId": "usage_workspace_publish_api_v1_workspaces__workspace__connectors_publish__connector_id__usage_get",
@@ -17636,6 +18461,168 @@
         "summary": "Draft Events",
         "tags": [
           "bulletins"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/publish-mapping/preview": {
+      "post": {
+        "description": "The payload (and request) of a configuration being edited, on a real\nvalidated bulletin or on a fictitious example.",
+        "operationId": "preview_mapping_api_v1_workspaces__workspace__publish_mapping_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingPreviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingPreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Mapping",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/publish-targets": {
+      "get": {
+        "operationId": "list_targets_api_v1_workspaces__workspace__publish_targets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TargetOut"
+                  },
+                  "title": "Response List Targets Api V1 Workspaces  Workspace  Publish Targets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Targets",
+        "tags": [
+          "publication"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace}/publish-targets/{connector_id}/dry-run": {
+      "post": {
+        "description": "The exact request for a bulletin, credentials masked; nothing is sent.",
+        "operationId": "dry_run_api_v1_workspaces__workspace__publish_targets__connector_id__dry_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace",
+            "required": true,
+            "schema": {
+              "title": "Workspace",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dry Run",
+        "tags": [
+          "publication"
         ]
       }
     },

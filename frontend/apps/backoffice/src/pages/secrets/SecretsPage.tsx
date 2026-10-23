@@ -36,7 +36,7 @@ export function SecretsPage({ scope }: { scope: "workspace" | "global" }) {
           ),
   });
   const purposes: Purpose[] =
-    scope === "global" ? ["source", "llm"] : ["source", "llm", "connector", "webhook"];
+    scope === "global" ? ["source", "llm", "connector"] : ["source", "llm", "connector", "webhook"];
 
   async function act(action: () => Promise<unknown>, success: string) {
     try {

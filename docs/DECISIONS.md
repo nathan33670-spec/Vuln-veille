@@ -257,3 +257,31 @@ Toute nouvelle décision s'ajoute à la fin, avec le format : Contexte / Décisi
   - L'aperçu d'un modèle est calculé par le serveur avec exactement ces règles.
 - **Conséquences** : un modèle ne peut pas produire de mise en forme hors de cette liste ; un lien inventé par le moteur reste possible en `http(s)` et passe par la relecture humaine (ADR-019).
 
+
+## ADR-030 — Connecteur de publication HTTP générique et réseau privé sur approbation
+
+- **Statut** : Proposée (2026-10-23), avec les réponses du porteur Q40 à Q43.
+- **Contexte** : les API cibles sont inconnues (Q12). Il faut pouvoir en ajouter une par configuration, sans exécuter de code fourni et sans jamais exposer un secret. Le cloisonnement VOC/CERT empêche un admin de voir les connecteurs de l'autre équipe, alors qu'il doit décider des accès au réseau interne.
+- **Décision** :
+  - Un type de connecteur `http_generic` (famille `publish`), espace ou global (Q40). Sa configuration couvre :
+    - la requête : URL, méthode, chemin en gabarit Liquid nourri de valeurs encodées, bloc `update` ;
+    - l'authentification : `none`, `api_key`, `bearer`, `basic`, `oauth2_client_credentials`, `mtls` ou `hmac` ;
+    - le corps : JSON par mapping, CSAF 2.0 ou Markdown ;
+    - la réponse : statuts de succès et chemin JMESPath de l'identifiant distant ;
+    - la clé d'idempotence, les reprises et le débit.
+  - **Secrets** : ils vont dans des emplacements facultatifs pour le cadre, et le type d'authentification décide lesquels sont exigés (contrôle à l'enregistrement).
+  - **Mapping** : c'est un arbre JSON dont chaque feuille est `const`, `path` (JMESPath, avec table de correspondance, valeur par défaut et format) ou `template` (Liquid restreint). Le corps est construit comme une valeur puis sérialisé, et les données lues ne sont jamais compilées. Les limites portent sur la profondeur, le nombre de nœuds et la taille.
+  - **Contexte publié** : uniquement le bulletin validé (révision courante d'un bulletin `approved`, révision publiée d'un bulletin `published`), ses CVE et ses technos. Jamais une qualification interne ni un secret.
+  - **Dry-run** : il est calculé par l'API, qui ne déchiffre aucun secret. Chaque identifiant et chaque signature y sont masqués. L'envoi réel se fait uniquement dans le worker `publish`, qui détient la clé de la famille.
+  - **mTLS** : le certificat et la clé client sont chargés en mémoire (`memfd`), jamais écrits sur disque. Une publication ne suit aucune redirection.
+  - **Réseau privé** (Q41) : l'équipe dépose une demande (plages privées, au plus larges /8 ou /32, et un motif) dans `private_network_requests`. Les admins plateforme voient toutes les demandes (nom du connecteur, hôtes, plages, demandeur) sans voir les connecteurs eux-mêmes, et approuvent, refusent ou révoquent, avec audit. Le worker n'applique une plage que si la dernière décision approuvée couvre exactement les hôtes et les plages actuels du connecteur. Changer d'URL ou de plages fait donc retomber l'accès. HTTP en clair n'est permis que vers une plage approuvée.
+  - **CSAF 2.0** (Q42) : l'éditeur (nom, catégorie, espace de noms) est un réglage de l'espace, et l'export est refusé tant qu'il est vide. Le document suit le profil `csaf_security_advisory` et est vérifié contre le schéma OASIS.
+  - **MFA** (Q43) : une MFA récente est exigée pour créer ou modifier un connecteur, ainsi qu'au premier envoi d'un bulletin vers un connecteur. Les mises à jour suivantes du même bulletin vers le même connecteur n'en redemandent pas.
+- **Alternatives écartées** :
+  - un nœud « requête HTTP » avec identifiants dans les paramètres : contraire à ADR-021 ;
+  - un code de mapping (Python, JavaScript) : refusé par la règle « pas d'exécution de code fourni » ;
+  - l'approbation écrite par l'admin directement sur le connecteur de l'autre espace : elle obligerait l'API à écrire hors du contexte RLS de l'admin.
+- **Conséquences** :
+  - les cibles connues plus tard (MISP, OpenCTI, TheHive…) seront des préréglages de configuration ;
+  - le jeton OAuth2 n'est conservé que dans la mémoire du worker, jusqu'à peu avant son expiration ;
+  - les secrets de connecteur peuvent être globaux, pour les connecteurs de publication communs.

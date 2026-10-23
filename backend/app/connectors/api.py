@@ -89,6 +89,7 @@ def connector_out(connector: Connector) -> ConnectorOut:
         last_error=connector.last_error,
         consecutive_failures=connector.consecutive_failures,
         allow_private_network=connector.allow_private_network,
+        private_network_cidrs=[str(c) for c in connector.private_network_cidrs],
         version=connector.version,
         created_at=connector.created_at,
         updated_at=connector.updated_at,

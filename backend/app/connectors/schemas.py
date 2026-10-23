@@ -65,6 +65,9 @@ class ConnectorOut(BaseModel):
     last_error: str | None
     consecutive_failures: int
     allow_private_network: bool
+    private_network_cidrs: list[str] = Field(
+        default_factory=list, description="Plages demandées ; actives après approbation"
+    )
     version: int
     created_at: datetime
     updated_at: datetime

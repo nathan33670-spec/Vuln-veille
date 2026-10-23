@@ -21,7 +21,8 @@ from app.vault.crypto import Sealed, SecretBinding, VaultError, open_sealed, rew
 from app.vault.keys import KeyFormatError, Keyring, PublicKey, SecretPurpose
 from app.vault.models import Secret
 
-GLOBAL_PURPOSES = frozenset({SecretPurpose.LLM, SecretPurpose.SOURCE})
+# Global connectors: sources, AI engines and publication targets shared by both teams.
+GLOBAL_PURPOSES = frozenset({SecretPurpose.LLM, SecretPurpose.SOURCE, SecretPurpose.CONNECTOR})
 HINT_MIN_LENGTH = 16  # shorter values show no hint at all
 
 

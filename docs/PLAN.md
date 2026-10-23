@@ -212,13 +212,13 @@ Chaque étape se termine par du code testé, poussé, et une mise à jour de PRO
 
 ### Phase 7 — Connecteurs de publication API
 
-- [ ] 7.1 Connecteur HTTP générique : URL, méthode, en-têtes, authentification (aucune, clé API, bearer, basic, OAuth2 client credentials, mTLS, signature HMAC)
-- [ ] 7.2 Mapping déclaratif du payload (constantes, chemins JMESPath, gabarits Liquid, tables de correspondance)
+- [x] 7.1 Connecteur HTTP générique : URL, méthode, en-têtes, authentification (aucune, clé API, bearer, basic, OAuth2 client credentials, mTLS, signature HMAC)
+- [x] 7.2 Mapping déclaratif du payload (constantes, chemins JMESPath, gabarits Liquid, tables de correspondance)
 - [ ] 7.3 Dry-run (aperçu de la requête, secrets masqués), test sur un serveur d'écho, critères de succès, extraction de l'identifiant distant
 - [ ] 7.4 Création ou mise à jour (identifiant distant mémorisé), clé d'idempotence, retries avec backoff, limitation de débit
 - [ ] 7.5 Journal des publications (requête expurgée, statut, extrait de réponse)
-- [ ] 7.6 Réseau privé autorisé uniquement par décision admin, tracée dans l'audit
-- [ ] 7.7 Export CSAF 2.0 et Markdown/JSON
+- [x] 7.6 Réseau privé autorisé uniquement par décision admin, tracée dans l'audit
+- [x] 7.7 Export CSAF 2.0 et Markdown/JSON
 - [ ] 7.8 Nœud `publish.api` (avec approbation obligatoire) et action « Pousser » sur un bulletin
 - [ ] 7.9 Interfaces : liste et édition des connecteurs de publication, éditeur de mapping avec aperçu, historique des envois
 

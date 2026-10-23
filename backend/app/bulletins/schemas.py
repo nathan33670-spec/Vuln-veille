@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -100,10 +100,16 @@ class MatchOut(BaseModel):
     reasons: list[str]
 
 
+CsafCategory = Literal["coordinator", "discoverer", "other", "translator", "user", "vendor"]
+
+
 class SettingsOut(BaseModel):
     ref_prefix: str
     review_required: bool
     default_template_id: uuid.UUID | None
+    csaf_publisher_name: str
+    csaf_publisher_namespace: str
+    csaf_publisher_category: str
     updated_at: datetime
     version: int
 
@@ -112,6 +118,12 @@ class SettingsIn(_In):
     ref_prefix: str = Field(pattern=r"^[A-Z][A-Z0-9-]{0,15}$")
     review_required: bool
     default_template_id: uuid.UUID | None
+    # CSAF publisher (Q42); left out: unchanged.
+    csaf_publisher_name: str | None = Field(default=None, max_length=200)
+    csaf_publisher_namespace: str | None = Field(
+        default=None, max_length=500, pattern=r"^(https://[^\s]+)?$"
+    )
+    csaf_publisher_category: CsafCategory | None = None
     version: int
 
 

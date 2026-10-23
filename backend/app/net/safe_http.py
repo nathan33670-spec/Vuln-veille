@@ -20,6 +20,7 @@ Barriers, per request and per redirect hop:
 import asyncio
 import ipaddress
 import json
+import os
 import socket
 import ssl
 import zlib
@@ -77,6 +78,9 @@ class EgressPolicy:
     total_timeout: float = 60.0
     allowed_content_types: tuple[str, ...] = ()
     ca_bundle_pem: str | None = None
+    # mTLS: PEM certificate chain and key, loaded from memory (never written to disk).
+    client_cert_pem: str | None = field(default=None, repr=False)
+    client_key_pem: str | None = field(default=None, repr=False)
     secret_headers: frozenset[str] = field(default=DEFAULT_SECRET_HEADERS)
 
     def domain_allowed(self, host: str) -> bool:
@@ -189,6 +193,8 @@ class SafeHttpClient:
             cafile=None if policy.ca_bundle_pem else certifi.where(),
             cadata=policy.ca_bundle_pem,
         )
+        if policy.client_cert_pem and policy.client_key_pem:
+            _load_client_certificate(self._ssl, policy.client_cert_pem, policy.client_key_pem)
 
     async def get(self, url: str, **kwargs: Any) -> SafeResponse:
         return await self.request("GET", url, **kwargs)
@@ -373,6 +379,25 @@ class SafeHttpClient:
                 raise ResponseRejectedError("response_too_large")
             chunks.append(decoder.feed(chunk))
         return b"".join(chunks)
+
+
+def _load_client_certificate(context: ssl.SSLContext, cert_pem: str, key_pem: str) -> None:
+    """``load_cert_chain`` reads paths only: anonymous in-memory files stand in for them,
+    so the key never touches a disk (Linux ``memfd``)."""
+    descriptors = []
+    try:
+        paths = []
+        for name, pem in (("cert", cert_pem), ("key", key_pem)):
+            fd = os.memfd_create(f"vv-{name}", os.MFD_CLOEXEC)
+            descriptors.append(fd)
+            os.write(fd, pem.encode())
+            paths.append(f"/proc/self/fd/{fd}")
+        context.load_cert_chain(certfile=paths[0], keyfile=paths[1])
+    except (ssl.SSLError, ValueError) as exc:
+        raise EgressError("client_certificate_invalid") from exc
+    finally:
+        for fd in descriptors:
+            os.close(fd)
 
 
 def egress_client(settings: Settings, policy: EgressPolicy) -> SafeHttpClient:

@@ -24,11 +24,8 @@ class Connector(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     usage_current_period: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     egress_domains: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     allow_private_network: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Requested ranges; applied only while an approved request matches (ADR-030).
     private_network_cidrs: Mapped[list[str]] = mapped_column(ARRAY(CIDR), default=list)
-    private_network_approved_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL")
-    )
-    private_network_approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     data_policy: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     last_check_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -54,6 +54,10 @@ class BulletinSettings(Base):
     default_template_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("bulletin_templates.id", ondelete="SET NULL")
     )
+    # CSAF publisher (Q42): the export is refused while name or namespace is empty.
+    csaf_publisher_name: Mapped[str] = mapped_column(Text, default="")
+    csaf_publisher_namespace: Mapped[str] = mapped_column(Text, default="")
+    csaf_publisher_category: Mapped[str] = mapped_column(Text, default="coordinator")
     updated_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey(_USER, ondelete="SET NULL"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     version: Mapped[int] = mapped_column(Integer, default=1)

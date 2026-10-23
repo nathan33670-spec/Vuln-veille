@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
     from app.connectors.models import Connector
 
-from app.net.safe_http import SafeHttpClient
+from app.net.safe_http import EgressPolicy, SafeHttpClient
 from app.vault.keys import SecretPurpose
 
 
@@ -144,6 +144,14 @@ class ConnectorType(ABC):
     def egress_for(cls, config: ConnectorConfig) -> tuple[str, ...]:
         """Domains this connector contacts; types reading user URLs override it."""
         return cls.egress_domains
+
+    @classmethod
+    def adjust_policy(
+        cls, config: ConnectorConfig, secrets: Mapping[str, str], policy: EgressPolicy
+    ) -> EgressPolicy:
+        """The egress policy of one connector (CA bundle, client certificate, timeouts),
+        never wider than its declared domains and approved ranges."""
+        return policy
 
     # Periodic synchronisation (global catalogue sources). Types that sync declare
     # ``syncs = True``, a ``sync_interval_minutes`` configuration field, and ``sync``.

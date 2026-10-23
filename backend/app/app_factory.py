@@ -35,6 +35,7 @@ from app.core.tasks import CeleryTaskQueue, TaskQueue
 from app.iam.admin_api import build_admin_router
 from app.iam.auth_api import build_auth_router
 from app.iam.portal_org_api import build_portal_org_router
+from app.publish.api import build_publish_router
 from app.technologies.api import build_technology_router
 from app.vault.api import build_vault_router
 from app.vault.service import Vault
@@ -96,6 +97,7 @@ def create_app(
         app.include_router(build_audit_router(), prefix=prefix)
         app.include_router(build_vault_router(), prefix=prefix)
         app.include_router(build_connector_router(), prefix=prefix)
+        app.include_router(build_publish_router(), prefix=prefix)
         app.include_router(build_catalog_router(), prefix=prefix)
         app.include_router(build_technology_router(), prefix=prefix)
         app.include_router(build_watch_router(), prefix=prefix)

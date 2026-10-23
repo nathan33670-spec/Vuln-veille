@@ -46,6 +46,10 @@ Les questions de cadrage ont été posées en interactif le 2026-10-20 (session 
 | Q38 | TLP par défaut d'un bulletin ? | **Défini par le modèle** (`tlp` de la spécification), AMBER si le modèle ne le précise pas ; modifiable sur le bulletin. | spec 04 |
 | Q39 | Modèles livrés ? | **Générique FR (modèle par défaut) et EN, et « Vulnérabilité exploitée ou critique »** (KEV, exploitée dans la nature ou critique), désactivables. | spec 04 §1 |
 | Q36 | Couche 2 de X (recherche web du moteur IA) activée par défaut ? | **Oui** (2026-10-22) ; l'espace peut la désactiver sur son connecteur `x_reader`. | ADR-028 |
+| Q40 | Portée des connecteurs de publication ? | **Par espace**, et des connecteurs **globaux** (créés par un admin plateforme) utilisables par les deux équipes (2026-10-23). Les secrets de type « connecteur » peuvent donc être globaux. | spec 05, ADR-030 |
+| Q41 | Approbation d'une cible sur réseau privé alors que l'admin ne voit pas les connecteurs de l'autre équipe ? | **File d'approbation** : l'équipe demande (plages, motif), l'admin voit la demande seule (nom, hôtes, plages, demandeur) et approuve ou refuse, avec audit (2026-10-23). | ADR-030 |
+| Q42 | Éditeur des exports CSAF 2.0 ? | **Réglage par espace** (nom, catégorie, espace de noms) ; export refusé tant qu'il est vide ; rien dans le dépôt (2026-10-23). | spec 05, ADR-030 |
+| Q43 | MFA à chaque envoi ? | **Au premier envoi** d'un bulletin vers un connecteur seulement, comme la spec ; les mises à jour suivantes ne la redemandent pas (2026-10-23). | spec 05 §5 |
 
 ## Questions encore ouvertes
 

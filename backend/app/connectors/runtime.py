@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 
 from pydantic import ValidationError
 from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connectors.base import (
@@ -29,8 +30,10 @@ from app.core.config import Settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.logging import get_logger
 from app.core.rls import init_context, set_context
+from app.net.addresses import IPNetwork
 from app.net.safe_http import EgressDeniedError, EgressError, EgressPolicy, egress_client
 from app.net.safe_http import private_networks as parse_networks
+from app.publish.models import PrivateNetworkRequest
 from app.vault.crypto import VaultError
 from app.vault.service import Vault, resolve_secret
 
@@ -50,10 +53,10 @@ async def build_context(
     domains = type_.egress_for(config)
     if not domains:
         raise EgressDeniedError("no_declared_domains")
-    approved = connector.allow_private_network and connector.private_network_approved_by
+    networks = await approved_networks(db, connector, domains)
     policy = EgressPolicy(
         allowed_domains=domains,
-        private_networks=parse_networks(connector.private_network_cidrs) if approved else (),
+        private_networks=networks,
         allowed_content_types=type_.content_types,
         max_bytes=type_.max_response_bytes,
     )
@@ -68,6 +71,7 @@ async def build_context(
         )
         for slot, secret_id in connector.secret_refs.items()
     }
+    policy = type_.adjust_policy(config, secrets, policy)
     quotas = (
         QuotaGuard(redis, connector.id, Quotas.model_validate(connector.quotas))
         if redis is not None
@@ -82,6 +86,32 @@ async def build_context(
         quotas=quotas,
     )
     return type_(), context
+
+
+async def approved_networks(
+    db: AsyncSession, connector: Connector, hosts: tuple[str, ...]
+) -> tuple[IPNetwork, ...]:
+    """The private ranges an administrator approved for the connector as it is now:
+    the latest decision must cover the same hosts and the same ranges (ADR-030)."""
+    if not connector.allow_private_network or not connector.private_network_cidrs:
+        return ()
+    latest = (
+        await db.execute(
+            select(PrivateNetworkRequest)
+            .where(
+                PrivateNetworkRequest.connector_id == connector.id,
+                PrivateNetworkRequest.status.in_(("approved", "revoked")),
+            )
+            .order_by(PrivateNetworkRequest.decided_at.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if latest is None or latest.status != "approved":
+        return ()
+    requested = {str(c) for c in connector.private_network_cidrs}
+    if {str(c) for c in latest.cidrs} != requested or set(latest.hosts) != set(hosts):
+        return ()
+    return parse_networks(sorted(requested))
 
 
 def record_health(connector: Connector, result: HealthResult, now: datetime) -> None:

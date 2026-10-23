@@ -5,21 +5,22 @@ range, applied by the worker only while it matches the connector (ADR-030)."""
 
 import json
 import uuid
-from datetime import UTC, datetime
 from typing import Any
 
-import asyncpg
 import pytest
 
-from app.bulletins.seeds import seed_templates
 from app.connectors.models import Connector
 from app.connectors.runtime import approved_networks
 from app.core.db import create_engine, create_sessionmaker
 from app.core.rls import init_context, set_context
-from tests.integration.conftest import PASSWORDS, Api, ApiFactory, Database
-from tests.integration.helpers import sign_in
-from tests.integration.seed import WORKSPACE_IDS, SeededUser, create_user
-from tests.integration.workflow_harness import harness
+from tests.integration.conftest import PASSWORDS, ApiFactory, Database
+from tests.integration.publish_support import (
+    login,
+    seed_all_templates,
+    sql,
+    validated_bulletin,
+)
+from tests.integration.seed import WORKSPACE_IDS, create_user
 
 pytestmark = pytest.mark.integration
 
@@ -38,84 +39,17 @@ CONFIG: dict[str, Any] = {
 }
 
 
-async def _sql(database: Database, query: str, *args: object) -> list[asyncpg.Record]:
-    conn = await asyncpg.connect(database.admin_dsn)
-    try:
-        return await conn.fetch(query, *args)
-    finally:
-        await conn.close()
-
-
-async def _bulletin(database: Database, workspace: uuid.UUID, status: str) -> uuid.UUID:
-    """A bulletin of the delivered generic template, with one revision."""
-    version = (
-        await _sql(
-            database,
-            "SELECT v.id FROM bulletin_template_versions v JOIN bulletin_templates t "
-            "ON t.id = v.template_id WHERE t.workspace_id = $1 AND t.seed_key = 'generic_fr'",
-            workspace,
-        )
-    )[0]["id"]
-    bulletin, revision = uuid.uuid4(), uuid.uuid4()
-    fields = {
-        "title": "RCE dans Exemple",
-        "summary": "Une faille.",
-        "recommendations": "Mettre à jour.",
-        "affected_products": [{"vendor": "exemple", "product": "serveur", "versions": "< 2"}],
-        "references": [{"title": "Avis", "url": "https://exemple.org/avis"}],
-    }
-    await _sql(
-        database,
-        "INSERT INTO bulletins (id, workspace_id, ref, language, title, status, tlp, "
-        "template_version_id, approved_at) VALUES ($1, $2, $3, 'fr', 'RCE', $4, 'GREEN', $5, "
-        "now())",
-        bulletin, workspace, f"CERT-2026-{uuid.uuid4().int % 10000:04d}", status, version,
-    )  # fmt: skip
-    await _sql(
-        database,
-        "INSERT INTO bulletin_revisions (id, workspace_id, bulletin_id, rev_no, fields, "
-        "rendered_markdown, rendered_html, content_hash, created_by_type) "
-        "VALUES ($1, $2, $3, 1, $4, '# RCE dans Exemple', '<h1>RCE</h1>', $5, 'user')",
-        revision, workspace, bulletin, json.dumps(fields), "b" * 64,
-    )  # fmt: skip
-    await _sql(
-        database, "UPDATE bulletins SET current_revision_id = $1 WHERE id = $2", revision, bulletin
-    )
-    return bulletin
-
-
-class Client:
-    def __init__(self, api: Api, csrf: str) -> None:
-        self.api, self.h = api, {"x-csrf-token": csrf}
-
-    async def call(self, method: str, path: str, body: Any = None, status: int = 200) -> Any:
-        response = await self.api.client.request(
-            method, self.api.url(path), json=body, headers=self.h
-        )
-        assert response.status_code == status, response.text
-        return response.json() if response.content else None
-
-
-async def _login(make_api: ApiFactory, user: SeededUser) -> Client:
-    api = await make_api("backoffice")
-    return Client(api, await sign_in(api, user))
-
-
 async def test_publish_connector_api(
     make_api: ApiFactory, database: Database, redis_url: str, clean_state: None
 ) -> None:
-    async with harness(database, redis_url) as h:
-        for slug in ("voc", "cert"):
-            async with h.app_db(WORKSPACE_IDS[slug]) as db:
-                await seed_templates(db, WORKSPACE_IDS[slug], slug, datetime.now(UTC))
-                await db.commit()
+    await seed_all_templates(database, redis_url)
     ana = await create_user(
         database.admin_dsn, "ana@voc.example.com", workspaces={"voc": "analyst"}, with_totp=True
     )
     eve = await create_user(
         database.admin_dsn, "eve@cert.example.com", workspaces={"cert": "analyst"}, with_totp=True
     )
-    a, e = await _login(make_api, ana), await _login(make_api, eve)
+    a, e = await login(make_api, ana), await login(make_api, eve)
     base = "/workspaces/cert"
 
     # The authentication type decides which secrets are required.
@@ -136,8 +70,8 @@ async def test_publish_connector_api(
     assert connector["egress_domains"] == ["api.partner.example"]
 
     # Dry-run: only a validated bulletin, credentials masked, nothing sent.
-    draft = await _bulletin(database, CERT, "draft")
-    approved = await _bulletin(database, CERT, "approved")
+    draft = await validated_bulletin(database, CERT, "draft")
+    approved = await validated_bulletin(database, CERT, "approved")
     target = f"{base}/publish-targets/{connector['id']}/dry-run"
     refused = await e.call("POST", target, {"bulletin_id": str(draft)}, 422)
     assert refused["detail"] == "not_pushable"
@@ -250,7 +184,7 @@ async def test_publish_connector_api(
 
     audit = {
         r["action"]
-        for r in await _sql(
+        for r in await sql(
             database, "SELECT action FROM audit_events WHERE action LIKE 'connector.%'"
         )
     }

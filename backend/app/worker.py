@@ -168,6 +168,14 @@ def bulletin_draft(request_id: str, workspace_id: str) -> None:
     asyncio.run(draft_entry(get_settings(), uuid.UUID(request_id), uuid.UUID(workspace_id)))
 
 
+@app.task(name="publish.push")
+def publish_push(publication_id: str, workspace_id: str) -> None:
+    """One attempt of a push to a publication connector (spec 05 §4)."""
+    from app.publish.runner import push_entry  # noqa: PLC0415 - worker-only import
+
+    asyncio.run(push_entry(get_settings(), uuid.UUID(publication_id), uuid.UUID(workspace_id)))
+
+
 @app.task(name="publish.workflow_node")
 def publish_workflow_node(node_run_id: str, workspace_id: str) -> None:
     _node(node_run_id, workspace_id)

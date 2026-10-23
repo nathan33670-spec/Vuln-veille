@@ -192,3 +192,54 @@ def sample_context() -> dict[str, Any]:
         "technologies": [{"vendor": "exemple", "product": "serveur", "name": "Exemple Serveur"}],
         "remote_id": None,
     }
+
+
+def sample_publication(workspace_slug: str, settings: BulletinSettings | None) -> Publication:
+    """The fictitious bulletin of a connection test, built in memory (never stored),
+    marked as a test in its reference and title."""
+    sample = sample_context()
+    data, revision = sample["bulletin"], sample["revision"]
+    released = datetime.fromisoformat(data["published_at"])
+    bulletin = Bulletin(
+        id=uuid.UUID(int=0),
+        workspace_id=settings.workspace_id if settings else uuid.UUID(int=0),
+        ref=f"TEST-{workspace_slug.upper()}-0000",
+        language=data["language"],
+        title=f"[TEST] {data['title']}",
+        status="published",
+        severity=data["severity"],
+        tlp=data["tlp"],
+        published_at=released,
+        approved_at=released,
+    )
+    fields = {**data["fields"], "title": f"[TEST] {data['fields']['title']}"}
+    return Publication(
+        bulletin=bulletin,
+        revision=BulletinRevision(
+            id=uuid.UUID(int=0),
+            bulletin_id=bulletin.id,
+            rev_no=revision["rev_no"],
+            fields=fields,
+            rendered_markdown=f"# [TEST] {data['title']}\n",
+            rendered_html=f"<h1>[TEST] {data['title']}</h1>\n",
+            content_hash="0" * 64,
+            created_at=datetime.fromisoformat(revision["created_at"]),
+        ),
+        vulnerabilities=[
+            Vulnerability(
+                id=uuid.UUID(int=0),
+                ref=v["ref"],
+                cve_id=v["cve_id"],
+                title=v["title"],
+                exploitation_status=v["exploitation_status"],
+                patch_status=v["patch_status"],
+            )
+            for v in sample["vulnerabilities"]
+        ],
+        technologies=[
+            Technology(vendor=t["vendor"], product=t["product"], display_name=t["name"])
+            for t in sample["technologies"]
+        ],
+        workspace_slug=workspace_slug,
+        settings=settings,
+    )

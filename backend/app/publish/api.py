@@ -9,7 +9,7 @@ import ipaddress
 import json
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -18,11 +18,14 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import AuditEntry, record
+from app.audit.service import record as record_audit
+from app.bulletins.models import Bulletin
 from app.connectors.base import Family
 from app.connectors.models import Connector
 from app.connectors.service import health_of
 from app.core.errors import ApiError
 from app.core.ids import uuid7
+from app.core.tasks import TaskQueue
 from app.iam.deps import (
     DB,
     SettingsDep,
@@ -44,9 +47,11 @@ from app.publish.context import (
 )
 from app.publish.csaf import csaf_document
 from app.publish.mapping import MappingError, build_payload, context_paths, validate_mapping
-from app.publish.models import PrivateNetworkRequest
+from app.publish.models import PrivateNetworkRequest, PushAttempt, PushRecord
 from app.publish.request import build_request
+from app.publish.runner import push_task
 from app.publish.schemas import (
+    AttemptOut,
     DecisionIn,
     DryRunIn,
     MappingPreviewIn,
@@ -54,9 +59,13 @@ from app.publish.schemas import (
     PreparedOut,
     PrivateNetworkIn,
     PrivateNetworkRequestOut,
+    PushDetailOut,
+    PushIn,
+    PushOut,
     RevokeIn,
     TargetOut,
 )
+from app.publish.service import first_push, push_target, queue_push
 
 Pusher = Annotated[WorkspaceAccess, Depends(require_workspace(Permission.CONNECTOR_PUBLISH_PUSH))]
 Manager = Annotated[
@@ -259,6 +268,165 @@ def _routes_publication(router: APIRouter) -> None:
         )
 
 
+def _push_out(record: PushRecord, connector_name: str, ref: str | None) -> PushOut:
+    return PushOut(
+        id=record.id,
+        bulletin_id=record.bulletin_id,
+        bulletin_ref=ref,
+        connector_id=record.connector_id,
+        connector_name=connector_name,
+        connector_version=record.connector_version,
+        rev_no=record.rev_no,
+        is_test=record.is_test,
+        origin=record.origin,
+        requested_by=record.requested_by,
+        status=record.status,
+        mode=record.mode,
+        attempts=record.attempts,
+        next_attempt_at=record.next_attempt_at,
+        remote_id=record.remote_id,
+        response_status=record.response_status,
+        error=record.error,
+        created_at=record.created_at,
+        finished_at=record.finished_at,
+    )
+
+
+async def _out(db: AsyncSession, record: PushRecord) -> PushOut:
+    connector = await db.get(Connector, record.connector_id)
+    bulletin = await db.get(Bulletin, record.bulletin_id) if record.bulletin_id else None
+    return _push_out(
+        record, connector.name if connector else "", bulletin.ref if bulletin else None
+    )
+
+
+def _send(request: Request, record: PushRecord) -> None:
+    name, kwargs, _ = push_task(record)
+    cast(TaskQueue, request.app.state.tasks).send(name, kwargs)
+
+
+def _routes_push(router: APIRouter) -> None:
+    @router.post(
+        "/workspaces/{workspace}/bulletins/{bulletin_id}/push",
+        response_model=PushOut,
+        status_code=202,
+    )
+    async def push_bulletin(
+        bulletin_id: uuid.UUID,
+        body: PushIn,
+        request: Request,
+        access: Pusher,
+        settings: SettingsDep,
+        db: DB,
+    ) -> PushOut:
+        """Queues a push of the validated bulletin; the first push of a bulletin to a
+        connector needs a recent second factor (Q43)."""
+        try:
+            connector = await push_target(db, access.workspace.id, body.connector_id)
+            publication = await load_publication(db, access.workspace.id, bulletin_id)
+            if await first_push(db, bulletin_id, connector.id):
+                ensure_recent_step_up(access.principal, settings)
+            record = await queue_push(
+                db, access.workspace.id, connector, publication,
+                origin="user", requested_by=access.principal.user_id, now=now(),
+            )  # fmt: skip
+        except PublishError as exc:
+            if exc.code == "connector_not_found":
+                raise HTTPException(status_code=404, detail="not_found") from None
+            if exc.code == "push_in_progress":
+                raise HTTPException(status_code=409, detail=exc.code) from None
+            raise _refused(exc) from None
+        await record_audit(
+            db,
+            access.principal.audit_ctx(request),
+            AuditEntry(
+                action="bulletin.pushed",
+                target_type="bulletin",
+                target_id=str(bulletin_id),
+                workspace_id=access.workspace.id,
+                details={"connector_id": str(connector.id), "rev_no": record.rev_no},
+            ),
+        )
+        await db.commit()
+        _send(request, record)
+        return _push_out(record, connector.name, publication.bulletin.ref)
+
+    @router.post(
+        "/workspaces/{workspace}/publish-targets/{connector_id}/test",
+        response_model=PushOut,
+        status_code=202,
+    )
+    async def test_target(
+        connector_id: uuid.UUID, request: Request, access: Manager, db: DB
+    ) -> PushOut:
+        """Sends the fictitious example bulletin, marked « TEST », to the target."""
+        try:
+            connector = await push_target(db, access.workspace.id, connector_id)
+        except PublishError as exc:
+            if exc.code == "connector_not_found":
+                raise HTTPException(status_code=404, detail="not_found") from None
+            raise _refused(exc) from None
+        record = await queue_push(
+            db, access.workspace.id, connector, None,
+            origin="test", requested_by=access.principal.user_id, now=now(),
+        )  # fmt: skip
+        await _audit(
+            db, request, access.principal, "connector.test_pushed",
+            connector.id, access.workspace.id,
+        )  # fmt: skip
+        await db.commit()
+        _send(request, record)
+        return _push_out(record, connector.name, None)
+
+    @router.get("/workspaces/{workspace}/publications", response_model=list[PushOut])
+    async def list_pushes(
+        access: Pusher,
+        db: DB,
+        bulletin_id: uuid.UUID | None = None,
+        connector_id: uuid.UUID | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    ) -> list[PushOut]:
+        query = (
+            select(PushRecord)
+            .where(PushRecord.workspace_id == access.workspace.id)
+            .order_by(PushRecord.created_at.desc())
+            .limit(limit)
+        )
+        if bulletin_id:
+            query = query.where(PushRecord.bulletin_id == bulletin_id)
+        if connector_id:
+            query = query.where(PushRecord.connector_id == connector_id)
+        return [await _out(db, r) for r in (await db.execute(query)).scalars()]
+
+    @router.get(
+        "/workspaces/{workspace}/publications/{publication_id}", response_model=PushDetailOut
+    )
+    async def get_push(publication_id: uuid.UUID, access: Pusher, db: DB) -> PushDetailOut:
+        record = await db.get(PushRecord, publication_id)
+        if record is None or record.workspace_id != access.workspace.id:
+            raise HTTPException(status_code=404, detail="not_found")
+        attempts = await db.execute(
+            select(PushAttempt)
+            .where(PushAttempt.publication_id == record.id)
+            .order_by(PushAttempt.attempt_no)
+        )
+        return PushDetailOut(
+            **(await _out(db, record)).model_dump(),
+            attempt_log=[
+                AttemptOut(
+                    attempt_no=a.attempt_no,
+                    request=a.request,
+                    response_status=a.response_status,
+                    response_excerpt=a.response_excerpt,
+                    error=a.error,
+                    duration_ms=a.duration_ms,
+                    started_at=a.started_at,
+                )
+                for a in attempts.scalars()
+            ],
+        )
+
+
 def _networks(cidrs: list[str]) -> list[str]:
     """Private ranges only, none wider than /8 (IPv4) or /32 (IPv6)."""
     out = []
@@ -458,6 +626,7 @@ def _routes_admin(router: APIRouter) -> None:
 def build_publish_router() -> APIRouter:
     router = APIRouter(tags=["publication"])
     _routes_publication(router)
+    _routes_push(router)
     _routes_private_network(router)
     _routes_admin(router)
     return router

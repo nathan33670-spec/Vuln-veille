@@ -38,6 +38,8 @@ class Harness:
     app_sessions: Any
     mails: list[dict[str, Any]] = field(default_factory=list)
     parked: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
+    # Tasks for other workers (``publish.push``…), kept for the test to run.
+    others: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
     now: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @asynccontextmanager
@@ -125,6 +127,8 @@ class Harness:
                 )
             elif name == MAIL_TASK:
                 self.mails.append(kwargs)
+            else:
+                self.others.append((name, kwargs))
         raise AssertionError("the engine did not settle")
 
     def unpark(self) -> None:

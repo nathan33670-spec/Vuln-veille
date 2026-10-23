@@ -65,7 +65,24 @@ Le payload est **construit comme un objet JSON** puis sérialisé : aucune injec
 
 Écarts avec le modèle YAML ci-dessus : les noms de champs ne doivent pas ressembler à un identifiant (règle du cadre de connecteurs), d'où `endpoint_url` (et non `token_url`), `key_name` et `key_location` pour la clé d'API, `signed_header`, `digest_prefix` et `timestamp_header` pour HMAC, `idempotency_header` au premier niveau, et `retry.retry_network` pour les erreurs réseau. Les secrets vont dans les emplacements du connecteur : `credential`, `username`, `password`, `client_id`, `client_secret`, `client_certificate`, `client_key`, `signing_key`, `ca_bundle`.
 
-L'envoi réel, le journal `publications` et le nœud `publish.api` arrivent en 7B, les interfaces en 7C.
+État en 7B :
+- **Envoi** : par le worker `publish` (`app/publish/runner.py`, tâche `publish.push`). Chaque tentative est prise une fois. La requête est construite avec les secrets déchiffrés et envoyée selon la politique de sortie du connecteur.
+- **Résultat** :
+  - un succès mémorise l'identifiant distant (`publication_targets`), et l'envoi suivant du même bulletin vers le même connecteur est une mise à jour ;
+  - un 429, un 5xx ou une erreur réseau est repris après le délai configuré ;
+  - le débit du connecteur (Redis) retarde un envoi d'une minute sans consommer de tentative ;
+  - un 401 avec OAuth2 oublie le jeton avant la reprise.
+- **Journal** :
+  - `publications` : un envoi, son origine (`user`, `workflow`, `test`), son statut, son mode, ses tentatives et l'identifiant distant ;
+  - `publication_attempts` : la requête expurgée, le statut HTTP, un extrait de réponse de 4 Kio au plus dont tout identifiant renvoyé en écho est retiré, l'erreur et la durée.
+- **Routes** :
+  - `POST /workspaces/{ws}/bulletins/{id}/push` : MFA récente au premier envoi vers ce connecteur seulement (Q43), 409 si un envoi est déjà en cours ;
+  - `POST …/publish-targets/{id}/test` : le bulletin d'exemple, marqué « TEST » ;
+  - `GET /workspaces/{ws}/publications` et `…/publications/{id}` (détail des tentatives).
+- **Nœud `publish.api`** (file `publish`) : il exige une approbation sur chaque chemin qui y mène. Il ne pousse qu'un bulletin validé, et en test il rend la requête masquée sans rien mettre en file.
+- **Point non couvert** : le « serveur d'écho intégré » de développement n'est pas livré. Le test de connexion vise la cible réelle avec le bulletin d'exemple, et les tests automatisés utilisent un serveur simulé.
+
+Les interfaces arrivent en 7C.
 
 ## 3. Authentifications prises en charge
 
